@@ -1,3 +1,7 @@
+"use client"
+
+import * as React from 'react'
+
 export default function RevendedoresHome() {
   return (
     <div className="space-y-4">
