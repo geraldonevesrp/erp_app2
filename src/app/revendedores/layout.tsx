@@ -1,5 +1,3 @@
-"use client"
-
 import * as React from 'react'
 import { AppLayout } from '@/components/layout/app-layout'
 import type { NavMenuItem } from '@/types/nav'
