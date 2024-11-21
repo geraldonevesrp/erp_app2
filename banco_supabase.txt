@@ -1,0 +1,8383 @@
+# Estrutura do Banco de Dados Supabase
+
+Query utilizada para extrair a estrutura:
+```sql
+SELECT
+
+  table_name,
+  column_name,
+  data_type,
+  is_nullable,
+  column_default
+FROM
+
+  information_schema.columns
+WHERE
+
+  table_schema 
+=
+ 
+'public'
+
+ORDER
+ 
+BY
+
+  table_name,
+  ordinal_position;
+```
+
+# Resultado da Query:
+
+[
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "codbar",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "produto",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "produto_upper",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "produto_acento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "peso",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "ncm",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "cest_codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "embalagem",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "quantidade_embalagem",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "foto_png",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "foto_webp",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "marca",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "preco_medio",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "img_gtin",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Produtos_Base",
+    "column_name": "categoria",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "Revendas_Config",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "Revendas_Config",
+    "column_name": "termo_uso_erps",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "api_config",
+    "column_name": "key",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "api_config",
+    "column_name": "value",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "asaas_id",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "city",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "name",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "phone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "state",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "object",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "address",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "canedit",
+    "data_type": "boolean",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "company",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "country",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "cpfcnpj",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "deleted",
+    "data_type": "boolean",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "cityname",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "province",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "candelete",
+    "data_type": "boolean",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "complement",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "persontype",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "postalcode",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "datecreated",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "mobilephone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "observations",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "addressnumber",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "additionalemails",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "cannoteditreason",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "stateinscription",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "externalreference",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "municipalinscription",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "notificationdisabled",
+    "data_type": "boolean",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "cannotbedeletedreason",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "asaas_contas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "pessoas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_clientes",
+    "column_name": "empresas_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "asaas_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "object",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": "'account'::text"
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "name",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "login_email",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "phone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "mobile_phone",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "address",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "address_number",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "complement",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "province",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "postal_code",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "cpf_cnpj",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "birth_date",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "person_type",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "company_type",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "city",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "state",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "country",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "site",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "wallet_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "api_key",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "account_number",
+    "data_type": "jsonb",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "income_value",
+    "data_type": "numeric",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "income_range",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "commercial_info_expiration",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_contas",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_webhooks",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_webhooks",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "asaas_webhooks",
+    "column_name": "asaas_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_webhooks",
+    "column_name": "asaas_event",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "asaas_webhooks",
+    "column_name": "asaas_json",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "assinaturas_planos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "assinaturas_planos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "assinaturas_planos",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "assinaturas_planos",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "assinaturas_planos",
+    "column_name": "mensalidade",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "assinaturas_planos",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "cobrancas_tipos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "asaas",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "sacado_perfil_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "cedente_perfil_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "sacado_empresa_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "cedente_pessoa_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "valor",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "vencimento",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "pago_em",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "paga",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "cobrancas",
+    "column_name": "erp_assinaturas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas_tipos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "cobrancas_tipos",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "compras",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "fornecedor_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "empresa_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "status_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "fornecedor_num_pedido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "numero",
+    "data_type": "numeric",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "orcamento_prazo_ate",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "fornecedor_numero_nf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "deposito_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras",
+    "column_name": "data",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "compras_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "produto_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "qt",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "unitario",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "frete",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "despesas",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "total",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "fator_conversao",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'1'::numeric"
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "qt_itens",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens",
+    "column_name": "unidade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'caixa'::text"
+  },
+  {
+    "table_name": "compras_itens_depositos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens_depositos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "compras_itens_depositos",
+    "column_name": "compras_itens_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens_depositos",
+    "column_name": "depositos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens_depositos",
+    "column_name": "qt",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens_depositos",
+    "column_name": "unidade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens_depositos",
+    "column_name": "fator_conversao",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_itens_depositos",
+    "column_name": "qt_itens",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_status",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "compras_status",
+    "column_name": "status",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "depositos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "depositos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "depositos",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "depositos",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "depositos",
+    "column_name": "principal",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "depositos_emp_prod",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "depositos_emp_prod",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "depositos_emp_prod",
+    "column_name": "depositos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "depositos_emp_prod",
+    "column_name": "produtos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "depositos_emp_prod",
+    "column_name": "local_estoque",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "depositos_emp_prod",
+    "column_name": "quantidade",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "depositos_emp_prod",
+    "column_name": "qt_reservada",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "depositos_emp_prod",
+    "column_name": "estoque_minimo",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "depositos_emp_prod",
+    "column_name": "empresas_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "empresas_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "apikey",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "walletid",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "accountnumber",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "incomevalue",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "incomerange",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "commercialInfoexpiration",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "id_asaas",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "loginemail",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "phone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "mobilephone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "address",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "addressnumber",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "complement",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "province",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "postalcode",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "cpfcnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "birthdate",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "persontype",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "companytype",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "city",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "state",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "country",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresa_asaas",
+    "column_name": "site",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "cnae",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "razao_social",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "fantasia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "ie",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "ie_st",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "capital_social",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "cnpj_raiz",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "porte_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "porte_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "natureza_juridica_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "natureza_juridica_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "qualificacao_do_responsavel_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "qualificacao_do_responsavel_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "logo_url",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "observacoes",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "subistituto_tributario",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "st_posto_fiscal",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "st_ocorrencia_fiscal",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "st_observacoes",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "beneficio_fiscal_icms",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "bficms_observacoes",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "registro_sif",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "sif_numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "im",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "fone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "endereco",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "whatsapp",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "cep",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "logradouro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "bairro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "complemento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "uf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "municipio",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "cod_municipio",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "cod_uf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "padrao",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "email_nfe",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "nome_email_nfe",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "email_boletos",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "nome_email_boletos",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "email_compras",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "nome_email_compras",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "email_vendas",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "nome_email_vendas",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "boletos_juros_mensais",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "boleto_multa_padrao",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "cob_juros_mensais",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "cob_juros_modo",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "fis_regimes_tributarios_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "celular",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "empresas",
+    "column_name": "renda",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "titulo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "cep",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "logradouro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "complemento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "bairro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "localidade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "uf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "uf_cod",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "ibge",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "gia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "ddd",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "siafi",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "principal",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "enderecos",
+    "column_name": "perfil_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "erp_assinaturas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "erp_assinaturas",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "erp_assinaturas",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "erp_assinaturas",
+    "column_name": "assinaturas_planos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "erp_assinaturas",
+    "column_name": "empresas_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "erp_assinaturas",
+    "column_name": "asaas",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_atividades_prepoderantes",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_atividades_prepoderantes",
+    "column_name": "atividade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cenq",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cenq",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cenq",
+    "column_name": "grupo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cenq",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cest",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cest",
+    "column_name": "cod_cest",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cest",
+    "column_name": "ncm",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cest",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cfop",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cfop",
+    "column_name": "cfop",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cfop",
+    "column_name": "descricao_resumida",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cfop",
+    "column_name": "indnfe",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cfop",
+    "column_name": "indcomunica",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cfop",
+    "column_name": "indtransp",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cfop",
+    "column_name": "inddevol",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_csosn",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_csosn",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "fis_csosn",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_csosn",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst",
+    "column_name": "created_at",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst",
+    "column_name": "titulo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_ipi",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_ipi",
+    "column_name": "created_at",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_ipi",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_ipi",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_ipi",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_ipi",
+    "column_name": "Grupo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_pis_cofins",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_pis_cofins",
+    "column_name": "created_at",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_pis_cofins",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_cst_pis_cofins",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ipi_enquadramentos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ipi_enquadramentos",
+    "column_name": "created_at",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ipi_enquadramentos",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ipi_enquadramentos",
+    "column_name": "grupo_cst",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ipi_enquadramentos",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_naturezas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_naturezas",
+    "column_name": "natureza",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ncm",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ncm",
+    "column_name": "ncm",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ncm",
+    "column_name": "Descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ncm",
+    "column_name": "descricao_completa",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ncm",
+    "column_name": "Data_Inicio",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ncm",
+    "column_name": "Data_Fim",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ncm",
+    "column_name": "Ato_Legal",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ncm",
+    "column_name": "numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_ncm",
+    "column_name": "Ano",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_origem_produto",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_origem_produto",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_origem_produto",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_regimes_tributarios",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "fis_regimes_tributarios",
+    "column_name": "regime",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "grupos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "grupos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "grupos",
+    "column_name": "tipo",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "grupos",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "grupos",
+    "column_name": "grupo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "grupos_tipos",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "grupos_tipos",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "http_resposta",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "http_resposta",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "http_resposta",
+    "column_name": "response_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "http_resposta",
+    "column_name": "resposta",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "id_emissor",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "empresas_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "pessoas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "transportador_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "transportador_endereco_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "ambiente",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "referencia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "infNFe",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "infNFeSupl",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "api_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "api_created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "api_status",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "data_emissao",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "modelo",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "serie",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "numero",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "tipo_emissao",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "valor_total",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "chave",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "last_nfe",
+    "column_name": "autorizacao",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "id_emissor",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "empresas_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "transportador_endereco_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "infNFe",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "infNFeSupl",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "api_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "api_created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "api_status",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "data_emissao",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "chave",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "autorizacao",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "pessoas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "transportador_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "fis_naturezas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": "'1'::bigint"
+  },
+  {
+    "table_name": "nfe",
+    "column_name": "pessoa_endereco_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "foto_url",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "apelido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "dominio",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "tipo",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "nome_completo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": "auth.uid()"
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "revenda_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "cpf_cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "fone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "celular",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "wathsapp",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "revenda_status",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "nascimento",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis",
+    "column_name": "faturamento",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_asaas_webhook_key",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "perfis_asaas_webhook_key",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "perfis_asaas_webhook_key",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "titulo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "cep",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "logradouro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "complemento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "bairro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "localidade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "uf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "ibge",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "gia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "ddd",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "siafi",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "principal",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "geo_point",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_enderecos",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_tipos",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_tipos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "perfis_tipos",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_users",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "perfis_users",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "perfis_users",
+    "column_name": "perfil_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "perfis_users",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "foto_url",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "nome_razao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "apelido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "cpf_cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "rg_ie",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "IM",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "profissoes_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "nascimento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "renda",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "obs",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "indIEDest",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "ISUF",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "pessoas_tipos",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "status_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": "'1'::smallint"
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "genero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "grupos_ids",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "subgrupos_ids",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "ramo_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "atividades_ids",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "natureza_juridica",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "porte",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "situacao_cadastral",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "atividade_principal",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "atividades_secundarias",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "socios",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "capital_social",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "data_inicio_atividades",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas",
+    "column_name": "matriz",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_anexos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_anexos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pessoas_anexos",
+    "column_name": "pessoa_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_anexos",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_anexos",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_anexos",
+    "column_name": "link",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_anexos",
+    "column_name": "download",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_atividades",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_atividades",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pessoas_atividades",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_atividades",
+    "column_name": "atividade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "pessoa_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "contato",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "cargo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "departamento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "celular",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "telefone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_contatos",
+    "column_name": "zap",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_email_tipos",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_emails",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_emails",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pessoas_emails",
+    "column_name": "pessoa_id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_emails",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_emails",
+    "column_name": "email",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_emails",
+    "column_name": "responsavel",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "pessoa_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "titulo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "cep",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "logradouro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "complemento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "bairro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "localidade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "uf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "ibge",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "gia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "ddd",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "siafi",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "principal",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_enderecos",
+    "column_name": "geo_point",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_ramos",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_ramos",
+    "column_name": "ramo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_redes_sociais",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_redes_sociais",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pessoas_redes_sociais",
+    "column_name": "pessoa_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_redes_sociais",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_redes_sociais",
+    "column_name": "link",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_status",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_status",
+    "column_name": "status",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_telefones",
+    "column_name": "id",
+    "data_type": "integer",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_telefones",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pessoas_telefones",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_telefones",
+    "column_name": "pessoa_id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_telefones",
+    "column_name": "numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_telefones_tipos",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_tipos",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pessoas_tipos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pessoas_tipos",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_grupos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_grupos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pg_grupos",
+    "column_name": "painel_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_grupos",
+    "column_name": "grupo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_grupos",
+    "column_name": "ordem",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_grupos",
+    "column_name": "icone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_grupos",
+    "column_name": "icon_size",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_grupos",
+    "column_name": "icon_margem_left",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_paginas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_paginas",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pg_paginas",
+    "column_name": "grupo_id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_paginas",
+    "column_name": "pagina",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_paginas",
+    "column_name": "ordem",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_paginas",
+    "column_name": "icone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_paginas",
+    "column_name": "pg_id",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_paineis",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pg_paineis",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "pg_paineis",
+    "column_name": "painel",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "ID",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "Nome_Fantasia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "Razao_Social",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "status",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "Representante",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "Ramo_atividade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "Cidade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "UF",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "pre_pessoas",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_categorias",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_categorias",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "prod_categorias",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "prod_categorias",
+    "column_name": "categoria",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_fornecedores",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_fornecedores",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "prod_fornecedores",
+    "column_name": "fornecedor_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_fornecedores",
+    "column_name": "produto_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_fornecedores",
+    "column_name": "principal",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_genero",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_genero",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_genero",
+    "column_name": "genero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_imagens",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_imagens",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "prod_imagens",
+    "column_name": "produtos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_imagens",
+    "column_name": "ordem",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_imagens",
+    "column_name": "url",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_imagens",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_imagens",
+    "column_name": "size",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_marcas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_marcas",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "prod_marcas",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "prod_marcas",
+    "column_name": "marca",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_subcategorias",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_subcategorias",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "prod_subcategorias",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "prod_subcategorias",
+    "column_name": "categoria_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_subcategorias",
+    "column_name": "subcategoria",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_tipos",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_tipos",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_unid_medidas",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_unid_medidas",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_variacao1",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_variacao1",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "prod_variacao1",
+    "column_name": "produtos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_variacao1",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_variacao2",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_variacao2",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "prod_variacao2",
+    "column_name": "produtos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "prod_variacao2",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "produtos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "tributacoes_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "cEANTrib",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "cBarraTrib",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "ncm_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "cest_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "cfop_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "cBenef",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produto_fiscal",
+    "column_name": "EXTIPI",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": "CURRENT_TIMESTAMP"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "prod_tipos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": "'1'::smallint"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "prod_generos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": "'1'::smallint"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "cod_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "sub_codigo_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": "1"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "cod_barras",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "ref_fornecedor",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "sku",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "unid_venda",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": "1"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "unid_compra",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": "1"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "unid_fator_conversao",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": "1"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "data_ultima_venda",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "data_ultima_compra",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "visivel_catalogo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "ativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "prod_categorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "prod_subcategorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "prod_marcas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "validade",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "comissao",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "custo_ultima_comp",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "estoque_negativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "peso_bruto",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "peso_liquido",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "embalagem",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "estoque_ideal",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "cashback",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "cashback_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "controlado_lote",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "composto",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "food",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "variacao1",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "variacao2",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "prod_variacao1_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "prod_variacao2_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "grade_de",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "compra_frete",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "produtos",
+    "column_name": "compra_frete_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "sub_grupos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "sub_grupos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "sub_grupos",
+    "column_name": "grupos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "sub_grupos",
+    "column_name": "subgrupo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "tabelas_precos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "tabelas_precos",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "tabelas_precos",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "tabelas_precos",
+    "column_name": "padrao",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "tabelas_precos",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "tabelas_precos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "produtos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "custo",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "custo_total",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "margem_lucro",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "margem_lucro_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "preco",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "frete",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "frete_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "ipi",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "ipi_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "icms_st",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "icms_st_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "icms",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "icms_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "fcp_st",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "fcp_st_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "seguro",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "seguro_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "despesas",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "tabelas_precos_itens",
+    "column_name": "despesas_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": "'0'::numeric"
+  },
+  {
+    "table_name": "temas_erp",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "temas_erp",
+    "column_name": "modelo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp",
+    "column_name": "usando",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": "false"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "modelo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'light'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_CorFundo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_CorTextoLogo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Grupo_CorFundo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Grupo_IconeCor",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Grupo_FonteCor",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Grupo_SetaCor",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Grupo_atual_IconeCor",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Item_CorFundo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Item_CorBarra",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Item_CorFonte",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Item_CorIcone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_ItemAtual_CorFundo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_ItemAtual_CorBarra",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_ItemAtual_CorFonte",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_ItemAtual_CorIcone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Item_Hover_CorFundo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Item_CorBarra_Hover",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Item_Hover_CorFonte",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Mn_Item_Hover_CorIcone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "temas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "cab_bg",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#ffffff'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "cab_text",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#000000'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "cab_borda",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "cab_iconbg",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "cab_icon",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#000000'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "bg_01",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#F2F2F7'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "bg_02",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#000000'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "bg_03",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#EDF2F9'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "bg_04",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#52525B'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "borda_pg",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#E4E4E7'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "texto",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#00000'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "texto_titulos",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#1E40AF'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "texto_alerta",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#ff9900'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "botao_acao_bg",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#52525B'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "botao_acao_text",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#000000'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "input_disable_bg",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#E4E4E7'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "borda_focus",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#E4E4E7'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "borda_erro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#ff9900'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "positivo_ok",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#047619'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "Icone",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#000000'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "grid_cab_bg",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#E9ECEF'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "grid_cab_txt",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#000000'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "grid_borda",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#E4E4E7'::text"
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "ativo_bg",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "ativo_txt",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "temas_erp_cores",
+    "column_name": "input_borda",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": "'#c3c3c3'::text"
+  },
+  {
+    "table_name": "themes",
+    "column_name": "id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": "uuid_generate_v4()"
+  },
+  {
+    "table_name": "themes",
+    "column_name": "perfil_id",
+    "data_type": "uuid",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "themes",
+    "column_name": "name",
+    "data_type": "text",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "themes",
+    "column_name": "light",
+    "data_type": "jsonb",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "themes",
+    "column_name": "dark",
+    "data_type": "jsonb",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "themes",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "timezone('utc'::text, now())"
+  },
+  {
+    "table_name": "themes",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "timezone('utc'::text, now())"
+  },
+  {
+    "table_name": "tributacoes",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "NO",
+    "column_default": null
+  },
+  {
+    "table_name": "tributacoes",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "NO",
+    "column_default": "now()"
+  },
+  {
+    "table_name": "tributacoes",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": "gen_random_uuid()"
+  },
+  {
+    "table_name": "tributacoes",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "tributacoes",
+    "column_name": "ipi",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "tributacoes",
+    "column_name": "cofins",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "tributacoes",
+    "column_name": "pis",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "tributacoes",
+    "column_name": "icms",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_asaas_response",
+    "column_name": "content",
+    "data_type": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "data",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_nome_razao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_apelido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_cpf_cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "empresa_cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "empresa_razao_social",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "empresa_fantasia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "empresa_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "status_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_num_pedido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "numero",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "orcamento_prazo_ate",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_numero_nf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "deposito_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "qt_itens",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "valor_total",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "qt_produtos",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "depositos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "deposito_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "produtos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "produto_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "local_estoque",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "quantidade",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "qt_reservada",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "estoque_minimo",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "cod_cest",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "ncm",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "cod_cest_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "cfop",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "descricao_resumida",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "indnfe",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "indcomunica",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "indtransp",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "inddevol",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "cfop_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "codigo_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "ncm",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "descricao_completa",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Data_Inicio",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Data_Fim",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Ato_Legal",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Ano",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "ncm_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_origem_produto",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_origem_produto",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_origem_produto",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_origem_produto",
+    "column_name": "codigo_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "perfil_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "email",
+    "data_type": "character varying",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "foto_url",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "nome_razao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "apelido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "cpf_cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "rg_ie",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "IM",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "profissoes_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "nascimento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "renda",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "obs",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "indIEDest",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "ISUF",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "pessoas_tipos",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "genero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "status_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "grupos_ids",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "subgrupos_ids",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "ramo_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "atividades_ids",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "ramo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "telefones",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "emails",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "grupos",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "subgrupos",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "atividades",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "tipospessoas",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_titulo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_cep",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_logradouro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_complemento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_bairro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_localidade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_uf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_ibge",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_gia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_ddd",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_siafi",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_principal",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_geo_point",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_tipos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_generos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "cod_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "sub_codigo_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "cod_barras",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "ref_fornecedor",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "sku",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_venda",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_compra",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_fator_conversao",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "data_ultima_venda",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "data_ultima_compra",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "visivel_catalogo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "ativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_categorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_subcategorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_marcas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "validade",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "comissao",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "custo_ultima_comp",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "estoque_negativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "peso_bruto",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "peso_liquido",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "embalagem",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "estoque_ideal",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "cashback",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "cashback_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "controlado_lote",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "composto",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "food",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "variacao1",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "variacao2",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_variacao1_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_variacao2_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "grade_de",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "perfis_apelido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_genero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_categoria",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_subcategoria",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_marca",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_variacao1",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_variacao2",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_venda_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_compra_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "grade_de_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "tabela_preco_item_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "tabela_preco_item_created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "tabelas_precos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "produto_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "custo",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "custo_total",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "margem_lucro",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "margem_lucro_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "preco",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "frete",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "frete_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "ipi",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "ipi_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "icms_st",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "icms_st_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "icms",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "icms_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "fcp_st",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "fcp_st_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "seguro",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "seguro_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "despesas",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "despesas_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "produto_created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_tipos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_generos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "produto_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "cod_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "sub_codigo_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "cod_barras",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "ref_fornecedor",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "sku",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "unid_venda",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "unid_compra",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "unid_fator_conversao",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "data_ultima_venda",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "data_ultima_compra",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "visivel_catalogo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "ativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_categorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_subcategorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_marcas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "validade",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "comissao",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "custo_ultima_comp",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "estoque_negativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "peso_bruto",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "peso_liquido",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "embalagem",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "estoque_ideal",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "cashback",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "cashback_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "controlado_lote",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "composto",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "food",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "variacao1",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "variacao2",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_variacao1_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_variacao2_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "grade_de",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "imagens",
+    "data_type": "json",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "depositos",
+    "data_type": "json",
+    "is_nullable": "YES",
+    "column_default": null
+  }
+]
+
+**views:**
+[
+  {
+    "table_name": "v_compras",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "data",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_nome_razao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_apelido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_cpf_cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "empresa_cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "empresa_razao_social",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "empresa_fantasia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "empresa_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "status_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_num_pedido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "numero",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "orcamento_prazo_ate",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "fornecedor_numero_nf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "deposito_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "qt_itens",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "valor_total",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_compras",
+    "column_name": "qt_produtos",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "depositos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "deposito_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "produtos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "produto_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "local_estoque",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "quantidade",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "qt_reservada",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_depositos_produto",
+    "column_name": "estoque_minimo",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "cod_cest",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "ncm",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cest",
+    "column_name": "cod_cest_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "cfop",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "descricao_resumida",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "indnfe",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "indcomunica",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "indtransp",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "inddevol",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_cfop",
+    "column_name": "cfop_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_csosn",
+    "column_name": "codigo_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "ncm",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "descricao_completa",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Data_Inicio",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Data_Fim",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Ato_Legal",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "Ano",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_ncm",
+    "column_name": "ncm_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_origem_produto",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_origem_produto",
+    "column_name": "codigo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_origem_produto",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_fis_origem_produto",
+    "column_name": "codigo_descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "perfil_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "user_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_perfis_users",
+    "column_name": "email",
+    "data_type": "character varying",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "foto_url",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "nome_razao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "apelido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "cpf_cnpj",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "rg_ie",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "IM",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "profissoes_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "nascimento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "renda",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "obs",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "indIEDest",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "ISUF",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "pessoas_tipos",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "genero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "status_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "grupos_ids",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "subgrupos_ids",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "ramo_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "atividades_ids",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "ramo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "telefones",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "emails",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "grupos",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "subgrupos",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "atividades",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "tipospessoas",
+    "data_type": "ARRAY",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_titulo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_cep",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_logradouro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_numero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_complemento",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_bairro",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_localidade",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_uf",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_ibge",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_gia",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_ddd",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_siafi",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_principal",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_pessoas",
+    "column_name": "endereco_geo_point",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "perfis_id",
+    "data_type": "uuid",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_tipos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_generos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "cod_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "sub_codigo_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "cod_barras",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "ref_fornecedor",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "sku",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_venda",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_compra",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_fator_conversao",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "data_ultima_venda",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "data_ultima_compra",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "visivel_catalogo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "ativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_categorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_subcategorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_marcas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "validade",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "comissao",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "custo_ultima_comp",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "estoque_negativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "peso_bruto",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "peso_liquido",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "embalagem",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "estoque_ideal",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "cashback",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "cashback_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "controlado_lote",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "composto",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "food",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "variacao1",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "variacao2",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_variacao1_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_variacao2_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "grade_de",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "perfis_apelido",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_tipo",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_genero",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_categoria",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_subcategoria",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_marca",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_variacao1",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "prod_variacao2",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_venda_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "unid_compra_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos",
+    "column_name": "grade_de_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "tabela_preco_item_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "tabela_preco_item_created_at",
+    "data_type": "timestamp with time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "tabelas_precos_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "produto_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "custo",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "custo_total",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "margem_lucro",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "margem_lucro_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "preco",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "frete",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "frete_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "ipi",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "ipi_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "icms_st",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "icms_st_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "icms",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "icms_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "fcp_st",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "fcp_st_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "seguro",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "seguro_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "despesas",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "despesas_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "produto_created_at",
+    "data_type": "timestamp without time zone",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_tipos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_generos_id",
+    "data_type": "smallint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "produto_nome",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "cod_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "sub_codigo_sequencial",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "cod_barras",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "ref_fornecedor",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "sku",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "unid_venda",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "unid_compra",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "unid_fator_conversao",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "data_ultima_venda",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "data_ultima_compra",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "visivel_catalogo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "ativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "descricao",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_categorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_subcategorias_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_marcas_id",
+    "data_type": "bigint",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "validade",
+    "data_type": "date",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "comissao",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "custo_ultima_comp",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "estoque_negativo",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "peso_bruto",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "peso_liquido",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "embalagem",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "estoque_ideal",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "cashback",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "cashback_p",
+    "data_type": "numeric",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "controlado_lote",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "composto",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "food",
+    "data_type": "boolean",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "variacao1",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "variacao2",
+    "data_type": "text",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_variacao1_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "prod_variacao2_id",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "grade_de",
+    "data_type": "integer",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "imagens",
+    "data_type": "json",
+    "is_nullable": "YES",
+    "column_default": null
+  },
+  {
+    "table_name": "v_produtos_get",
+    "column_name": "depositos",
+    "data_type": "json",
+    "is_nullable": "YES",
+    "column_default": null
+  }
+]
+
+
