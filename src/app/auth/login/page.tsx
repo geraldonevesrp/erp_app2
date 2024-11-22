@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { UserCircle, AlertCircle, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { usePerfil } from '@/contexts/perfil'
 import { PERFIL_ROTAS } from '@/types/perfil'
+import { getVersionString } from '@/config/version'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -147,6 +148,11 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+          <div className="absolute bottom-2 right-2">
+            <span className="text-xs text-muted-foreground/40">
+              {getVersionString()}
+            </span>
+          </div>
         </div>
       </div>
     </div>
