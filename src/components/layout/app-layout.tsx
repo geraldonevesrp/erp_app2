@@ -42,9 +42,9 @@ export function AppLayout({ children, menuItems }: AppLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-16 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
+      <header className="fixed top-0 left-0 right-0 h-12 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
         <div className="flex items-center justify-between h-full px-4">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -112,21 +112,17 @@ export function AppLayout({ children, menuItems }: AppLayoutProps) {
       </header>
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 border-r bg-background transition-transform duration-300 ${
-        isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
-        <div className="p-4">
-          <NavMenu items={menuItems} />
-        </div>
+      <aside
+        className={`fixed left-0 top-12 bottom-0 w-64 border-r bg-background transition-transform duration-200 ease-in-out z-40 ${
+          isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <NavMenu items={menuItems} />
       </aside>
 
       {/* Main Content */}
-      <main className={`pt-16 transition-all duration-300 ${
-        isMenuOpen ? 'pl-64' : 'pl-0'
-      }`}>
-        <div className="p-6">
-          {children}
-        </div>
+      <main className={`flex-1 mt-12 ${isMenuOpen ? 'ml-64' : ''} transition-[margin] duration-200 ease-in-out`}>
+        {children}
       </main>
     </div>
   )
