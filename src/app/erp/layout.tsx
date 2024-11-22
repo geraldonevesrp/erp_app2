@@ -12,7 +12,8 @@ const menuItems = [
       },
       {
         name: 'Vendas',
-        href: '/erp/dashboard/vendas'
+        href: '/erp/dashboard/vendas',
+        disabled: true
       }
     ]
   },
@@ -25,11 +26,13 @@ const menuItems = [
       },
       {
         name: 'Grupo de Pessoas',
-        href: '/erp/cadastros/grupos'
+        href: '/erp/cadastros/grupos',
+        disabled: true
       },
       {
         name: 'Empresas',
-        href: '/erp/cadastros/empresas'
+        href: '/erp/cadastros/empresas',
+        disabled: true
       }
     ]
   },
@@ -38,23 +41,28 @@ const menuItems = [
     items: [
       {
         name: 'Categorias',
-        href: '/erp/estoque/categorias'
+        href: '/erp/estoque/categorias',
+        disabled: true
       },
       {
         name: 'Produtos',
-        href: '/erp/estoque/produtos'
+        href: '/erp/estoque/produtos',
+        disabled: true
       },
       {
         name: 'Tabela de Preços',
-        href: '/erp/estoque/precos'
+        href: '/erp/estoque/precos',
+        disabled: true
       },
       {
         name: 'Depósitos',
-        href: '/erp/estoque/depositos'
+        href: '/erp/estoque/depositos',
+        disabled: true
       },
       {
         name: 'Compras',
-        href: '/erp/estoque/compras'
+        href: '/erp/estoque/compras',
+        disabled: true
       }
     ]
   },
@@ -63,11 +71,13 @@ const menuItems = [
     items: [
       {
         name: 'Orçamentos',
-        href: '/erp/vendas/orcamentos'
+        href: '/erp/vendas/orcamentos',
+        disabled: true
       },
       {
         name: 'Pedidos',
-        href: '/erp/vendas/pedidos'
+        href: '/erp/vendas/pedidos',
+        disabled: true
       }
     ]
   },
@@ -76,15 +86,18 @@ const menuItems = [
     items: [
       {
         name: 'OS Equipamentos',
-        href: '/erp/os/equipamentos'
+        href: '/erp/os/equipamentos',
+        disabled: true
       },
       {
         name: 'OS Veículos',
-        href: '/erp/os/veiculos'
+        href: '/erp/os/veiculos',
+        disabled: true
       },
       {
         name: 'OS Serviços Gerais',
-        href: '/erp/os/servicos'
+        href: '/erp/os/servicos',
+        disabled: true
       }
     ]
   },
@@ -93,15 +106,18 @@ const menuItems = [
     items: [
       {
         name: 'NF-e',
-        href: '/erp/fiscal/nfe'
+        href: '/erp/fiscal/nfe',
+        disabled: true
       },
       {
         name: 'NFC-e',
-        href: '/erp/fiscal/nfce'
+        href: '/erp/fiscal/nfce',
+        disabled: true
       },
       {
         name: 'NFS-e',
-        href: '/erp/fiscal/nfse'
+        href: '/erp/fiscal/nfse',
+        disabled: true
       }
     ]
   },
@@ -110,19 +126,23 @@ const menuItems = [
     items: [
       {
         name: 'Contas a Receber',
-        href: '/erp/financeiro/receber'
+        href: '/erp/financeiro/receber',
+        disabled: true
       },
       {
         name: 'Contas a Pagar',
-        href: '/erp/financeiro/pagar'
+        href: '/erp/financeiro/pagar',
+        disabled: true
       },
       {
         name: 'Fluxo de Caixa',
-        href: '/erp/financeiro/fluxo'
+        href: '/erp/financeiro/fluxo',
+        disabled: true
       },
       {
         name: 'Relatórios',
-        href: '/erp/financeiro/relatorios'
+        href: '/erp/financeiro/relatorios',
+        disabled: true
       }
     ]
   },
@@ -131,7 +151,8 @@ const menuItems = [
     items: [
       {
         name: 'Tema',
-        href: '/erp/configuracoes/tema'
+        href: '/erp/configuracoes/tema',
+        disabled: true
       }
     ]
   }

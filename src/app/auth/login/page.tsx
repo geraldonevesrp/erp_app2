@@ -1,20 +1,39 @@
 'use client'
 
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { UserCircle, AlertCircle, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { usePerfil } from '@/contexts/perfil'
+import { PERFIL_ROTAS } from '@/types/perfil'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const supabase = createClient()
+  const { perfil, perfilPublico, refreshPerfil } = usePerfil()
+
+  useEffect(() => {
+    // Se já tem perfil e está autenticado, redireciona
+    if (perfil) {
+      // Redireciona para o dashboard se já estiver logado
+      router.push('/erp/dashboard')
+      return
+    }
+  }, [perfil])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
     setError(null)
 
     try {
@@ -23,72 +42,112 @@ export default function LoginPage() {
         password,
       })
 
-      if (error) {
-        throw error
-      }
+      if (error) throw error
 
-      router.push('/')
-      router.refresh()
+      await refreshPerfil()
+      router.push('/erp/dashboard')
     } catch (error: any) {
-      setError(error.message)
+      console.error('Erro no login:', error)
+      setError('Email ou senha inválidos')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10">
-      <div className="w-full max-w-md">
-        <form onSubmit={handleLogin} className="bg-card p-8 rounded-lg shadow-lg space-y-6">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Login</h1>
-            <p className="text-muted-foreground mt-2">Entre com suas credenciais</p>
-          </div>
-
-          {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive text-destructive text-sm rounded">
-              {error}
+      <div className="w-full max-w-md p-8 bg-card rounded-lg shadow-lg space-y-6">
+        <div className="flex flex-col items-center justify-center gap-4">
+          {perfilPublico?.foto_url ? (
+            <Image
+              src={perfilPublico.foto_url}
+              alt="Logo"
+              width={200}
+              height={200}
+              className="rounded-lg"
+            />
+          ) : (
+            <div className="w-[200px] h-[200px] bg-gray-200 rounded-lg flex items-center justify-center">
+              <UserCircle className="w-32 h-32 text-gray-400" />
             </div>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-2 rounded-md border bg-background"
-                required
-              />
+          {perfilPublico?.apelido && (
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {perfilPublico.apelido}
+            </h1>
+          )}
+
+          <p className="text-sm text-gray-500">
+            Entre com suas credenciais para acessar
+          </p>
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-4 w-full">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1">
-                Senha
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 rounded-md border bg-background"
-                required
-              />
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                'Entrar'
+              )}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   )

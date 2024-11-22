@@ -1,11 +1,11 @@
-'use client'
+"use client"
 
-import * as React from 'react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { motion } from "framer-motion"
+import { ChevronDown } from "lucide-react"
+import { useState } from "react"
 
 interface NavMenuProps {
   items: {
@@ -13,88 +13,83 @@ interface NavMenuProps {
     items: {
       name: string
       href: string
+      disabled?: boolean
     }[]
   }[]
 }
 
 export function NavMenu({ items }: NavMenuProps) {
-  const [expandedItems, setExpandedItems] = React.useState<string[]>([])
   const pathname = usePathname()
+  const [openSections, setOpenSections] = useState<string[]>([])
 
-  // Expandir automaticamente o menu pai da página atual
-  React.useEffect(() => {
-    const currentParent = items.find(item => 
-      item.items.some(subItem => subItem.href === pathname)
-    )
-    if (currentParent?.title) {
-      setExpandedItems([currentParent.title]) // Apenas o item atual
-    }
-  }, [pathname, items])
-
-  const toggleExpanded = (title: string) => {
-    setExpandedItems(prev => 
-      prev.includes(title) 
-        ? prev.filter(item => item !== title)
+  const toggleSection = (title: string) => {
+    setOpenSections((prev) =>
+      prev.includes(title)
+        ? prev.filter((t) => t !== title)
         : [...prev, title]
     )
   }
 
   return (
     <nav className="space-y-1">
-      {items.map((item, index) => {
-        const isExpanded = expandedItems.includes(item.title)
-        const hasActiveChild = item.items.some(subItem => subItem.href === pathname)
-
+      {items.map((section) => {
+        const isOpen = openSections.includes(section.title)
+        const hasActiveItem = section.items.some(item => pathname === item.href)
+        
         return (
-          <div key={index} className="relative">
+          <div key={section.title}>
             <button
-              onClick={() => toggleExpanded(item.title)}
+              onClick={() => toggleSection(section.title)}
               className={cn(
-                'flex items-center justify-between w-full px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                'flex w-full items-center justify-between px-2 py-2 text-sm font-medium rounded-md',
                 'hover:bg-accent hover:text-accent-foreground',
-                hasActiveChild && 'bg-accent/50 text-accent-foreground',
-                isExpanded && 'bg-accent text-accent-foreground'
+                (isOpen || hasActiveItem) && 'bg-accent/50'
               )}
             >
-              <span>{item.title}</span>
-              <motion.div
-                animate={{ rotate: isExpanded ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <ChevronDown className="h-4 w-4" />
-              </motion.div>
+              <span>{section.title}</span>
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 transition-transform duration-200',
+                  isOpen && 'transform rotate-180'
+                )}
+              />
             </button>
-
-            <AnimatePresence initial={false}>
-              {isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
-                >
-                  <div className="pt-1 pl-4">
-                    {item.items.map((subItem, subIndex) => {
-                      const isActive = pathname === subItem.href
-                      return (
-                        <Link
-                          key={subIndex}
-                          href={subItem.href}
-                          className={cn(
-                            'flex items-center group px-4 py-2 text-sm rounded-md transition-colors',
-                            'hover:bg-accent hover:text-accent-foreground',
-                            isActive && 'bg-accent text-accent-foreground font-medium'
-                          )}
-                        >
-                          <span>{subItem.name}</span>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {isOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="flex flex-col space-y-1 pt-1 px-2">
+                  {section.items.map((item, index) => {
+                    const isActive = pathname === item.href
+                    return item.disabled ? (
+                      <span
+                        key={index}
+                        className="cursor-not-allowed text-sm text-muted-foreground/70 hover:text-muted-foreground px-4 py-2 rounded-md"
+                        title="Em desenvolvimento"
+                      >
+                        {item.name}
+                      </span>
+                    ) : (
+                      <Link
+                        key={index}
+                        href={item.href}
+                        className={cn(
+                          'flex items-center px-4 py-2 text-sm rounded-md transition-colors',
+                          'hover:bg-accent hover:text-accent-foreground',
+                          isActive && 'bg-accent text-accent-foreground font-medium'
+                        )}
+                      >
+                        <span>{item.name}</span>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </motion.div>
+            )}
           </div>
         )
       })}

@@ -1,9 +1,21 @@
 "use client"
 
 import { useState } from 'react'
-import { Menu, Bell, Sun, Moon } from 'lucide-react'
+import { Menu, Bell, Sun, Moon, User, LogOut, Settings } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { NavMenu } from './nav-menu'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { usePerfil } from '@/contexts/perfil'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -12,6 +24,7 @@ interface AppLayoutProps {
     items: {
       name: string
       href: string
+      disabled?: boolean
     }[]
   }[]
 }
@@ -19,6 +32,14 @@ interface AppLayoutProps {
 export function AppLayout({ children, menuItems }: AppLayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(true)
   const { theme, setTheme } = useTheme()
+  const router = useRouter()
+  const supabase = createClient()
+  const { perfil } = usePerfil()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/auth/login')
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -45,10 +66,47 @@ export function AppLayout({ children, menuItems }: AppLayoutProps) {
                 <Moon className="h-5 w-5" />
               )}
             </button>
-            <button className="p-2 hover:bg-accent rounded-md transition-colors relative" aria-label="Notifications">
+
+            <button 
+              className="p-2 hover:bg-accent rounded-md transition-colors relative" 
+              aria-label="Notifications"
+            >
               <Bell className="h-5 w-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
             </button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center space-x-2 p-2 hover:bg-accent rounded-md transition-colors">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={perfil?.foto_url || ''} />
+                    <AvatarFallback>
+                      {perfil?.nome?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium hidden md:inline-block">
+                    {perfil?.nome || 'Usuário'}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/erp/perfil')}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push('/erp/configuracoes')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Configurações</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
