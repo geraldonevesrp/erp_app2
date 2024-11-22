@@ -1,21 +1,11 @@
 "use client"
 
-import { Settings2 } from "lucide-react"
 import { Table } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet"
-import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { RotateCcw, Settings2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
-import { defaultVisibleColumns } from "../pessoas/columns"
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>
@@ -24,6 +14,70 @@ interface DataTableViewOptionsProps<TData> {
 export function DataTableViewOptions<TData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
+  const resetVisibility = () => {
+    if (typeof window !== 'undefined') {
+      const tableKey = table.getAllColumns().map(col => col.id).join('_')
+      localStorage.removeItem(`table_${tableKey}_visibility`)
+    }
+    table.toggleAllColumnsVisible(true)
+  }
+
+  // Função auxiliar para obter o título da coluna
+  const getColumnTitle = (column: any) => {
+    switch (column.id) {
+      case "apelido":
+        return "Apelido/Nome Fantasia"
+      case "nome_razao":
+        return "Nome Completo/Razão Social"
+      case "cpf_cnpj":
+        return "CPF/CNPJ"
+      case "rg_ie":
+        return "RG/IE"
+      case "IM":
+        return "Inscrição Municipal"
+      case "telefones":
+        return "Telefones"
+      case "emails":
+        return "E-mails"
+      case "nascimento":
+        return "Data Nascimento"
+      case "genero":
+        return "Gênero"
+      case "tipo":
+        return "Tipo"
+      case "status_id":
+        return "Status"
+      case "ramo":
+        return "Ramo de Atividade"
+      case "grupos":
+        return "Grupos"
+      case "subgrupos":
+        return "Subgrupos"
+      case "atividades":
+        return "Atividades"
+      case "endereco_cep":
+        return "CEP"
+      case "endereco_logradouro":
+        return "Logradouro"
+      case "endereco_numero":
+        return "Número"
+      case "endereco_complemento":
+        return "Complemento"
+      case "endereco_bairro":
+        return "Bairro"
+      case "endereco_localidade":
+        return "Cidade"
+      case "endereco_uf":
+        return "UF"
+      case "created_at":
+        return "Data de Cadastro"
+      case "obs":
+        return "Observações"
+      default:
+        return column.id
+    }
+  }
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -32,60 +86,38 @@ export function DataTableViewOptions<TData>({
           Colunas
         </Button>
       </SheetTrigger>
-      <SheetContent>
-        <SheetHeader>
-          <SheetTitle>Colunas Visíveis</SheetTitle>
-          <SheetDescription>
-            Selecione as colunas que deseja exibir na tabela.
-          </SheetDescription>
-        </SheetHeader>
-        <ScrollArea className="h-[calc(100vh-200px)] mt-4">
-          <div className="space-y-4">
-            {table
-              .getAllColumns()
-              .filter(
-                (column) =>
-                  typeof column.accessorFn !== "undefined" && column.getCanHide()
-              )
-              .map((column) => {
+      <SheetContent className="w-[300px] sm:w-[400px]">
+        <div className="flex flex-col h-full">
+          <SheetHeader className="mb-6">
+            <SheetTitle>Colunas Visíveis</SheetTitle>
+            <SheetDescription>
+              Selecione as colunas que deseja exibir na tabela.
+            </SheetDescription>
+          </SheetHeader>
+          
+          <ScrollArea className="flex-1 -mx-6">
+            <div className="px-6">
+              {table.getAllColumns().filter(column => column.getCanHide()).map(column => {
                 return (
-                  <div
-                    key={column.id}
-                    className="flex items-center space-x-2"
-                  >
+                  <div key={column.id} className="py-2 flex items-center justify-between">
+                    <span className="text-sm">{getColumnTitle(column)}</span>
                     <Switch
-                      id={column.id}
                       checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                      onCheckedChange={value => column.toggleVisibility(value)}
+                      aria-label={`Toggle ${getColumnTitle(column)} column`}
                     />
-                    <Label htmlFor={column.id}>
-                      {column.columnDef.header?.toString()}
-                    </Label>
                   </div>
                 )
               })}
+            </div>
+          </ScrollArea>
+
+          <div className="mt-auto pt-4 border-t">
+            <Button variant="outline" onClick={resetVisibility} className="w-full">
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Restaurar Padrão
+            </Button>
           </div>
-        </ScrollArea>
-        <Separator className="my-4" />
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            onClick={() => {
-              // Primeiro esconde todas as colunas
-              table.getAllColumns().forEach((column) => {
-                column.toggleVisibility(false)
-              })
-              // Depois mostra apenas as colunas padrão
-              defaultVisibleColumns.forEach((columnId) => {
-                const column = table.getColumn(columnId)
-                if (column) {
-                  column.toggleVisibility(true)
-                }
-              })
-            }}
-          >
-            Restaurar Padrão
-          </Button>
         </div>
       </SheetContent>
     </Sheet>

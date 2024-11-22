@@ -25,15 +25,14 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Search, X } from "lucide-react"
+import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { DataTableViewOptions } from "./data-table-view-options"
-import { DataTablePagination } from "./data-table-pagination"
+import { DataTableViewOptions } from "../base/data-table-view-options"
+import { DataTablePagination } from "../base/data-table-pagination"
 
-interface DataTableProps<TData, TValue> {
+interface PessoasDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  searchPlaceholder?: string
   pageSize?: number
   pageSizeOptions?: number[]
   showAllOption?: boolean
@@ -44,10 +43,9 @@ interface DataTableProps<TData, TValue> {
   initialSorting?: SortingState
 }
 
-export function DataTable<TData, TValue>({
+export function PessoasDataTable<TData, TValue>({
   columns,
   data,
-  searchPlaceholder = "Filtrar registros...",
   pageSize = 10,
   pageSizeOptions = [10, 20, 50, 100, 200, 300, 500],
   showAllOption = true,
@@ -56,32 +54,36 @@ export function DataTable<TData, TValue>({
   enableColumnVisibility = true,
   gridHeight = "calc(100vh - 300px)",
   initialSorting = [],
-}: DataTableProps<TData, TValue>) {
+}: PessoasDataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [sorting, setSorting] = React.useState<SortingState>(initialSorting)
   const [globalFilter, setGlobalFilter] = React.useState("")
 
-  // Gera uma chave única baseada nas colunas da tabela
-  const tableKey = React.useMemo(() => {
-    return columns.map(col => col.id || col.accessorKey).join('_')
-  }, [columns])
+  // Função de filtro específica para a tabela de pessoas
+  const pessoasGlobalFilter = React.useCallback((row: any, columnId: string, filterValue: string) => {
+    const searchValue = String(filterValue).toLowerCase()
+    
+    // Lista de campos para buscar
+    const searchFields = [
+      'apelido',
+      'nome_razao',
+      'cpf_cnpj',
+      'rg_ie',
+      'telefones',
+      'emails',
+      'tipo',
+      'status_id'
+    ]
 
-  // Carrega a visibilidade das colunas do localStorage
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`table_${tableKey}_visibility`)
-      return saved ? JSON.parse(saved) : {}
-    }
-    return {}
-  })
-
-  // Salva a visibilidade das colunas no localStorage quando mudar
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`table_${tableKey}_visibility`, JSON.stringify(columnVisibility))
-    }
-  }, [columnVisibility, tableKey])
+    // Busca em todos os campos definidos
+    return searchFields.some(field => {
+      const value = row.getValue(field)
+      if (value === null || value === undefined) return false
+      return String(value).toLowerCase().includes(searchValue)
+    })
+  }, [])
 
   const table = useReactTable({
     data,
@@ -93,6 +95,10 @@ export function DataTable<TData, TValue>({
       columnFilters,
       globalFilter,
     },
+    filterFns: {
+      pessoasGlobal: pessoasGlobalFilter,
+    },
+    globalFilterFn: "pessoasGlobal",
     enableRowSelection,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
@@ -105,13 +111,6 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
-    globalFilterFn: (row, columnId, filterValue) => {
-      const value = row.getValue(columnId)
-      if (value === null || value === undefined) return false
-      return String(value)
-        .toLowerCase()
-        .includes(String(filterValue).toLowerCase())
-    },
   })
 
   React.useEffect(() => {
@@ -127,20 +126,11 @@ export function DataTable<TData, TValue>({
               <div className="relative w-[250px]">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={searchPlaceholder}
+                  placeholder="Procurar em todos os campos..."
                   value={globalFilter ?? ""}
                   onChange={(event) => setGlobalFilter(event.target.value)}
                   className="h-9 pl-8 pr-8 bg-white"
                 />
-                {globalFilter && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => setGlobalFilter("")}
-                    className="absolute right-1 top-1.5 h-6 w-6 p-0 hover:bg-transparent"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
               </div>
             </div>
           )}
@@ -154,7 +144,7 @@ export function DataTable<TData, TValue>({
         <div className="relative" style={{ height: gridHeight }}>
           <div className="absolute inset-0 overflow-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-gray-100/75 backdrop-blur supports-[backpack-filter]:bg-gray-100/60">
+              <TableHeader className="sticky top-0 bg-gray-100/75 backdrop-blur supports-[backdrop-filter]:bg-gray-100/60">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => {

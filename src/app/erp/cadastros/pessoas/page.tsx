@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { DataTable } from "@/components/data-tables/base/data-table"
 import { columns, type Pessoa } from "@/components/data-tables/pessoas/columns"
+import { PessoasDataTable } from "@/components/data-tables/pessoas/data-table"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 
@@ -16,20 +16,17 @@ export default function PessoasPage() {
     async function loadPessoas() {
       try {
         const { data, error } = await supabase
-          .from("v_pessoas")
-          .select("*")
-          .order("nome_razao", { ascending: true })
-        
+          .from('pessoas')
+          .select('*')
+          .order('apelido', { ascending: true })
+
         if (error) {
-          console.error("Erro detalhado:", error)
           throw error
         }
-        
-        console.log("Dados retornados:", data)
-        
+
         setPessoas(data || [])
       } catch (error) {
-        console.error("Erro ao carregar pessoas:", error)
+        console.error('Erro ao carregar pessoas:', error)
       } finally {
         setLoading(false)
       }
@@ -39,12 +36,12 @@ export default function PessoasPage() {
   }, [supabase])
 
   return (
-    <div className="h-full flex flex-col space-y-4 px-6 py-4">
-      <div className="flex justify-between items-center">
+    <div className="h-full flex-1 flex-col p-8 md:flex">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Cadastro de Pessoas</h1>
+          <h2 className="text-2xl font-bold tracking-tight">Cadastro de Pessoas</h2>
           <p className="text-muted-foreground">
-            Gerencie o cadastro de clientes, fornecedores e colaboradores.
+            Gerencie seus clientes, fornecedores e colaboradores
           </p>
         </div>
         <Button>
@@ -58,18 +55,15 @@ export default function PessoasPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
         </div>
       ) : (
-        <div className="flex-1">
-          <DataTable
-            columns={columns}
-            data={pessoas}
-            searchPlaceholder="Buscar por nome, CPF/CNPJ..."
-            pageSize={50}
-            pageSizeOptions={[10, 20, 50, 100, 200, 300, 500]}
-            showAllOption={true}
-            gridHeight="calc(100vh - 255px)"
-            initialSorting={[{ id: "apelido", desc: false }]}
-          />
-        </div>
+        <PessoasDataTable
+          data={pessoas}
+          columns={columns}
+          pageSize={50}
+          pageSizeOptions={[10, 20, 50, 100, 200, 300, 500]}
+          showAllOption={true}
+          gridHeight="calc(100vh - 290px)"
+          initialSorting={[{ id: "apelido", desc: false }]}
+        />
       )}
     </div>
   )

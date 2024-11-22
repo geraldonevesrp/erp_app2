@@ -19,6 +19,8 @@ Sistema ERP moderno e personalizável com módulos para gestão empresarial e á
 - `/src/app/revendedores` - Módulo de Revendedores com gestão de licenças e financeiro
 - `/src/components` - Componentes reutilizáveis
 - `/src/components/layout` - Componentes de layout (AppLayout)
+- `/src/components/data-tables` - Componentes de tabela
+- [Diretrizes para Componentes de Tabela](src/components/data-tables/README.md)
 - `banco_supabase.txt` - Estrutura completa do banco de dados
 
 ## Banco de Dados
