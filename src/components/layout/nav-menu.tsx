@@ -20,7 +20,12 @@ interface NavMenuProps {
 
 export function NavMenu({ items }: NavMenuProps) {
   const pathname = usePathname()
-  const [openSections, setOpenSections] = useState<string[]>([])
+  const [openSections, setOpenSections] = useState<string[]>(() => {
+    // Inicializa com as seções que contêm a página atual
+    return items
+      .filter(section => section.items.some(item => pathname.startsWith(item.href)))
+      .map(section => section.title)
+  })
 
   const toggleSection = (title: string) => {
     setOpenSections((prev) =>
@@ -34,7 +39,7 @@ export function NavMenu({ items }: NavMenuProps) {
     <nav className="space-y-1">
       {items.map((section) => {
         const isOpen = openSections.includes(section.title)
-        const hasActiveItem = section.items.some(item => pathname === item.href)
+        const hasActiveItem = section.items.some(item => pathname.startsWith(item.href))
         
         return (
           <div key={section.title}>
@@ -64,7 +69,7 @@ export function NavMenu({ items }: NavMenuProps) {
               >
                 <div className="flex flex-col space-y-1 pt-1 px-2">
                   {section.items.map((item, index) => {
-                    const isActive = pathname === item.href
+                    const isActive = pathname.startsWith(item.href)
                     return item.disabled ? (
                       <span
                         key={index}

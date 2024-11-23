@@ -2,10 +2,11 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Perfil, PerfilPublico } from '@/types/perfil'
+import { Perfil, PerfilPublico, PerfilContextType, PERFIL_TIPOS } from '@/types/perfil'
 
 interface PerfilContextType {
   perfil: Perfil | null
+  perfil_user: Perfil | null
   perfilPublico: PerfilPublico | null
   isLoading: boolean
   error: Error | null
@@ -14,6 +15,7 @@ interface PerfilContextType {
 
 const PerfilContext = createContext<PerfilContextType>({
   perfil: null,
+  perfil_user: null,
   perfilPublico: null,
   isLoading: true,
   error: null,
@@ -26,6 +28,7 @@ export function PerfilProvider({
   children: React.ReactNode
 }) {
   const [perfil, setPerfil] = useState<Perfil | null>(null)
+  const [perfil_user, setPerfil_user] = useState<Perfil | null>(null)
   const [perfilPublico, setPerfilPublico] = useState<PerfilPublico | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -109,6 +112,57 @@ export function PerfilProvider({
     }
   }
 
+  const loadOrCreateUserPerfil = async (userId: string) => {
+    try {
+      // Busca perfil pessoal existente
+      const { data: perfilUser, error } = await supabase
+        .from('perfis')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('tipo', PERFIL_TIPOS.PESSOA)
+        .single()
+
+      if (perfilUser) {
+        setPerfil_user(perfilUser)
+        return perfilUser
+      }
+
+      // Se não existe, cria novo perfil
+      const { data: newPerfilUser, error: createError } = await supabase
+        .from('perfis')
+        .insert({
+          tipo: PERFIL_TIPOS.PESSOA,
+          user_id: userId,
+          // Campos opcionais iniciam como null
+          foto_url: null,
+          apelido: null,
+          nome_completo: null,
+          fone: null,
+          celular: null,
+          wathsapp: null,
+          email: null,
+          nascimento: null,
+          // Campos que não se aplicam ao perfil pessoal ficam null
+          dominio: null,
+          revenda_id: null,
+          cpf_cnpj: null,
+          revenda_status: null,
+          faturamento: null
+        })
+        .select()
+        .single()
+
+      if (createError) throw createError
+      
+      setPerfil_user(newPerfilUser)
+      return newPerfilUser
+
+    } catch (error) {
+      console.error('Erro ao carregar/criar perfil do usuário:', error)
+      return null
+    }
+  }
+
   // Carrega o perfil completo (requer autenticação)
   const loadPerfil = async () => {
     try {
@@ -119,6 +173,7 @@ export function PerfilProvider({
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         setPerfil(null)
+        setPerfil_user(null)
         return
       }
 
@@ -135,27 +190,16 @@ export function PerfilProvider({
         .single()
 
       if (perfilError) throw perfilError
-
-      // Verifica se o usuário é dono ou tem acesso ao perfil
-      const isOwner = perfilData.user_id === session.user.id
-
-      if (!isOwner) {
-        // Verifica se tem acesso via perfis_users
-        const { data: userPerfil, error: userPerfilError } = await supabase
-          .from('perfis_users')
-          .select('*')
-          .eq('perfil_id', perfilData.id)
-          .eq('user_id', session.user.id)
-          .single()
-
-        if (userPerfilError) throw userPerfilError
-      }
-
       setPerfil(perfilData)
+
+      // Carrega/cria perfil do usuário separadamente
+      await loadOrCreateUserPerfil(session.user.id)
+
     } catch (error) {
-      console.error('Erro ao carregar perfil:', error)
+      console.error('Erro ao carregar perfis:', error)
       setError(error as Error)
       setPerfil(null)
+      setPerfil_user(null)
     } finally {
       setIsLoading(false)
     }
@@ -176,6 +220,7 @@ export function PerfilProvider({
   return (
     <PerfilContext.Provider value={{ 
       perfil, 
+      perfil_user,
       perfilPublico, 
       isLoading, 
       error, 
@@ -186,7 +231,7 @@ export function PerfilProvider({
   )
 }
 
-export function usePerfil() {
+export const usePerfil = () => {
   const context = useContext(PerfilContext)
   if (!context) {
     throw new Error('usePerfil deve ser usado dentro de um PerfilProvider')

@@ -36,8 +36,8 @@ export default function PessoasPage() {
   }, [supabase])
 
   return (
-    <div className="h-full flex-1 flex-col p-8 md:flex">
-      <div className="flex items-center justify-between mb-6">
+    <div className="h-full flex-1 flex-col space-y-6 overflow-hidden">
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Cadastro de Pessoas</h2>
           <p className="text-muted-foreground">
@@ -50,21 +50,23 @@ export default function PessoasPage() {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="flex-1 flex justify-center items-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      ) : (
-        <PessoasDataTable
-          data={pessoas}
-          columns={columns}
-          pageSize={50}
-          pageSizeOptions={[10, 20, 50, 100, 200, 300, 500]}
-          showAllOption={true}
-          gridHeight="calc(100vh - 290px)"
-          initialSorting={[{ id: "apelido", desc: false }]}
-        />
-      )}
+      <div className="h-[calc(100%-5rem)] overflow-hidden">
+        {loading ? (
+          <div className="flex-1 flex justify-center items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        ) : (
+          <PessoasDataTable
+            data={pessoas}
+            columns={columns}
+            pageSize={50}
+            pageSizeOptions={[10, 20, 50, 100, 200, 300, 500]}
+            showAllOption={true}
+            gridHeight="calc(100vh - 290px)"
+            initialSorting={[{ id: "apelido", desc: false }]}
+          />
+        )}
+      </div>
     </div>
   )
 }

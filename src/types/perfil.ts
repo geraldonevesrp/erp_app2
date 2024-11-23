@@ -31,6 +31,15 @@ export interface PerfilUser {
   updated_at: string
 }
 
+export interface PerfilContextType {
+  perfil: Perfil | null
+  perfil_user: PerfilUser | null
+  perfilPublico: PerfilPublico | null
+  isLoading: boolean
+  error: Error | null
+  refreshPerfil: () => Promise<void>
+}
+
 export const PERFIL_TIPOS = {
   PESSOA: 1,
   REVENDA: 2,

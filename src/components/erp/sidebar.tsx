@@ -2,8 +2,10 @@
 
 import * as React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { usePerfil } from '@/contexts/perfil'
 import {
   LayoutDashboard,
   Users,
@@ -17,7 +19,8 @@ import {
   Wallet,
   Receipt,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  UserCircle
 } from 'lucide-react'
 
 interface MenuItem {
@@ -182,18 +185,28 @@ const menuItems: MenuItem[] = [
 export function Sidebar() {
   const [expandedMenus, setExpandedMenus] = React.useState<string[]>([])
   const pathname = usePathname()
+  const { perfilPublico } = usePerfil()
 
   // Expandir automaticamente o menu pai da página atual
   React.useEffect(() => {
-    const currentMenuItem = menuItems.find(item => 
-      item.children?.some(child => child.href === pathname)
-    )
-    if (currentMenuItem?.label) {
-      setExpandedMenus(prev => 
-        prev.includes(currentMenuItem.label) 
-          ? prev 
-          : [...prev, currentMenuItem.label]
-      )
+    const pathParts = pathname.split('/').filter(Boolean)
+    const menuParents: string[] = []
+
+    const findActiveParents = (items: MenuItem[], parents: string[] = []) => {
+      items.forEach(item => {
+        if (item.href && pathname.startsWith(item.href)) {
+          menuParents.push(...parents)
+        }
+        if (item.children?.length) {
+          findActiveParents(item.children, [...parents, item.label])
+        }
+      })
+    }
+
+    findActiveParents(menuItems)
+
+    if (menuParents.length > 0) {
+      setExpandedMenus(menuParents)
     }
   }, [pathname])
 
@@ -210,7 +223,11 @@ export function Sidebar() {
     const isExpanded = expandedMenus.includes(item.label)
     const isActive = pathname === item.href
     const hasChildren = item.children && item.children.length > 0
-    const isActiveParent = hasChildren && item.children?.some(child => child.href === pathname)
+    const isActiveParent = hasChildren && item.children?.some(child => {
+      const childPath = child.href?.split('/').filter(Boolean) || []
+      const currentPath = pathname.split('/').filter(Boolean)
+      return childPath.every((part, index) => part === currentPath[index])
+    })
 
     return (
       <div key={index} className="w-full">
@@ -254,8 +271,29 @@ export function Sidebar() {
   }
 
   return (
-    <div className="h-screen w-64 border-r bg-background p-4 space-y-2">
-      <div className="font-semibold text-lg mb-4">ERP System</div>
+    <div className="h-screen w-64 border-r bg-background p-4 space-y-4">
+      <div className="flex flex-col items-center justify-center py-4">
+        {perfilPublico?.foto_url ? (
+          <div className="relative w-[150px] h-[40px]">
+            <Image
+              src={perfilPublico.foto_url}
+              alt="Logo"
+              fill
+              className="object-contain dark:invert"
+              priority
+            />
+          </div>
+        ) : (
+          <div className="w-[150px] h-[40px] bg-muted flex items-center justify-center rounded">
+            <UserCircle className="h-6 w-6 text-muted-foreground" />
+          </div>
+        )}
+        {perfilPublico?.apelido && (
+          <span className="mt-2 text-sm font-medium text-muted-foreground">
+            {perfilPublico.apelido}
+          </span>
+        )}
+      </div>
       <nav className="space-y-2">
         {menuItems.map((item, index) => renderMenuItem(item, index))}
       </nav>

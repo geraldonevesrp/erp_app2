@@ -149,7 +149,7 @@ export default function LoginPage() {
             </Button>
           </form>
           <div className="absolute bottom-2 right-2">
-            <span className="text-xs text-muted-foreground/40">
+            <span className="text-xs text-muted-foreground">
               {getVersionString()}
             </span>
           </div>
