@@ -118,96 +118,109 @@ export function PessoasDataTable<TData, TValue>({
   }, [pageSize, table])
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          {enableSearch && (
-            <div className="flex flex-1 items-center space-x-2">
-              <div className="relative w-[250px]">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Procurar em todos os campos..."
-                  value={globalFilter ?? ""}
-                  onChange={(event) => setGlobalFilter(event.target.value)}
-                  className="h-9 pl-8 pr-8 bg-white"
-                />
-              </div>
-            </div>
-          )}
-          {enableColumnVisibility && (
-            <DataTableViewOptions table={table} />
-          )}
-        </div>
-      </div>
-
-      <div className="rounded-md border mt-4 flex-1">
-        <div className="relative" style={{ height: gridHeight }}>
-          <div className="absolute inset-0 overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 bg-gray-100/75 backdrop-blur supports-[backdrop-filter]:bg-gray-100/60">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead 
-                          key={header.id}
-                          style={{ width: header.getSize() }}
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      )
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell 
-                          key={cell.id}
-                          style={{ width: cell.column.getSize() }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      Nenhum resultado encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+    <div className="space-y-4">
+      <style jsx global>{`
+        .sticky-column {
+          position: sticky !important;
+          left: 0;
+          z-index: 20;
+          background-color: hsl(var(--background)) !important;
+          box-shadow: 4px 0 8px rgba(0,0,0,0.1);
+        }
+        
+        .sticky-column::after {
+          content: '';
+          position: absolute;
+          right: -4px;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          background: linear-gradient(to right, rgba(0,0,0,0.1), transparent);
+        }
+      `}</style>
+      <div className="flex items-center justify-between">
+        {enableSearch && (
+          <div className="relative w-72">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar em todos os campos..."
+              value={globalFilter ?? ""}
+              onChange={(event) => setGlobalFilter(event.target.value)}
+              className="pl-8"
+            />
           </div>
-        </div>
+        )}
+        {enableColumnVisibility && (
+          <DataTableViewOptions table={table} />
+        )}
       </div>
-
-      <div className="py-4">
-        <DataTablePagination 
-          table={table} 
-          pageSizeOptions={pageSizeOptions}
-          showAllOption={showAllOption}
-        />
+      <div className="rounded-md border" style={{ height: gridHeight, overflow: 'auto' }}>
+        <Table>
+          <TableHeader className="sticky top-0 z-10 bg-background">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead 
+                      key={header.id}
+                      className={header.column.columnDef.enablePinning ? 'sticky-column' : ''}
+                      style={{
+                        width: header.getSize()
+                      }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  )
+                })}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell 
+                      key={cell.id}
+                      className={cell.column.columnDef.enablePinning ? 'sticky-column' : ''}
+                      style={{
+                        width: cell.column.getSize()
+                      }}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  Nenhum resultado encontrado.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
+      <DataTablePagination 
+        table={table} 
+        pageSizeOptions={pageSizeOptions}
+        showAllOption={showAllOption}
+      />
     </div>
   )
 }

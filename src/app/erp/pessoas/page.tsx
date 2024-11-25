@@ -1,5 +1,6 @@
 "use client"
 
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { columns, type Pessoa } from "@/components/data-tables/pessoas/columns"
@@ -7,7 +8,11 @@ import { PessoasDataTable } from "@/components/data-tables/pessoas/data-table"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { AddPessoaDialog } from "@/components/erp/pessoas/add-pessoa-dialog"
-import { PessoaEdit } from "@/components/erp/pessoas/pessoa-edit"
+
+// Importação dinâmica do componente PessoaEdit
+const PessoaEdit = dynamic(() => import('@/components/erp/pessoas/pessoa-edit').then(mod => mod.PessoaEdit), {
+  ssr: false
+})
 
 export default function PessoasPage() {
   const [pessoas, setPessoas] = useState<Pessoa[]>([])
@@ -58,42 +63,21 @@ export default function PessoasPage() {
   }
 
   return (
-    <div className="h-full flex-1 flex-col space-y-6 overflow-hidden">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Cadastro de Pessoas</h2>
-          <p className="text-muted-foreground">
-            Gerencie seus clientes, fornecedores e colaboradores
-          </p>
-        </div>
+    <div suppressHydrationWarning>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Pessoas</h1>
         <Button onClick={() => setIsAddDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Adicionar
+          Adicionar Pessoa
         </Button>
       </div>
 
-      <div className="h-[calc(100%-5rem)] overflow-hidden">
-        {loading ? (
-          <div className="flex-1 flex justify-center items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          </div>
-        ) : (
-          <PessoasDataTable
-            data={pessoas}
-            columns={columns}
-            pageSize={50}
-            pageSizeOptions={[10, 20, 50, 100, 200, 300, 500]}
-            showAllOption={true}
-            gridHeight="calc(100vh - 290px)"
-            initialSorting={[{ id: "apelido", desc: false }]}
-          />
-        )}
-      </div>
+      <PessoasDataTable columns={columns} data={pessoas} loading={loading} />
 
       <AddPessoaDialog
-        isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
-        onSuccess={handlePessoaAdded}
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onPessoaAdded={handlePessoaAdded}
       />
 
       <PessoaEdit
