@@ -52,6 +52,13 @@ npm run dev
 
 ## Módulos
 
+### Documentação Técnica
+- [Diretrizes de Desenvolvimento](docs/DIRETRIZES.md)
+- [Implementação dos Sidebars](docs/sidebar_implementation.md)
+- [Estrutura de Rotas e Autenticação](docs/auth_routes_structure.md)
+- [Configuração de Domínio](docs/configuracao_dominio.md)
+- [Deploy na Vercel](docs/vercel_deploy.md)
+
 ### ERP
 - Dashboard com gráficos e métricas
 - Gestão de Pessoas
