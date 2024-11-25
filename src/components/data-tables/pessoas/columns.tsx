@@ -1,6 +1,8 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { StatusCell, DateCell } from "../base/columns"
 import { DataTableColumnHeader } from "../base/data-table-header"
+import { Button } from "@/components/ui/button"
+import { Pencil } from "lucide-react"
 
 export interface Pessoa {
   [key: string]: any
@@ -15,7 +17,8 @@ export const defaultVisibleColumns = [
   "emails",
   "tipo",
   "status_id",
-  "created_at"
+  "created_at",
+  "actions"
 ]
 
 export const columns: ColumnDef<Pessoa>[] = [
@@ -232,5 +235,36 @@ export const columns: ColumnDef<Pessoa>[] = [
     ),
     size: 200,
     enableSorting: true,
+  },
+  // Ações
+  {
+    id: "actions",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Ações" />
+    ),
+    cell: ({ row }) => {
+      const pessoa = row.original
+
+      return (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 p-0"
+            onClick={() => {
+              // O evento será capturado pelo componente pai
+              const event = new CustomEvent('editPessoa', {
+                detail: { pessoaId: pessoa.id }
+              })
+              window.dispatchEvent(event)
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        </div>
+      )
+    },
+    size: 80,
+    enableSorting: false,
   }
 ]

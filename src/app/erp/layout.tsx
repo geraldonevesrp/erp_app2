@@ -22,7 +22,7 @@ const menuItems = [
     items: [
       {
         name: 'Pessoas',
-        href: '/erp/cadastros/pessoas'
+        href: '/erp/pessoas'
       },
       {
         name: 'Grupo de Pessoas',
@@ -102,26 +102,6 @@ const menuItems = [
     ]
   },
   {
-    title: 'Fiscal',
-    items: [
-      {
-        name: 'NF-e',
-        href: '/erp/fiscal/nfe',
-        disabled: true
-      },
-      {
-        name: 'NFC-e',
-        href: '/erp/fiscal/nfce',
-        disabled: true
-      },
-      {
-        name: 'NFS-e',
-        href: '/erp/fiscal/nfse',
-        disabled: true
-      }
-    ]
-  },
-  {
     title: 'Financeiro',
     items: [
       {
@@ -140,8 +120,8 @@ const menuItems = [
         disabled: true
       },
       {
-        name: 'Relatórios',
-        href: '/erp/financeiro/relatorios',
+        name: 'Bancos',
+        href: '/erp/financeiro/bancos',
         disabled: true
       }
     ]
@@ -150,8 +130,18 @@ const menuItems = [
     title: 'Configurações',
     items: [
       {
-        name: 'Tema',
-        href: '/erp/configuracoes/tema',
+        name: 'Perfil',
+        href: '/erp/configuracoes/perfil',
+        disabled: true
+      },
+      {
+        name: 'Usuários',
+        href: '/erp/configuracoes/usuarios',
+        disabled: true
+      },
+      {
+        name: 'Permissões',
+        href: '/erp/configuracoes/permissoes',
         disabled: true
       }
     ]

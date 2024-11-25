@@ -6,34 +6,56 @@ import { columns, type Pessoa } from "@/components/data-tables/pessoas/columns"
 import { PessoasDataTable } from "@/components/data-tables/pessoas/data-table"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
+import { AddPessoaDialog } from "@/components/erp/pessoas/add-pessoa-dialog"
+import { PessoaEdit } from "@/components/erp/pessoas/pessoa-edit"
 
 export default function PessoasPage() {
   const [pessoas, setPessoas] = useState<Pessoa[]>([])
   const [loading, setLoading] = useState(true)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [editingPessoaId, setEditingPessoaId] = useState<number | null>(null)
   const supabase = createClientComponentClient()
 
-  useEffect(() => {
-    async function loadPessoas() {
-      try {
-        const { data, error } = await supabase
-          .from('pessoas')
-          .select('*')
-          .order('apelido', { ascending: true })
+  const loadPessoas = async () => {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('pessoas')
+        .select('*')
+        .order('apelido', { ascending: true })
 
-        if (error) {
-          throw error
-        }
-
-        setPessoas(data || [])
-      } catch (error) {
-        console.error('Erro ao carregar pessoas:', error)
-      } finally {
-        setLoading(false)
+      if (error) {
+        throw error
       }
+
+      setPessoas(data || [])
+    } catch (error) {
+      console.error('Erro ao carregar pessoas:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadPessoas()
+  }, [])
+
+  useEffect(() => {
+    // Listener para o evento de edição
+    const handleEditPessoa = (event: CustomEvent<{ pessoaId: number }>) => {
+      setEditingPessoaId(event.detail.pessoaId)
     }
 
-    loadPessoas()
-  }, [supabase])
+    window.addEventListener('editPessoa', handleEditPessoa as EventListener)
+
+    return () => {
+      window.removeEventListener('editPessoa', handleEditPessoa as EventListener)
+    }
+  }, [])
+
+  const handlePessoaAdded = (id: number) => {
+    loadPessoas() // Recarrega a lista após adicionar uma nova pessoa
+  }
 
   return (
     <div className="h-full flex-1 flex-col space-y-6 overflow-hidden">
@@ -44,7 +66,7 @@ export default function PessoasPage() {
             Gerencie seus clientes, fornecedores e colaboradores
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Adicionar
         </Button>
@@ -67,6 +89,18 @@ export default function PessoasPage() {
           />
         )}
       </div>
+
+      <AddPessoaDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSuccess={handlePessoaAdded}
+      />
+
+      <PessoaEdit
+        pessoaId={editingPessoaId}
+        isOpen={editingPessoaId !== null}
+        onClose={() => setEditingPessoaId(null)}
+      />
     </div>
   )
 }
