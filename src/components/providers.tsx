@@ -1,7 +1,8 @@
 'use client'
 
 import { ThemeProvider } from '@/components/theme-provider'
-import SupabaseProvider from '@/components/providers/supabase-provider'
+import { SupabaseProvider } from '@/contexts/supabase'
+import { PerfilProvider } from '@/contexts/perfil'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +13,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange
     >
       <SupabaseProvider>
-        {children}
+        <PerfilProvider>
+          {children}
+        </PerfilProvider>
       </SupabaseProvider>
     </ThemeProvider>
   )

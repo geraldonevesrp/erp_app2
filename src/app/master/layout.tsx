@@ -1,6 +1,6 @@
 "use client"
 
-import { AppLayout } from '@/components/layout/app-layout'
+import { MasterLayout } from '@/components/master/layout/master-layout'
 
 const menuItems = [
   {
@@ -28,8 +28,8 @@ const menuItems = [
         href: '/master/gestao/usuarios'
       },
       {
-        name: 'Revendedores',
-        href: '/master/gestao/revendedores'
+        name: 'Revendas',
+        href: '/master/gestao/revendas'
       }
     ]
   },
@@ -74,5 +74,5 @@ export default function MasterLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <AppLayout menuItems={menuItems}>{children}</AppLayout>
+  return <MasterLayout menuItems={menuItems}>{children}</MasterLayout>
 }

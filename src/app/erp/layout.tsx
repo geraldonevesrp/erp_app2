@@ -1,6 +1,6 @@
 "use client"
 
-import { AppLayout } from '@/components/layout/app-layout'
+import { ErpLayout } from '@/components/erp/layout/erp-layout'
 
 const menuItems = [
   {
@@ -163,5 +163,5 @@ export default function ERPLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <AppLayout menuItems={menuItems}>{children}</AppLayout>
+  return <ErpLayout menuItems={menuItems}>{children}</ErpLayout>
 }

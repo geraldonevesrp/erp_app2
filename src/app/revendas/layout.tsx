@@ -1,6 +1,6 @@
 "use client"
 
-import { AppLayout } from '@/components/layout/app-layout'
+import { RevendasLayout } from '@/components/revendas/layout/revendas-layout'
 
 const menuItems = [
   {
@@ -44,10 +44,10 @@ const menuItems = [
   }
 ]
 
-export default function RevendasLayout({
+export default function Layout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return <AppLayout menuItems={menuItems}>{children}</AppLayout>
+  return <RevendasLayout menuItems={menuItems}>{children}</RevendasLayout>
 }
