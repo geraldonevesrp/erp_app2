@@ -66,13 +66,13 @@ export function RevendasSidebar({ isOpen, onClose, menuItems }: RevendasSidebarP
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed md:fixed top-0 left-0 h-screen w-64 bg-background border-r z-40",
+          "fixed md:fixed top-0 left-0 h-screen w-64 bg-background border-r z-40 flex flex-col",
           "transition-transform duration-300 ease-in-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Logo e Info do Perfil */}
-        <div className="flex flex-col items-center justify-center py-6 border-b w-full px-2">
+        <div className="flex-none flex flex-col items-center justify-center py-6 border-b w-full px-2">
           {perfilPublico?.foto_url ? (
             <div className="relative w-full h-[120px]">
               <Image
@@ -96,8 +96,8 @@ export function RevendasSidebar({ isOpen, onClose, menuItems }: RevendasSidebarP
         </div>
 
         {/* Menu de Navegação */}
-        <nav className="flex-1 overflow-hidden p-4">
-          <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-accent scrollbar-track-transparent pr-2">
+        <nav className="flex-1 min-h-0">
+          <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-accent scrollbar-track-transparent p-4">
             {menuItems.map((group, groupIndex) => {
               const active = isGroupActive(group)
               return (
@@ -121,7 +121,7 @@ export function RevendasSidebar({ isOpen, onClose, menuItems }: RevendasSidebarP
                   <div
                     className={cn(
                       "space-y-1 overflow-hidden transition-all duration-200",
-                      expandedGroups[group.title] ? "max-h-96" : "max-h-0"
+                      expandedGroups[group.title] ? "h-auto" : "h-0"
                     )}
                   >
                     {group.items.map((item, itemIndex) => (
