@@ -11,6 +11,10 @@ interface PessoaEditSheetProps extends React.HTMLAttributes<HTMLDivElement> {
   onClose?: () => void
   onSave?: () => void
   loading?: boolean
+  pessoa?: {
+    apelido?: string
+    nome_razao?: string
+  }
 }
 
 export function PessoaEditSheet({ 
@@ -20,13 +24,14 @@ export function PessoaEditSheet({
   onClose,
   onSave,
   loading,
+  pessoa,
   ...props 
 }: PessoaEditSheetProps) {
   return (
     <div
       data-state={open ? "open" : "closed"}
       className={cn(
-        "fixed top-[49px] bottom-[6px] right-0 w-[calc(100%-16rem)] bg-background transition-transform duration-300 z-50 flex flex-col border-l",
+        "fixed top-[49px] bottom-[6px] right-0 w-[calc(100%-16rem)] bg-slate-50/95 transition-transform duration-300 z-50 flex flex-col border-l",
         open ? "translate-x-0" : "translate-x-full",
         className
       )}
@@ -34,7 +39,15 @@ export function PessoaEditSheet({
     >
       <div className="h-14 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-6 flex-none">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-semibold">Editar Pessoa</h2>
+          <h2 className="text-lg font-semibold">
+            {pessoa ? (
+              <>
+                Editando Pessoa: {pessoa.apelido} - {pessoa.nome_razao}
+              </>
+            ) : (
+              "Editando Pessoa"
+            )}
+          </h2>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>
@@ -70,7 +83,7 @@ export function PessoaEditSheetContent({
   return (
     <div
       className={cn(
-        "flex-1 flex flex-col overflow-hidden bg-background",
+        "flex-1 flex flex-col overflow-hidden bg-slate-50/95",
         className
       )}
       {...props}
