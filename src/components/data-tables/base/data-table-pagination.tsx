@@ -19,17 +19,11 @@ import {
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>
-  pageSizeOptions?: number[]
-  showAllOption?: boolean
 }
 
 export function DataTablePagination<TData>({
   table,
-  pageSizeOptions = [10, 20, 50, 100, 200, 300, 500],
-  showAllOption = true,
 }: DataTablePaginationProps<TData>) {
-  const totalRows = table.getFilteredRowModel().rows.length
-
   return (
     <div className="flex items-center justify-between px-2">
       <div className="flex-1 text-sm text-muted-foreground">
@@ -42,22 +36,18 @@ export function DataTablePagination<TData>({
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
-              const size = value === 'all' ? totalRows : Number(value)
-              table.setPageSize(size)
+              table.setPageSize(Number(value))
             }}
           >
-            <SelectTrigger className="h-8 w-[100px]">
+            <SelectTrigger className="h-8 w-[70px]">
               <SelectValue placeholder={table.getState().pagination.pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {pageSizeOptions.map((pageSize) => (
+              {[10, 20, 30, 40, 50].map((pageSize) => (
                 <SelectItem key={pageSize} value={`${pageSize}`}>
                   {pageSize}
                 </SelectItem>
               ))}
-              {showAllOption && (
-                <SelectItem value="all">Todos</SelectItem>
-              )}
             </SelectContent>
           </Select>
         </div>

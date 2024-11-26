@@ -74,12 +74,11 @@ export function MultiSelect({
       <div
         onClick={handleContainerClick}
         className={cn(
-          "relative flex min-h-[38px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background cursor-pointer",
-          "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+          "relative flex min-h-[42px] w-full items-center gap-1.5 rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
           className
         )}
       >
-        <div className="flex flex-wrap gap-1 w-full">
+        <div className="flex flex-wrap gap-1.5">
           {selected.map((value) => {
             const option = options.find((opt) => opt.value === value)
             if (!option) return null
@@ -87,7 +86,7 @@ export function MultiSelect({
               <Badge
                 key={option.value}
                 variant="secondary"
-                className="hover:bg-secondary/80"
+                className="rounded-sm px-1 pl-2 font-normal hover:bg-secondary/80"
               >
                 {option.label}
                 <button

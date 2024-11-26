@@ -16,9 +16,15 @@ export const getDefaultColumns = <T extends object>(columns: BaseColumn[]): Colu
 }
 
 // Funções utilitárias para formatação de células
-export const formatDate = (value: string) => {
-  const date = new Date(value)
-  return date.toLocaleDateString("pt-BR")
+export const formatDate = (value: string | null) => {
+  if (!value) return ""
+  try {
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return ""
+    return date.toLocaleDateString("pt-BR")
+  } catch {
+    return ""
+  }
 }
 
 export const formatCurrency = (value: number) => {
@@ -55,6 +61,8 @@ export const StatusCell = ({ value }: { value: number }) => (
   </div>
 )
 
-export const DateCell = ({ value }: { value: string }) => (
-  <span>{formatDate(value)}</span>
-)
+export const DateCell = ({ date }: { date: string | null }) => {
+  if (!date) return <span>-</span>
+  const formattedDate = formatDate(date)
+  return <span>{formattedDate || "-"}</span>
+}

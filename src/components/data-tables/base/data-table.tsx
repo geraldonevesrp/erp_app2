@@ -29,6 +29,7 @@ import { Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DataTableViewOptions } from "./data-table-view-options"
 import { DataTablePagination } from "./data-table-pagination"
+import { defaultVisibleColumns } from "@/components/data-tables/pessoas/columns"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -64,22 +65,34 @@ export function DataTable<TData, TValue>({
 
   // Gera uma chave única baseada nas colunas da tabela
   const tableKey = React.useMemo(() => {
-    return columns.map(col => col.id || col.accessorKey).join('_')
-  }, [columns])
+    return 'pessoas_table_visibility'
+  }, [])
 
   // Carrega a visibilidade das colunas do localStorage
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(`table_${tableKey}_visibility`)
-      return saved ? JSON.parse(saved) : {}
+      const saved = localStorage.getItem(tableKey)
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch (e) {
+          console.error('Erro ao carregar visibilidade das colunas:', e)
+        }
+      }
     }
-    return {}
+    // Se não houver configuração salva, usa as colunas padrão
+    const defaultVisibility: VisibilityState = {}
+    columns.forEach(col => {
+      const columnId = col.id || col.accessorKey as string
+      defaultVisibility[columnId] = defaultVisibleColumns.includes(columnId)
+    })
+    return defaultVisibility
   })
 
   // Salva a visibilidade das colunas no localStorage quando mudar
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`table_${tableKey}_visibility`, JSON.stringify(columnVisibility))
+    if (typeof window !== 'undefined' && Object.keys(columnVisibility).length > 0) {
+      localStorage.setItem(tableKey, JSON.stringify(columnVisibility))
     }
   }, [columnVisibility, tableKey])
 
@@ -153,60 +166,85 @@ export function DataTable<TData, TValue>({
       <div className="rounded-md border mt-4 flex-1">
         <div className="relative" style={{ height: gridHeight }}>
           <div className="absolute inset-0 overflow-auto">
-            <Table>
-              <TableHeader className="sticky top-0 bg-gray-100/75 backdrop-blur supports-[backpack-filter]:bg-gray-100/60">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead 
-                          key={header.id}
-                          style={{ width: header.getSize() }}
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      )
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell 
-                          key={cell.id}
-                          style={{ width: cell.column.getSize() }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
+            <div className="relative">
+              <Table>
+                <TableHeader className="relative">
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        const isFixed = header.column.columnDef.meta?.fixed;
+                        return (
+                          <TableHead 
+                            key={header.id}
+                            className="bg-gray-100/75 backdrop-blur border-b-2 border-gray-200"
+                            style={{ 
+                              width: header.getSize(),
+                              ...(isFixed ? {
+                                position: 'sticky',
+                                left: 0,
+                                zIndex: 40,
+                                backgroundColor: 'white',
+                                boxShadow: '4px 0 4px -2px rgba(0,0,0,0.1)'
+                              } : {})
+                            }}
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </TableHead>
+                        )
+                      })}
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      Nenhum resultado encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                      >
+                        {row.getVisibleCells().map((cell) => {
+                          const isFixed = cell.column.columnDef.meta?.fixed;
+                          return (
+                            <TableCell 
+                              key={cell.id}
+                              style={{ 
+                                width: cell.column.getSize(),
+                                ...(isFixed ? {
+                                  position: 'sticky',
+                                  left: 0,
+                                  zIndex: 30,
+                                  backgroundColor: 'white',
+                                  boxShadow: '4px 0 4px -2px rgba(0,0,0,0.1)'
+                                } : {})
+                              }}
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          )
+                        })}
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        Nenhum resultado encontrado.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       </div>

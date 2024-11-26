@@ -42,6 +42,7 @@ interface PessoaEditProps {
   pessoaId: number | null
   isOpen: boolean
   onClose: () => void
+  onSave?: () => void
 }
 
 interface PessoaTipo {
@@ -49,8 +50,8 @@ interface PessoaTipo {
   tipo: string
 }
 
-export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
-  const [loading, setLoading] = useState(true)
+export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProps) {
+  const [loading, setLoading] = useState(true)  // Iniciando como true
   const [error, setError] = useState("")
   const supabase = createClientComponentClient()
   const { perfil } = usePerfil()
@@ -70,84 +71,25 @@ export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
     }
   }, [pessoaId, isOpen, mounted])
 
-  useEffect(() => {
-    async function fetchPessoa() {
-      try {
-        if (!pessoaId) {
-          setPessoa({
-            tipo: "F",
-            pessoas_enderecos: [],
-            pessoas_contatos: []
-          })
-          return
-        }
-
-        const { data: pessoaData, error: pessoaError } = await supabase
-          .from("pessoas")
-          .select(`
-            *,
-            pessoas_enderecos (
-              id,
-              cep,
-              logradouro,
-              numero,
-              complemento,
-              bairro,
-              cidade,
-              uf,
-              principal,
-              sem_numero
-            ),
-            pessoas_contatos (
-              id,
-              tipo,
-              valor,
-              observacao,
-              principal
-            ),
-            pessoas_tipos_vinculos (
-              id,
-              pessoa_tipo_id
-            )
-          `)
-          .eq("id", pessoaId)
-          .single()
-
-        if (pessoaError) {
-          toast({
-            title: "Erro ao carregar pessoa",
-            description: "Não foi possível carregar os dados da pessoa.",
-            variant: "destructive"
-          })
-          return
-        }
-
-        if (pessoaData) {
-          setPessoa(pessoaData)
-        }
-      } catch (error) {
-        toast({
-          title: "Erro inesperado",
-          description: "Ocorreu um erro ao carregar os dados da pessoa.",
-          variant: "destructive"
-        })
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchPessoa()
-  }, [pessoaId, supabase])
-
   const loadPessoa = async () => {
     try {
       setLoading(true)
       setError("")
 
-      const { data, error } = await supabase
+      // Primeiro carrega os dados da view para ter todos os campos calculados
+      const { data: viewData, error: viewError } = await supabase
+        .from("v_pessoas")
+        .select("*")
+        .eq("id", pessoaId)
+        .eq("perfis_id", perfil.id)
+        .single()
+
+      if (viewError) throw viewError
+
+      // Depois carrega os dados relacionados
+      const { data: relData, error: relError } = await supabase
         .from("pessoas")
         .select(`
-          *,
           pessoas_enderecos(*),
           pessoas_contatos(*)
         `)
@@ -155,9 +97,14 @@ export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
         .eq("perfis_id", perfil.id)
         .single()
 
-      if (error) throw error
+      if (relError) throw relError
 
-      setPessoa(data)
+      // Combina os dados da view com os relacionamentos
+      setPessoa({
+        ...viewData,
+        pessoas_enderecos: relData?.pessoas_enderecos || [],
+        pessoas_contatos: relData?.pessoas_contatos || []
+      })
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -166,52 +113,15 @@ export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
   }
 
   const validateFields = () => {
-    const errors = []
+    const errors: string[] = []
+    
+    if (!pessoa) {
+      errors.push("Dados da pessoa não encontrados")
+      return errors
+    }
 
-    // Validação dos campos da pessoa
-    if (!pessoa.nome_razao) {
+    if (!pessoa.nome_razao?.trim()) {
       errors.push("Nome/Razão Social é obrigatório")
-    }
-
-    if (!pessoa.tipo) {
-      errors.push("Tipo de pessoa é obrigatório")
-    }
-
-    // Validação dos endereços
-    if (pessoa.pessoas_enderecos.length > 0) {
-      for (const [index, endereco] of pessoa.pessoas_enderecos.entries()) {
-        if (!endereco.cep) {
-          errors.push(`CEP do endereço ${index + 1} é obrigatório`)
-        }
-        if (!endereco.logradouro) {
-          errors.push(`Logradouro do endereço ${index + 1} é obrigatório`)
-        }
-        // Valida número apenas se não for "sem número"
-        if (!endereco.sem_numero && (!endereco.numero || endereco.numero.trim() === "")) {
-          errors.push(`Número do endereço ${index + 1} é obrigatório`)
-        }
-        if (!endereco.bairro) {
-          errors.push(`Bairro do endereço ${index + 1} é obrigatório`)
-        }
-        if (!endereco.localidade) {
-          errors.push(`Cidade do endereço ${index + 1} é obrigatório`)
-        }
-        if (!endereco.uf) {
-          errors.push(`UF do endereço ${index + 1} é obrigatório`)
-        }
-      }
-    }
-
-    // Validação dos contatos
-    if (pessoa.pessoas_contatos.length > 0) {
-      for (const [index, contato] of pessoa.pessoas_contatos.entries()) {
-        if (!contato.tipo) {
-          errors.push(`Tipo do contato ${index + 1} é obrigatório`)
-        }
-        if (!contato.valor) {
-          errors.push(`Valor do contato ${index + 1} é obrigatório`)
-        }
-      }
     }
 
     return errors
@@ -223,79 +133,109 @@ export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
       setError("")
 
       // Validação dos campos
-      const errors = validateFields()
-      if (errors.length > 0) {
-        throw new Error(errors.join("\n"))
+      const validationErrors = validateFields()
+      if (validationErrors.length > 0) {
+        throw new Error(validationErrors.join("\n"))
+      }
+
+      if (!pessoa || !pessoaId || !perfil?.id) {
+        throw new Error("Dados necessários não encontrados")
       }
 
       // Atualiza a pessoa
-      const { error: pessoaError } = await supabase
+      const { data: pessoaData, error: pessoaError } = await supabase
         .from("pessoas")
         .update({
-          nome: pessoa.nome,
-          nome_fantasia: pessoa.nome_fantasia,
+          nome_razao: pessoa.nome_razao,
+          apelido: pessoa.apelido,
           tipo: pessoa.tipo,
-          inscricao_estadual: pessoa.inscricao_estadual,
-          inscricao_municipal: pessoa.inscricao_municipal,
-          inscricao_suframa: pessoa.inscricao_suframa,
-          regime_tributario: pessoa.regime_tributario,
-          cnae_principal: pessoa.cnae_principal,
-          cnae_secundario: pessoa.cnae_secundario,
-          situacao_fiscal: pessoa.situacao_fiscal,
-          contribuinte_icms: pessoa.contribuinte_icms,
-          retem_iss: pessoa.retem_iss,
-          retem_irrf: pessoa.retem_irrf,
-          retem_inss: pessoa.retem_inss,
-          retem_pis: pessoa.retem_pis,
-          retem_cofins: pessoa.retem_cofins,
-          retem_csll: pessoa.retem_csll,
-          updated_at: new Date().toISOString()
+          cpf_cnpj: pessoa.cpf_cnpj || null,
+          rg_ie: pessoa.rg_ie || null,
+          "IM": pessoa.IM || null,
+          nascimento: pessoa.nascimento || null,
+          renda: pessoa.renda || null,
+          obs: pessoa.obs || null,
+          "indIEDest": pessoa.indIEDest || null,
+          "ISUF": pessoa.ISUF || null,
+          pessoas_tipos: pessoa.pessoas_tipos || null,
+          status_id: pessoa.status_id || 1,
+          genero: pessoa.genero || null,
+          grupos_ids: pessoa.grupos_ids || null,
+          subgrupos_ids: pessoa.subgrupos_ids || null,
+          ramo_id: pessoa.ramo_id || null,
+          atividades_ids: pessoa.atividades_ids || null,
+          natureza_juridica: pessoa.natureza_juridica || null,
+          porte: pessoa.porte || null,
+          situacao_cadastral: pessoa.situacao_cadastral || null,
+          atividade_principal: pessoa.atividade_principal || null,
+          atividades_secundarias: pessoa.atividades_secundarias || null,
+          socios: pessoa.socios || null,
+          capital_social: pessoa.capital_social || null,
+          data_inicio_atividades: pessoa.data_inicio_atividades || null,
+          matriz: pessoa.matriz || null
         })
         .eq("id", pessoaId)
         .eq("perfis_id", perfil.id)
+        .select()
 
-      if (pessoaError) throw pessoaError
+      if (pessoaError) {
+        console.error("Erro ao atualizar pessoa:", pessoaError)
+        throw new Error(`Erro ao atualizar pessoa: ${pessoaError.message}`)
+      }
+
+      if (!pessoaData || pessoaData.length === 0) {
+        throw new Error("Não foi possível atualizar a pessoa")
+      }
 
       // Atualiza os endereços
-      for (const endereco of pessoa.pessoas_enderecos) {
-        if (endereco.id) {
-          const { error: enderecoError } = await supabase
-            .from("pessoas_enderecos")
-            .update({
-              cep: endereco.cep,
-              logradouro: endereco.logradouro,
-              numero: endereco.numero,
-              complemento: endereco.complemento,
-              bairro: endereco.bairro,
-              localidade: endereco.localidade,
-              uf: endereco.uf,
-              ibge: endereco.ibge,
-              principal: endereco.principal,
-              sem_numero: endereco.sem_numero,
-              updated_at: new Date().toISOString()
-            })
-            .eq("id", endereco.id)
+      if (pessoa.pessoas_enderecos?.length > 0) {
+        for (const endereco of pessoa.pessoas_enderecos) {
+          if (endereco.id) {
+            const { error: enderecoError } = await supabase
+              .from("pessoas_enderecos")
+              .update({
+                cep: endereco.cep,
+                logradouro: endereco.logradouro,
+                numero: endereco.numero,
+                complemento: endereco.complemento,
+                bairro: endereco.bairro,
+                cidade: endereco.cidade,
+                uf: endereco.uf,
+                ibge: endereco.ibge,
+                principal: endereco.principal,
+                sem_numero: endereco.sem_numero
+              })
+              .eq("id", endereco.id)
+              .eq("pessoa_id", pessoaId)
 
-          if (enderecoError) throw enderecoError
+            if (enderecoError) {
+              console.error("Erro ao atualizar endereço:", enderecoError)
+              throw new Error(`Erro ao atualizar endereço: ${enderecoError.message}`)
+            }
+          }
         }
       }
 
       // Atualiza os contatos
-      for (const contato of pessoa.pessoas_contatos) {
-        if (contato.id) {
-          const { error: contatoError } = await supabase
-            .from("pessoas_contatos")
-            .update({
-              tipo: contato.tipo,
-              valor: contato.valor,
-              descricao: contato.descricao,
-              observacao: contato.observacao,
-              principal: contato.principal,
-              updated_at: new Date().toISOString()
-            })
-            .eq("id", contato.id)
+      if (pessoa.pessoas_contatos?.length > 0) {
+        for (const contato of pessoa.pessoas_contatos) {
+          if (contato.id) {
+            const { error: contatoError } = await supabase
+              .from("pessoas_contatos")
+              .update({
+                tipo: contato.tipo,
+                valor: contato.valor,
+                observacao: contato.observacao,
+                principal: contato.principal
+              })
+              .eq("id", contato.id)
+              .eq("pessoa_id", pessoaId)
 
-          if (contatoError) throw contatoError
+            if (contatoError) {
+              console.error("Erro ao atualizar contato:", contatoError)
+              throw new Error(`Erro ao atualizar contato: ${contatoError.message}`)
+            }
+          }
         }
       }
 
@@ -305,12 +245,16 @@ export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
         variant: "success"
       })
 
+      // Notifica que salvou com sucesso
+      onSave?.()
       onClose()
     } catch (err: any) {
-      setError(err.message)
+      const errorMessage = err?.message || "Ocorreu um erro ao salvar os dados"
+      console.error("Erro ao salvar:", errorMessage)
+      setError(errorMessage)
       toast({
-        title: "Erro",
-        description: err.message,
+        title: "Erro ao salvar",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {
@@ -770,11 +714,11 @@ export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
     <PessoaEditSheet 
       open={isOpen} 
       onClose={onClose} 
-      onSave={handleSave} 
+      onSave={() => handleSave()}
       loading={loading}
       pessoa={{
-        apelido: pessoa.apelido,
-        nome_razao: pessoa.nome_razao
+        apelido: pessoa?.apelido,
+        nome_razao: pessoa?.nome_razao
       }}
     >
       <PessoaEditSheetContent>
@@ -846,17 +790,17 @@ export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
               </div>
 
               <div className="space-y-2">
-                <RequiredLabel value={pessoa.data_nasc_fund}>
-                  <Label>{getFieldLabel("data_nasc_fund")}</Label>
+                <RequiredLabel value={pessoa.nascimento}>
+                  <Label>{getFieldLabel("nascimento")}</Label>
                 </RequiredLabel>
                 <Input
-                  id="data_nasc_fund"
+                  id="nascimento"
                   type="date"
-                  value={pessoa?.data_nasc_fund || ""}
-                  onChange={(e) => handlePessoaChange("data_nasc_fund", e.target.value)}
-                  onBlur={() => markFieldAsTouched("data_nasc_fund")}
+                  value={pessoa?.nascimento || ""}
+                  onChange={(e) => handlePessoaChange("nascimento", e.target.value)}
+                  onBlur={() => markFieldAsTouched("nascimento")}
                   className={cn(
-                    isFieldInvalid("data_nasc_fund", pessoa.data_nasc_fund) && 
+                    isFieldInvalid("nascimento", pessoa.nascimento) && 
                     "border-destructive focus-visible:ring-destructive"
                   )}
                 />
@@ -873,15 +817,15 @@ export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
               </div>
 
               <div className="space-y-2">
-                <RequiredLabel value={pessoa.genero_porte}>
-                  <Label>{getFieldLabel("genero_porte")}</Label>
+                <RequiredLabel value={pessoa.genero}>
+                  <Label>{getFieldLabel("genero")}</Label>
                 </RequiredLabel>
                 <Select
-                  value={pessoa?.genero_porte || ""}
-                  onValueChange={(value) => handlePessoaChange("genero_porte", value)}
-                  onBlur={() => markFieldAsTouched("genero_porte")}
+                  value={pessoa?.genero || ""}
+                  onValueChange={(value) => handlePessoaChange("genero", value)}
+                  onBlur={() => markFieldAsTouched("genero")}
                   className={cn(
-                    isFieldInvalid("genero_porte", pessoa.genero_porte) && 
+                    isFieldInvalid("genero", pessoa.genero) && 
                     "border-destructive focus-visible:ring-destructive"
                   )}
                 >
@@ -1238,8 +1182,8 @@ export function PessoaEdit({ pessoaId, isOpen, onClose }: PessoaEditProps) {
               <div className="space-y-2">
                 <Label>Observações</Label>
                 <Input
-                  value={pessoa?.observacoes || ""}
-                  onChange={(e) => handlePessoaChange("observacoes", e.target.value)}
+                  value={pessoa?.obs || ""}
+                  onChange={(e) => handlePessoaChange("obs", e.target.value)}
                 />
               </div>
             </div>

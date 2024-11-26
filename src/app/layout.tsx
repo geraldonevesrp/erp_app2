@@ -3,7 +3,8 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { ClientLayout } from '@/components/client-layout'
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster as ShadcnToaster } from "@/components/ui/toaster"
+import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -23,7 +24,8 @@ export default function RootLayout({
         <Providers suppressHydrationWarning>
           <ClientLayout suppressHydrationWarning>
             {children}
-            <Toaster suppressHydrationWarning />
+            <ShadcnToaster suppressHydrationWarning />
+            <Toaster richColors closeButton position="top-right" />
           </ClientLayout>
         </Providers>
       </body>

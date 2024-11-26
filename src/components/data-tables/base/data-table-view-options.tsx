@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { RotateCcw, Settings2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { defaultVisibleColumns } from "@/components/data-tables/pessoas/columns"
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>
@@ -15,11 +16,22 @@ export function DataTableViewOptions<TData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
   const resetVisibility = () => {
-    if (typeof window !== 'undefined') {
-      const tableKey = table.getAllColumns().map(col => col.id).join('_')
-      localStorage.removeItem(`table_${tableKey}_visibility`)
-    }
-    table.toggleAllColumnsVisible(true)
+    // Cria um novo estado com todas as colunas ocultas primeiro
+    const newState: { [key: string]: boolean } = {}
+    table.getAllColumns().forEach(column => {
+      if (column.getCanHide()) {
+        newState[column.id] = false
+      }
+    })
+
+    // Mostra apenas as colunas padrão
+    defaultVisibleColumns.forEach(columnId => {
+      newState[columnId] = true
+    })
+
+    // Atualiza a visibilidade usando a função do table
+    // Isso vai acionar o onColumnVisibilityChange que salvará no localStorage
+    table.setColumnVisibility(newState)
   }
 
   // Função auxiliar para obter o título da coluna
