@@ -1,6 +1,7 @@
 "use client"
 
 import { ErpLayout } from '@/components/erp/layout/erp-layout'
+import { HeaderProvider } from '@/contexts/header-context'
 
 const menuItems = [
   {
@@ -153,5 +154,11 @@ export default function ERPLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <ErpLayout menuItems={menuItems}>{children}</ErpLayout>
+  return (
+    <HeaderProvider>
+      <ErpLayout menuItems={menuItems}>
+        {children}
+      </ErpLayout>
+    </HeaderProvider>
+  )
 }

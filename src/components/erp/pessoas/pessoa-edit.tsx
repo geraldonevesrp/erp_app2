@@ -37,6 +37,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { Switch } from "@/components/ui/switch"
+import { useHeader } from "@/contexts/header-context"
 
 interface PessoaEditProps {
   pessoaId: number | null
@@ -60,6 +61,7 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
   const [mounted, setMounted] = useState(false)
   const [tiposPessoa, setTiposPessoa] = useState<PessoaTipo[]>([])
   const [touchedFields, setTouchedFields] = useState<{ [key: string]: boolean }>({})
+  const { setSubtitle } = useHeader()
 
   useEffect(() => {
     setMounted(true)
@@ -70,6 +72,18 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
       loadPessoa()
     }
   }, [pessoaId, isOpen, mounted])
+
+  useEffect(() => {
+    if (pessoa) {
+      const subtitle = pessoa.tipo === 'F' 
+        ? `${pessoa.nome_razao} - ${formatCPF(pessoa.cpf_cnpj)}`
+        : `${pessoa.nome_razao} - ${formatCNPJ(pessoa.cpf_cnpj)}`
+      setSubtitle(subtitle)
+    }
+    return () => {
+      setSubtitle(null)
+    }
+  }, [pessoa, setSubtitle])
 
   const loadPessoa = async () => {
     try {

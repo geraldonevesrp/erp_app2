@@ -9,6 +9,7 @@ import dynamic from 'next/dynamic'
 import { useEffect, useState } from "react"
 import { AddPessoaDialog } from "@/components/erp/pessoas/add-pessoa-dialog"
 import { PessoasProvider } from "@/contexts/pessoas-context"
+import { useHeader } from "@/contexts/header-context"
 
 // Importação dinâmica do componente PessoaEdit
 const PessoaEdit = dynamic(() => import('@/components/erp/pessoas/pessoa-edit').then(mod => mod.PessoaEdit), {
@@ -27,6 +28,13 @@ function PessoasPageContent() {
   const { pessoas, loading, loadPessoas, updatePessoa } = usePessoas()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingPessoaId, setEditingPessoaId] = useState<number | null>(null)
+  const { setTitle, setSubtitle } = useHeader()
+
+  // Define o título ao montar o componente
+  useEffect(() => {
+    setTitle("Pessoas")
+    setSubtitle(null)
+  }, [setTitle, setSubtitle])
 
   // Limpa o localStorage na montagem do componente
   useEffect(() => {
@@ -82,37 +90,29 @@ function PessoasPageContent() {
   };
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between py-4 px-8 border-b">
-        <h2 className="text-2xl font-semibold tracking-tight">Pessoas</h2>
-      </div>
+    <div className="h-full">
+      <PessoasDataTable 
+        columns={columns} 
+        data={pessoas || []} 
+        loading={loading}
+        pageSize={10}
+        onAddClick={() => setIsAddDialogOpen(true)}
+      />
 
-      {/* Conteúdo com altura dinâmica */}
-      <div className="flex-1 p-8 min-h-0">
-        <PessoasDataTable 
-          columns={columns} 
-          data={pessoas || []} 
-          loading={loading}
-          pageSize={10}
-          onAddClick={() => setIsAddDialogOpen(true)}
+      <AddPessoaDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSuccess={handlePessoaAdded}
+      />
+
+      {editingPessoaId && (
+        <PessoaEdit
+          pessoaId={editingPessoaId}
+          isOpen={true}
+          onClose={() => setEditingPessoaId(null)}
+          onSave={() => handlePessoaSaved(editingPessoaId)}
         />
-
-        <AddPessoaDialog
-          isOpen={isAddDialogOpen}
-          onClose={() => setIsAddDialogOpen(false)}
-          onSuccess={handlePessoaAdded}
-        />
-
-        {editingPessoaId && (
-          <PessoaEdit
-            pessoaId={editingPessoaId}
-            isOpen={true}
-            onClose={() => setEditingPessoaId(null)}
-            onSave={() => handlePessoaSaved(editingPessoaId)}
-          />
-        )}
-      </div>
+      )}
     </div>
   )
 }

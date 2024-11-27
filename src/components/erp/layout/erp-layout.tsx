@@ -53,18 +53,19 @@ export function ErpLayout({ children, menuItems }: ErpLayoutProps) {
       {/* Sidebar */}
       <ErpSidebar
         isOpen={isMenuOpen}
+        setIsOpen={setIsMenuOpen}
         menuItems={menuItems}
-        onClose={() => setIsMenuOpen(false)}
+        onLogout={handleLogout}
       />
 
       {/* Conteúdo Principal */}
-      <div className="flex flex-col flex-1 h-full overflow-hidden w-full">
+      <div className="flex-1 flex flex-col min-h-0">
         <ErpHeader
           isMenuOpen={isMenuOpen}
           setIsMenuOpen={setIsMenuOpen}
           onLogout={handleLogout}
         />
-        <main className="flex-1 p-4 overflow-auto">
+        <main className="flex-1 overflow-auto">
           {children}
         </main>
       </div>
