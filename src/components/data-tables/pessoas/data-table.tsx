@@ -141,7 +141,7 @@ export function PessoasDataTable<TData, TValue>({
           <div className="flex items-center space-x-2">
             <FilterSheet table={table} />
             <DataTableViewOptions table={table} storageKey={STORAGE_KEY} />
-            <DataTableExport data={data} />
+            <DataTableExport table={table} />
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
