@@ -132,31 +132,35 @@ export function PessoasDataTable<TData, TValue>({
               />
             )}
           </div>
-          <FilterSheet table={table} />
         </div>
 
         {/* Ações */}
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  onClick={onAddClick}
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-8 p-0 rounded-full"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="sr-only">Adicionar Pessoa</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Adicionar Pessoa</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <DataTableViewOptions table={table} storageKey={STORAGE_KEY} />
-          <DataTableExport data={data} />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+          </div>
+          <div className="flex items-center space-x-2">
+            <FilterSheet table={table} />
+            <DataTableViewOptions table={table} storageKey={STORAGE_KEY} />
+            <DataTableExport data={data} />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 w-8 p-0 rounded-full"
+                    onClick={onAddClick}
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="sr-only">Adicionar Pessoa</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Adicionar Pessoa</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       </div>
 

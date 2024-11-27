@@ -5,16 +5,11 @@ import { PessoasDataTable } from "@/components/data-tables/pessoas/data-table"
 import { usePessoas } from "@/contexts/pessoas-context"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
-import dynamic from 'next/dynamic'
 import { useEffect, useState } from "react"
 import { AddPessoaDialog } from "@/components/erp/pessoas/add-pessoa-dialog"
 import { PessoasProvider } from "@/contexts/pessoas-context"
 import { useHeader } from "@/contexts/header-context"
-
-// Importação dinâmica do componente PessoaEdit
-const PessoaEdit = dynamic(() => import('@/components/erp/pessoas/pessoa-edit').then(mod => mod.PessoaEdit), {
-  ssr: false
-})
+import { PessoaEdit } from '@/components/erp/pessoas/pessoa-edit'
 
 export default function PessoasPage() {
   return (
@@ -65,6 +60,11 @@ function PessoasPageContent() {
     // Listener para o evento de edição
     const handleEditPessoa = (event: CustomEvent<{ pessoaId: number }>) => {
       setEditingPessoaId(event.detail.pessoaId)
+      // Garantir que o sheet seja aberto
+      const pessoaEditSheet = document.querySelector('.pessoa-edit-sheet');
+      if (pessoaEditSheet) {
+        pessoaEditSheet.classList.add('open');
+      }
     }
 
     window.addEventListener('editPessoa', handleEditPessoa as EventListener)
@@ -82,6 +82,16 @@ function PessoasPageContent() {
   const handlePessoaSaved = async (id: number) => {
     await updatePessoa(id)
     setEditingPessoaId(null)
+    
+    // Adicionar um delay para garantir que a animação termine
+    setTimeout(() => {
+      const sheet = document.querySelector('.pessoa-edit-sheet')
+      if (sheet) {
+        sheet.classList.remove('open')
+        sheet.classList.remove('translate-x-0')
+        sheet.classList.add('translate-x-full')
+      }
+    }, 300)
   }
 
   const handleNewPessoaClick = () => {
@@ -105,10 +115,10 @@ function PessoasPageContent() {
         onSuccess={handlePessoaAdded}
       />
 
-      {editingPessoaId && (
-        <PessoaEdit
-          pessoaId={editingPessoaId}
-          isOpen={true}
+      {editingPessoaId !== null && (
+        <PessoaEdit 
+          pessoaId={editingPessoaId} 
+          isOpen={true} 
           onClose={() => setEditingPessoaId(null)}
           onSave={() => handlePessoaSaved(editingPessoaId)}
         />

@@ -288,12 +288,12 @@ export function FilterSheet({ table }: FilterSheetProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 w-8 p-0 rounded-full">
+                <Button variant="outline" size="sm" className="h-8 w-8 p-0 rounded-full relative">
                   <Filter className="h-4 w-4" />
-                  {Object.keys(activeFilters).length > 0 && (
-                    <Badge variant="secondary" className="absolute -top-2 -right-2 h-4 w-4 p-0 text-xs rounded-full">
-                      {Object.keys(activeFilters).length}
-                    </Badge>
+                  {countActiveFilters() > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center">
+                      {countActiveFilters()}
+                    </span>
                   )}
                   <span className="sr-only">Filtrar</span>
                 </Button>

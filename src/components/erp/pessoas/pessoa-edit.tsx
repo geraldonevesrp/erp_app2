@@ -74,16 +74,30 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
   }, [pessoaId, isOpen, mounted])
 
   useEffect(() => {
-    if (pessoa) {
-      const subtitle = pessoa.tipo === 'F' 
-        ? `${pessoa.nome_razao} - ${formatCPF(pessoa.cpf_cnpj)}`
-        : `${pessoa.nome_razao} - ${formatCNPJ(pessoa.cpf_cnpj)}`
-      setSubtitle(subtitle)
+    // Forçar reflow para garantir animação
+    console.log('PessoaEdit isOpen:', isOpen, 'pessoaId:', pessoaId)
+    if (isOpen) {
+      setTimeout(() => {
+        const sheet = document.querySelector('.pessoa-edit-sheet')
+        console.log('Sheet encontrado:', !!sheet)
+        if (sheet) {
+          sheet.classList.add('open')
+          sheet.classList.remove('translate-x-full')
+          sheet.classList.add('translate-x-0')
+        }
+      }, 50)
+    } else {
+      // Quando fecha, remover classes
+      setTimeout(() => {
+        const sheet = document.querySelector('.pessoa-edit-sheet')
+        if (sheet) {
+          sheet.classList.remove('open')
+          sheet.classList.remove('translate-x-0')
+          sheet.classList.add('translate-x-full')
+        }
+      }, 50)
     }
-    return () => {
-      setSubtitle(null)
-    }
-  }, [pessoa, setSubtitle])
+  }, [isOpen])
 
   const loadPessoa = async () => {
     try {

@@ -31,8 +31,10 @@ export function PessoaEditSheet({
     <div
       data-state={open ? "open" : "closed"}
       className={cn(
-        "fixed top-[49px] bottom-[6px] right-0 w-[calc(100%-16rem)] bg-slate-50/95 transition-transform duration-300 z-50 flex flex-col border-l",
-        open ? "translate-x-0" : "translate-x-full",
+        "fixed top-16 bottom-[6px] right-0 w-[calc(100%-16rem)] bg-slate-50/95 z-50 flex flex-col border-l",
+        "transition-transform duration-300 ease-in-out transform",
+        "pessoa-edit-sheet",
+        open ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none",
         className
       )}
       {...props}
