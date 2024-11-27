@@ -23,6 +23,7 @@ function PessoasPageContent() {
   const { pessoas, loading, loadPessoas, updatePessoa } = usePessoas()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingPessoaId, setEditingPessoaId] = useState<number | null>(null)
+  const [isPessoaEditSheetOpen, setIsPessoaEditSheetOpen] = useState(false)
   const { setTitle, setSubtitle } = useHeader()
 
   // Define o título ao montar o componente
@@ -60,11 +61,7 @@ function PessoasPageContent() {
     // Listener para o evento de edição
     const handleEditPessoa = (event: CustomEvent<{ pessoaId: number }>) => {
       setEditingPessoaId(event.detail.pessoaId)
-      // Garantir que o sheet seja aberto
-      const pessoaEditSheet = document.querySelector('.pessoa-edit-sheet');
-      if (pessoaEditSheet) {
-        pessoaEditSheet.classList.add('open');
-      }
+      setIsPessoaEditSheetOpen(true)
     }
 
     window.addEventListener('editPessoa', handleEditPessoa as EventListener)
@@ -82,16 +79,7 @@ function PessoasPageContent() {
   const handlePessoaSaved = async (id: number) => {
     await updatePessoa(id)
     setEditingPessoaId(null)
-    
-    // Adicionar um delay para garantir que a animação termine
-    setTimeout(() => {
-      const sheet = document.querySelector('.pessoa-edit-sheet')
-      if (sheet) {
-        sheet.classList.remove('open')
-        sheet.classList.remove('translate-x-0')
-        sheet.classList.add('translate-x-full')
-      }
-    }, 300)
+    setIsPessoaEditSheetOpen(false)
   }
 
   const handleNewPessoaClick = () => {
@@ -118,7 +106,7 @@ function PessoasPageContent() {
       {editingPessoaId !== null && (
         <PessoaEdit 
           pessoaId={editingPessoaId} 
-          isOpen={true} 
+          isOpen={isPessoaEditSheetOpen} 
           onClose={() => setEditingPessoaId(null)}
           onSave={() => handlePessoaSaved(editingPessoaId)}
         />

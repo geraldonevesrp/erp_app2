@@ -27,8 +27,8 @@ import {
   Lock,
   Check,
   ChevronsUpDown,
-  X,
-  Asterisk
+  Asterisk,
+  Plus
 } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 import { formatCPF, formatCNPJ, formatPhone, formatCEP } from "@/lib/masks"
@@ -38,6 +38,8 @@ import { Badge } from "@/components/ui/badge"
 import { MultiSelect } from "@/components/ui/multi-select"
 import { Switch } from "@/components/ui/switch"
 import { useHeader } from "@/contexts/header-context"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Camera, PencilLine, X } from "lucide-react"
 
 interface PessoaEditProps {
   pessoaId: number | null
@@ -62,6 +64,19 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
   const [tiposPessoa, setTiposPessoa] = useState<PessoaTipo[]>([])
   const [touchedFields, setTouchedFields] = useState<{ [key: string]: boolean }>({})
   const { setSubtitle } = useHeader()
+  const [hasChanges, setHasChanges] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
+  const [originalData, setOriginalData] = useState<any>(null)
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+
+  const RequiredLabel = ({ children, value }: { children: React.ReactNode, value: any }) => (
+    <div className="flex items-center gap-1">
+      {children}
+      {(!value || value.trim() === "") && (
+        <Asterisk className="h-3 w-3 text-destructive" />
+      )}
+    </div>
+  )
 
   useEffect(() => {
     setMounted(true)
@@ -99,10 +114,32 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
     }
   }, [isOpen])
 
+  useEffect(() => {
+    if (!isOpen) {
+      setHasChanges(false)
+      setValidationErrors({})
+      setOriginalData(null)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (pessoa && originalData) {
+      const currentData = JSON.stringify(pessoa)
+      setHasChanges(currentData !== originalData)
+    }
+  }, [pessoa, originalData])
+
+  useEffect(() => {
+    if (pessoa && !originalData) {
+      setOriginalData(JSON.stringify(pessoa))
+    }
+  }, [pessoa])
+
   const loadPessoa = async () => {
     try {
       setLoading(true)
       setError("")
+      setOriginalData(null) // Reseta os dados originais antes de carregar novos dados
 
       // Primeiro carrega os dados da view para ter todos os campos calculados
       const { data: viewData, error: viewError } = await supabase
@@ -141,17 +178,52 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
   }
 
   const validateFields = () => {
-    const errors: string[] = []
+    const errors: { [key: string]: string } = {}
     
     if (!pessoa) {
-      errors.push("Dados da pessoa não encontrados")
+      errors.geral = "Dados da pessoa não encontrados"
       return errors
     }
 
+    // Validação do nome/razão social
     if (!pessoa.nome_razao?.trim()) {
-      errors.push("Nome/Razão Social é obrigatório")
+      errors.nome_razao = "Nome/Razão Social é obrigatório"
+    } else if (pessoa.nome_razao.trim().length < 3) {
+      errors.nome_razao = "Nome/Razão Social deve ter pelo menos 3 caracteres"
     }
 
+    // Validação do CPF/CNPJ se preenchido
+    if (pessoa.cpf_cnpj) {
+      const cpfCnpj = pessoa.cpf_cnpj.replace(/\D/g, '')
+      if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
+        errors.cpf_cnpj = "CPF/CNPJ inválido"
+      }
+    }
+
+    // Validação de endereços
+    if (pessoa.pessoas_enderecos?.length > 0) {
+      const principalCount = pessoa.pessoas_enderecos.filter((e: any) => e.principal).length
+      if (principalCount !== 1) {
+        errors.enderecos = "Deve haver exatamente um endereço principal"
+      }
+
+      pessoa.pessoas_enderecos.forEach((endereco: any, index: number) => {
+        if (!endereco.cep?.trim()) {
+          errors[`endereco_${index}_cep`] = "CEP é obrigatório"
+        }
+        if (!endereco.logradouro?.trim()) {
+          errors[`endereco_${index}_logradouro`] = "Logradouro é obrigatório"
+        }
+        if (!endereco.cidade?.trim()) {
+          errors[`endereco_${index}_cidade`] = "Cidade é obrigatória"
+        }
+        if (!endereco.uf?.trim()) {
+          errors[`endereco_${index}_uf`] = "UF é obrigatória"
+        }
+      })
+    }
+
+    setValidationErrors(errors)
     return errors
   }
 
@@ -161,9 +233,10 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
       setError("")
 
       // Validação dos campos
-      const validationErrors = validateFields()
-      if (validationErrors.length > 0) {
-        throw new Error(validationErrors.join("\n"))
+      const errors = validateFields()
+      if (Object.keys(errors).length > 0) {
+        const errorMessages = Object.values(errors).join("\n")
+        throw new Error(errorMessages)
       }
 
       if (!pessoa || !pessoaId || !perfil?.id) {
@@ -715,18 +788,114 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
     return formatCEP(cep)
   }
 
-  const RequiredLabel = ({ children, value }: { children: React.ReactNode, value: any }) => (
-    <div className="flex items-center gap-1">
-      {children}
-      {(!value || value.trim() === "") && (
-        <Asterisk className="h-3 w-3 text-destructive" />
-      )}
-    </div>
-  )
+  const handleUploadFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !pessoaId || !perfil?.id) return
+
+    try {
+      // Validação do tamanho do arquivo (2MB)
+      const maxSize = 2 * 1024 * 1024
+      if (file.size > maxSize) {
+        throw new Error('Arquivo muito grande. O tamanho máximo permitido é 2MB.')
+      }
+
+      setLoading(true)
+      
+      // Remove foto antiga se existir
+      if (pessoa.foto_url) {
+        const oldFileUrl = new URL(pessoa.foto_url)
+        const oldFilePath = oldFileUrl.pathname.split('/').pop()
+        if (oldFilePath) {
+          await supabase
+            .storage
+            .from('Perfis')
+            .remove([`${perfil.id}/pessoas_fotos/${pessoaId}/${oldFilePath}`])
+        }
+      }
+      
+      // Cria um nome único para o arquivo
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const fileName = `${Date.now()}.${fileExt}`
+      const filePath = `${perfil.id}/pessoas_fotos/${pessoaId}/${fileName}`
+
+      // Upload para o bucket 'Perfis' no Supabase Storage
+      const { error: uploadError } = await supabase
+        .storage
+        .from('Perfis')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        if (uploadError.message.includes('duplicate')) {
+          throw new Error('Já existe uma foto com este nome. Tente novamente.')
+        }
+        throw uploadError
+      }
+
+      // Obtém a URL pública do arquivo
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from('Perfis')
+        .getPublicUrl(filePath)
+
+      // Atualiza a pessoa com a nova URL da foto
+      const { error: updateError } = await supabase
+        .from('pessoas')
+        .update({ foto_url: publicUrl })
+        .eq('id', pessoaId)
+        .eq('perfis_id', perfil.id)
+
+      if (updateError) {
+        // Se falhar ao atualizar o banco, remove a foto do storage
+        await supabase
+          .storage
+          .from('Perfis')
+          .remove([filePath])
+        throw updateError
+      }
+
+      // Atualiza o estado local
+      setPessoa(prev => ({
+        ...prev,
+        foto_url: publicUrl
+      }))
+
+      toast({
+        title: "Sucesso",
+        description: "Foto atualizada com sucesso!",
+        variant: "success"
+      })
+    } catch (err: any) {
+      console.error('Erro ao fazer upload:', err)
+      toast({
+        title: "Erro ao fazer upload",
+        description: err.message,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleClose = () => {
+    if (hasChanges) {
+      if (window.confirm("Existem alterações não salvas. Deseja realmente fechar?")) {
+        onClose()
+      }
+    } else {
+      onClose()
+    }
+  }
 
   if (!pessoa || loading) {
     return (
-      <PessoaEditSheet open={isOpen} onClose={onClose}>
+      <PessoaEditSheet 
+        open={isOpen} 
+        onOpenChange={handleClose}
+        loading={loading}
+      >
         <PessoaEditSheetContent>
           <div className="flex items-center justify-center h-full">
             <div className="animate-pulse text-muted-foreground">
@@ -741,481 +910,579 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
   return (
     <PessoaEditSheet 
       open={isOpen} 
-      onClose={onClose} 
-      onSave={() => handleSave()}
+      onOpenChange={handleClose} 
       loading={loading}
       pessoa={{
         apelido: pessoa?.apelido,
         nome_razao: pessoa?.nome_razao
       }}
+      hasChanges={hasChanges}
+      onSave={handleSave}
     >
       <PessoaEditSheetContent>
-        <div className="space-y-6 p-6 overflow-y-auto">
-          {/* Card Principal - Dados Básicos */}
-          <div className="rounded-lg border bg-white shadow-sm p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                <h2 className="text-xl font-semibold">Dados Principais</h2>
+        <div className="flex-1 overflow-y-auto">
+          <div className="space-y-6 p-6">
+            {error && (
+              <div className="bg-red-50 text-red-700 p-4 rounded-md">
+                {error}
               </div>
-              <div className="flex items-center gap-2">
-                <div className="px-3 py-1 rounded-full text-sm font-medium bg-gray-50 text-gray-700 border border-gray-200">
-                  {formatDocument(pessoa?.cpf_cnpj || "")}
-                </div>
-                <div className={cn(
-                  "px-3 py-1 rounded-full text-sm font-medium",
-                  pessoa?.tipo === "F" 
-                    ? "bg-blue-50 text-blue-700 border border-blue-200" 
-                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                )}>
-                  {pessoa?.tipo === "F" ? "Pessoa Física" : "Pessoa Jurídica"}
-                </div>
-              </div>
-            </div>
+            )}
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <RequiredLabel value={pessoa.nome_razao}>
-                  <Label>{getFieldLabel("nome_razao")}</Label>
-                </RequiredLabel>
-                <Input
-                  id="nome_razao"
-                  value={pessoa?.nome_razao || ""}
-                  onChange={(e) => handlePessoaChange("nome_razao", e.target.value)}
-                  onBlur={() => markFieldAsTouched("nome_razao")}
-                  className={cn(
-                    isFieldInvalid("nome_razao", pessoa.nome_razao) && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}
-                />
+            {Object.keys(validationErrors).length > 0 && (
+              <div className="bg-yellow-50 text-yellow-700 p-4 rounded-md">
+                <h3 className="font-semibold mb-2">Erros de validação:</h3>
+                <ul className="list-disc pl-4">
+                  {Object.values(validationErrors).map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
               </div>
+            )}
 
-              <div className="space-y-2">
-                <RequiredLabel value={pessoa.apelido}>
-                  <Label>{getFieldLabel("apelido")}</Label>
-                </RequiredLabel>
-                <Input
-                  id="apelido"
-                  value={pessoa?.apelido || ""}
-                  onChange={(e) => handlePessoaChange("apelido", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <RequiredLabel value={pessoa.rg_ie}>
-                  <Label>{getFieldLabel("rg_ie")}</Label>
-                </RequiredLabel>
-                <Input
-                  id="rg_ie"
-                  value={pessoa?.rg_ie || ""}
-                  onChange={(e) => handlePessoaChange("rg_ie", e.target.value)}
-                  onBlur={() => markFieldAsTouched("rg_ie")}
-                  className={cn(
-                    isFieldInvalid("rg_ie", pessoa.rg_ie) && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <RequiredLabel value={pessoa.nascimento}>
-                  <Label>{getFieldLabel("nascimento")}</Label>
-                </RequiredLabel>
-                <Input
-                  id="nascimento"
-                  type="date"
-                  value={pessoa?.nascimento || ""}
-                  onChange={(e) => handlePessoaChange("nascimento", e.target.value)}
-                  onBlur={() => markFieldAsTouched("nascimento")}
-                  className={cn(
-                    isFieldInvalid("nascimento", pessoa.nascimento) && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Tipos</Label>
-                <MultiSelect
-                  options={tiposOptions}
-                  selected={Array.isArray(pessoa?.pessoas_tipos) ? pessoa.pessoas_tipos : []}
-                  onChange={handleTiposChange}
-                  placeholder="Selecione os tipos..."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <RequiredLabel value={pessoa.genero}>
-                  <Label>{getFieldLabel("genero")}</Label>
-                </RequiredLabel>
-                <Select
-                  value={pessoa?.genero || ""}
-                  onValueChange={(value) => handlePessoaChange("genero", value)}
-                  onBlur={() => markFieldAsTouched("genero")}
-                  className={cn(
-                    isFieldInvalid("genero", pessoa.genero) && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={`Selecione ${pessoa?.tipo === "F" ? "o gênero" : "o porte"}`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getGeneroPorteOptions().map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Cards Expansíveis */}
-          <ExpandableCard 
-            title="Endereços" 
-            icon={<MapPin className="h-5 w-5" />}
-            defaultExpanded={true}
-            className="mt-4 bg-white"
-          >
-            {/* Conteúdo dos endereços */}
-            {pessoa.pessoas_enderecos.map((endereco: any, index: number) => (
-              <div key={endereco.id} className="border rounded-lg p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Endereço {index + 1}</h4>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSetPrincipal(endereco.id)}
-                      disabled={endereco.principal}
-                    >
-                      {endereco.principal ? "Principal" : "Tornar Principal"}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleRemoveEndereco(endereco.id)}
-                      disabled={endereco.principal}
-                    >
-                      Remover
-                    </Button>
+            <Dialog open={isPhotoModalOpen} onOpenChange={setIsPhotoModalOpen}>
+              <DialogContent 
+                className="max-w-fit p-0 gap-0 bg-transparent border-0 mx-auto 
+                  [&>button]:h-6 [&>button]:w-6 [&>button]:rounded-full [&>button]:hover:bg-black/20 
+                  [&>button]:bg-transparent [&>button]:text-white/90 [&>button]:top-2 [&>button]:right-2
+                  [&>button]:flex [&>button]:items-center [&>button]:justify-center
+                  [&>button:focus]:outline-none [&>button:focus]:ring-0 [&>button:focus]:ring-offset-0
+                  [&>button>svg]:h-3 [&>button>svg]:w-3"
+              >
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute top-0 left-0 right-0 flex items-center px-4 py-2 bg-black/20 backdrop-blur-sm">
+                    <DialogTitle className="text-sm text-white/90">
+                      {pessoa.nome_razao || 'Visualizar foto'}
+                    </DialogTitle>
                   </div>
+                  <img 
+                    src={pessoa.foto_url} 
+                    alt={pessoa.nome_razao || 'Foto'} 
+                    className="max-w-[90vw] max-h-[90vh] w-auto h-auto object-contain"
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Card Principal - Dados Básicos */}
+            <div className="rounded-lg border bg-white shadow-sm p-6">
+              <div className="flex items-start gap-6">
+                {/* Área da Foto */}
+                <div className="flex flex-col items-center space-y-2">
+                  <div 
+                    className="relative w-32 h-32 rounded-lg border-2 border-dashed border-gray-200 hover:border-gray-300 transition-colors cursor-pointer overflow-hidden group"
+                    onClick={() => pessoa.foto_url ? setIsPhotoModalOpen(true) : document.getElementById('photo-upload')?.click()}
+                  >
+                    {pessoa.foto_url ? (
+                      <>
+                        <img 
+                          src={pessoa.foto_url} 
+                          alt={pessoa.nome_razao || 'Foto'} 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Camera className="w-6 h-6 text-white" />
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+                        <Camera className="w-8 h-8 text-gray-400 mb-2" />
+                        <span className="text-xs text-gray-500">Clique para adicionar foto</span>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    id="photo-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleUploadFoto}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs"
+                    onClick={() => document.getElementById('photo-upload')?.click()}
+                  >
+                    <PencilLine className="w-3 h-3 mr-1" />
+                    Editar Foto
+                  </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <RequiredLabel value={endereco.cep}>
-                      <Label>CEP</Label>
-                    </RequiredLabel>
-                    <Input
-                      value={formatCEP(endereco.cep || "")}
-                      onChange={(e) => handleCepChange(index, e.target.value)}
-                      onBlur={() => markFieldAsTouched(`endereco_${index}_cep`)}
-                      className={cn(
-                        isFieldInvalid(`endereco_${index}_cep`, endereco.cep) && 
-                        "border-destructive focus-visible:ring-destructive"
-                      )}
-                    />
+                {/* Dados Principais */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-6">
+                    <User className="h-5 w-5" />
+                    <h3 className="text-lg font-semibold">Dados Principais</h3>
                   </div>
-                  <div className="space-y-2">
-                    <RequiredLabel value={endereco.logradouro}>
-                      <Label>Logradouro</Label>
-                    </RequiredLabel>
-                    <Input
-                      value={endereco.logradouro || ""}
-                      onChange={(e) => handleEnderecoChange(index, "logradouro", e.target.value)}
-                      onBlur={() => markFieldAsTouched(`endereco_${index}_logradouro`)}
-                      className={cn(
-                        isFieldInvalid(`endereco_${index}_logradouro`, endereco.logradouro) && 
-                        "border-destructive focus-visible:ring-destructive"
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <RequiredLabel value={endereco.sem_numero ? "Sem Número" : endereco.numero}>
-                      <Label>Número</Label>
-                    </RequiredLabel>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <Input
-                          value={endereco.numero || ""}
-                          onChange={(e) => handleNumeroChange(index, e.target.value)}
-                          onBlur={() => markFieldAsTouched(`endereco_${index}_numero`)}
-                          disabled={endereco.sem_numero}
-                          className={cn(
-                            !endereco.sem_numero && 
-                            isFieldInvalid(`endereco_${index}_numero`, endereco.numero) && 
-                            "border-destructive focus-visible:ring-destructive"
-                          )}
-                        />
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id={`sem-numero-${index}`}
-                          checked={endereco.sem_numero || false}
-                          onCheckedChange={(checked) => handleSemNumeroChange(checked, index)}
-                        />
-                        <label
-                          htmlFor={`sem-numero-${index}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Sem Número
-                        </label>
-                      </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <RequiredLabel value={pessoa.nome_razao}>
+                        <Label>{getFieldLabel("nome_razao")}</Label>
+                      </RequiredLabel>
+                      <Input
+                        id="nome_razao"
+                        value={pessoa?.nome_razao || ""}
+                        onChange={(e) => handlePessoaChange("nome_razao", e.target.value)}
+                        onBlur={() => markFieldAsTouched("nome_razao")}
+                        className={cn(
+                          isFieldInvalid("nome_razao", pessoa.nome_razao) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <RequiredLabel value={pessoa.apelido}>
+                        <Label>{getFieldLabel("apelido")}</Label>
+                      </RequiredLabel>
+                      <Input
+                        id="apelido"
+                        value={pessoa?.apelido || ""}
+                        onChange={(e) => handlePessoaChange("apelido", e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <RequiredLabel value={pessoa.rg_ie}>
+                        <Label>{getFieldLabel("rg_ie")}</Label>
+                      </RequiredLabel>
+                      <Input
+                        id="rg_ie"
+                        value={pessoa?.rg_ie || ""}
+                        onChange={(e) => handlePessoaChange("rg_ie", e.target.value)}
+                        onBlur={() => markFieldAsTouched("rg_ie")}
+                        className={cn(
+                          isFieldInvalid("rg_ie", pessoa.rg_ie) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <RequiredLabel value={pessoa.nascimento}>
+                        <Label>{getFieldLabel("nascimento")}</Label>
+                      </RequiredLabel>
+                      <Input
+                        id="nascimento"
+                        type="date"
+                        value={pessoa?.nascimento || ""}
+                        onChange={(e) => handlePessoaChange("nascimento", e.target.value)}
+                        onBlur={() => markFieldAsTouched("nascimento")}
+                        className={cn(
+                          isFieldInvalid("nascimento", pessoa.nascimento) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Tipos</Label>
+                      <MultiSelect
+                        options={tiposOptions}
+                        selected={Array.isArray(pessoa?.pessoas_tipos) ? pessoa.pessoas_tipos : []}
+                        onChange={handleTiposChange}
+                        placeholder="Selecione os tipos..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <RequiredLabel value={pessoa.genero}>
+                        <Label>{getFieldLabel("genero")}</Label>
+                      </RequiredLabel>
+                      <Select
+                        value={pessoa?.genero || ""}
+                        onValueChange={(value) => handlePessoaChange("genero", value)}
+                        onBlur={() => markFieldAsTouched("genero")}
+                        className={cn(
+                          isFieldInvalid("genero", pessoa.genero) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={`Selecione ${pessoa?.tipo === "F" ? "o gênero" : "o porte"}`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getGeneroPorteOptions().map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Complemento</Label>
-                    <Input
-                      value={endereco.complemento || ""}
-                      onChange={(e) => handleEnderecoChange(index, "complemento", e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <RequiredLabel value={endereco.bairro}>
-                      <Label>Bairro</Label>
-                    </RequiredLabel>
-                    <Input
-                      value={endereco.bairro || ""}
-                      onChange={(e) => handleEnderecoChange(index, "bairro", e.target.value)}
-                      onBlur={() => markFieldAsTouched(`endereco_${index}_bairro`)}
-                      className={cn(
-                        isFieldInvalid(`endereco_${index}_bairro`, endereco.bairro) && 
-                        "border-destructive focus-visible:ring-destructive"
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <RequiredLabel value={endereco.cidade}>
-                      <Label>Cidade</Label>
-                    </RequiredLabel>
-                    <Input
-                      value={endereco.cidade || ""}
-                      onChange={(e) => handleEnderecoChange(index, "cidade", e.target.value)}
-                      onBlur={() => markFieldAsTouched(`endereco_${index}_cidade`)}
-                      className={cn(
-                        isFieldInvalid(`endereco_${index}_cidade`, endereco.cidade) && 
-                        "border-destructive focus-visible:ring-destructive"
-                      )}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <RequiredLabel value={endereco.uf}>
-                      <Label>UF</Label>
-                    </RequiredLabel>
-                    <Input
-                      value={endereco.uf || ""}
-                      onChange={(e) => handleEnderecoChange(index, "uf", e.target.value)}
-                      onBlur={() => markFieldAsTouched(`endereco_${index}_uf`)}
-                      className={cn(
-                        isFieldInvalid(`endereco_${index}_uf`, endereco.uf) && 
-                        "border-destructive focus-visible:ring-destructive"
-                      )}
-                    />
-                  </div>
                 </div>
-              </div>
-            ))}
-            <Button
-              onClick={handleAddEndereco}
-              className="w-full mt-4"
-              variant="outline"
-            >
-              Adicionar Endereço
-            </Button>
-          </ExpandableCard>
-
-          <ExpandableCard 
-            title="Contatos" 
-            icon={<Phone className="h-5 w-5" />}
-            className="mt-4 bg-white"
-          >
-            {/* Conteúdo dos contatos */}
-            {pessoa.pessoas_contatos.map((contato: any, index: number) => (
-              <div key={contato.id} className="border rounded-lg p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Contato {index + 1}</h4>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSetPrincipalContato(contato.id)}
-                      disabled={contato.principal}
-                    >
-                      {contato.principal ? "Principal" : "Tornar Principal"}
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleRemoveContato(contato.id)}
-                      disabled={contato.principal}
-                    >
-                      Remover
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <RequiredLabel value={contato.tipo}>
-                      <Label>Tipo</Label>
-                    </RequiredLabel>
-                    <Select
-                      value={contato.tipo || ""}
-                      onValueChange={(value) => handleContatoChange(index, "tipo", value)}
-                      onBlur={() => markFieldAsTouched(`contato_${index}_tipo`)}
-                      className={cn(
-                        isFieldInvalid(`contato_${index}_tipo`, contato.tipo) && 
-                        "border-destructive focus-visible:ring-destructive"
-                      )}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="telefone">Telefone</SelectItem>
-                        <SelectItem value="celular">Celular</SelectItem>
-                        <SelectItem value="email">E-mail</SelectItem>
-                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <RequiredLabel value={contato.valor}>
-                      <Label>Valor</Label>
-                    </RequiredLabel>
-                    <Input
-                      value={contato.tipo === "telefone" || contato.tipo === "celular" ? 
-                        formatPhoneNumber(contato.valor || "") : 
-                        contato.valor || ""
-                      }
-                      onChange={(e) => handleContatoChange(index, "valor", e.target.value)}
-                      onBlur={() => markFieldAsTouched(`contato_${index}_valor`)}
-                      className={cn(
-                        isFieldInvalid(`contato_${index}_valor`, contato.valor) && 
-                        "border-destructive focus-visible:ring-destructive"
-                      )}
-                    />
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label>Observação</Label>
-                    <Input
-                      value={contato.observacao || ""}
-                      onChange={(e) => handleContatoChange(index, "observacao", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-            <Button
-              onClick={handleAddContato}
-              className="w-full mt-4"
-              variant="outline"
-            >
-              Adicionar Contato
-            </Button>
-          </ExpandableCard>
-
-          <ExpandableCard 
-            title="Informações Fiscais" 
-            icon={<Receipt className="h-5 w-5" />}
-            className="mt-4 bg-white"
-          >
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <RequiredLabel value={pessoa.inscricao_estadual}>
-                  <Label>Inscrição Estadual</Label>
-                </RequiredLabel>
-                <Input
-                  value={pessoa?.inscricao_estadual || ""}
-                  onChange={(e) => handlePessoaChange("inscricao_estadual", e.target.value)}
-                  onBlur={() => markFieldAsTouched("inscricao_estadual")}
-                  className={cn(
-                    isFieldInvalid("inscricao_estadual", pessoa.inscricao_estadual) && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <RequiredLabel value={pessoa.inscricao_municipal}>
-                  <Label>Inscrição Municipal</Label>
-                </RequiredLabel>
-                <Input
-                  value={pessoa?.inscricao_municipal || ""}
-                  onChange={(e) => handlePessoaChange("inscricao_municipal", e.target.value)}
-                  onBlur={() => markFieldAsTouched("inscricao_municipal")}
-                  className={cn(
-                    isFieldInvalid("inscricao_municipal", pessoa.inscricao_municipal) && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <RequiredLabel value={pessoa.regime_tributario}>
-                  <Label>Regime Tributário</Label>
-                </RequiredLabel>
-                <Select
-                  value={pessoa?.regime_tributario || ""}
-                  onValueChange={(value) => handlePessoaChange("regime_tributario", value)}
-                  onBlur={() => markFieldAsTouched("regime_tributario")}
-                  className={cn(
-                    isFieldInvalid("regime_tributario", pessoa.regime_tributario) && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o regime" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="simples">Simples Nacional</SelectItem>
-                    <SelectItem value="presumido">Lucro Presumido</SelectItem>
-                    <SelectItem value="real">Lucro Real</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <RequiredLabel value={pessoa.contribuinte_icms}>
-                  <Label>Contribuinte ICMS</Label>
-                </RequiredLabel>
-                <Select
-                  value={pessoa?.contribuinte_icms || ""}
-                  onValueChange={(value) => handlePessoaChange("contribuinte_icms", value)}
-                  onBlur={() => markFieldAsTouched("contribuinte_icms")}
-                  className={cn(
-                    isFieldInvalid("contribuinte_icms", pessoa.contribuinte_icms) && 
-                    "border-destructive focus-visible:ring-destructive"
-                  )}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Contribuinte ICMS</SelectItem>
-                    <SelectItem value="2">Contribuinte isento</SelectItem>
-                    <SelectItem value="9">Não Contribuinte</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
-          </ExpandableCard>
 
-          <ExpandableCard 
-            title="Outras Informações" 
-            icon={<FileText className="h-5 w-5" />}
-            className="mt-4 bg-white"
-          >
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Observações</Label>
-                <Input
-                  value={pessoa?.obs || ""}
-                  onChange={(e) => handlePessoaChange("obs", e.target.value)}
-                />
+            {/* Cards Expansíveis */}
+            <ExpandableCard 
+              title={
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  <span>Endereços</span>
+                </div>
+              }
+              description="Gerencie os endereços da pessoa"
+              defaultExpanded={true}
+              className="bg-white p-6"
+            >
+              {/* Conteúdo dos endereços */}
+              {pessoa.pessoas_enderecos.map((endereco: any, index: number) => (
+                <div key={endereco.id} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Endereço {index + 1}</h4>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSetPrincipal(endereco.id)}
+                        disabled={endereco.principal}
+                      >
+                        {endereco.principal ? "Principal" : "Tornar Principal"}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleRemoveEndereco(endereco.id)}
+                        disabled={endereco.principal}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <RequiredLabel value={endereco.cep}>
+                        <Label>CEP</Label>
+                      </RequiredLabel>
+                      <Input
+                        value={formatCEP(endereco.cep || "")}
+                        onChange={(e) => handleCepChange(index, e.target.value)}
+                        onBlur={() => markFieldAsTouched(`endereco_${index}_cep`)}
+                        className={cn(
+                          isFieldInvalid(`endereco_${index}_cep`, endereco.cep) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <RequiredLabel value={endereco.logradouro}>
+                        <Label>Logradouro</Label>
+                      </RequiredLabel>
+                      <Input
+                        value={endereco.logradouro || ""}
+                        onChange={(e) => handleEnderecoChange(index, "logradouro", e.target.value)}
+                        onBlur={() => markFieldAsTouched(`endereco_${index}_logradouro`)}
+                        className={cn(
+                          isFieldInvalid(`endereco_${index}_logradouro`, endereco.logradouro) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <RequiredLabel value={endereco.sem_numero ? "Sem Número" : endereco.numero}>
+                        <Label>Número</Label>
+                      </RequiredLabel>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <Input
+                            value={endereco.numero || ""}
+                            onChange={(e) => handleNumeroChange(index, e.target.value)}
+                            onBlur={() => markFieldAsTouched(`endereco_${index}_numero`)}
+                            disabled={endereco.sem_numero}
+                            className={cn(
+                              !endereco.sem_numero && 
+                              isFieldInvalid(`endereco_${index}_numero`, endereco.numero) && 
+                              "border-destructive focus-visible:ring-destructive"
+                            )}
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id={`sem-numero-${index}`}
+                            checked={endereco.sem_numero || false}
+                            onCheckedChange={(checked) => handleSemNumeroChange(checked, index)}
+                          />
+                          <label
+                            htmlFor={`sem-numero-${index}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            Sem Número
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Complemento</Label>
+                      <Input
+                        value={endereco.complemento || ""}
+                        onChange={(e) => handleEnderecoChange(index, "complemento", e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <RequiredLabel value={endereco.bairro}>
+                        <Label>Bairro</Label>
+                      </RequiredLabel>
+                      <Input
+                        value={endereco.bairro || ""}
+                        onChange={(e) => handleEnderecoChange(index, "bairro", e.target.value)}
+                        onBlur={() => markFieldAsTouched(`endereco_${index}_bairro`)}
+                        className={cn(
+                          isFieldInvalid(`endereco_${index}_bairro`, endereco.bairro) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <RequiredLabel value={endereco.cidade}>
+                        <Label>Cidade</Label>
+                      </RequiredLabel>
+                      <Input
+                        value={endereco.cidade || ""}
+                        onChange={(e) => handleEnderecoChange(index, "cidade", e.target.value)}
+                        onBlur={() => markFieldAsTouched(`endereco_${index}_cidade`)}
+                        className={cn(
+                          isFieldInvalid(`endereco_${index}_cidade`, endereco.cidade) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <RequiredLabel value={endereco.uf}>
+                        <Label>UF</Label>
+                      </RequiredLabel>
+                      <Input
+                        value={endereco.uf || ""}
+                        onChange={(e) => handleEnderecoChange(index, "uf", e.target.value)}
+                        onBlur={() => markFieldAsTouched(`endereco_${index}_uf`)}
+                        className={cn(
+                          isFieldInvalid(`endereco_${index}_uf`, endereco.uf) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Botão de adicionar no rodapé */}
+              <Button
+                onClick={handleAddEndereco}
+                className="w-full mt-4"
+                variant="outline"
+                disabled={loading}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Endereço
+              </Button>
+            </ExpandableCard>
+
+            <ExpandableCard 
+              title={
+                <div className="flex items-center gap-2">
+                  <Phone className="h-5 w-5" />
+                  <span>Contatos</span>
+                </div>
+              }
+              description="Gerencie os contatos da pessoa"
+              defaultExpanded={true}
+              className="bg-white p-6"
+            >
+              {/* Conteúdo dos contatos */}
+              {pessoa.pessoas_contatos.map((contato: any, index: number) => (
+                <div key={contato.id} className="border rounded-lg p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Contato {index + 1}</h4>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSetPrincipalContato(contato.id)}
+                        disabled={contato.principal}
+                      >
+                        {contato.principal ? "Principal" : "Tornar Principal"}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleRemoveContato(contato.id)}
+                        disabled={contato.principal}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <RequiredLabel value={contato.tipo}>
+                        <Label>Tipo</Label>
+                      </RequiredLabel>
+                      <Select
+                        value={contato.tipo || ""}
+                        onValueChange={(value) => handleContatoChange(index, "tipo", value)}
+                        onBlur={() => markFieldAsTouched(`contato_${index}_tipo`)}
+                        className={cn(
+                          isFieldInvalid(`contato_${index}_tipo`, contato.tipo) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="telefone">Telefone</SelectItem>
+                          <SelectItem value="celular">Celular</SelectItem>
+                          <SelectItem value="email">E-mail</SelectItem>
+                          <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <RequiredLabel value={contato.valor}>
+                        <Label>Valor</Label>
+                      </RequiredLabel>
+                      <Input
+                        value={contato.tipo === "telefone" || contato.tipo === "celular" ? 
+                          formatPhoneNumber(contato.valor || "") : 
+                          contato.valor || ""
+                        }
+                        onChange={(e) => handleContatoChange(index, "valor", e.target.value)}
+                        onBlur={() => markFieldAsTouched(`contato_${index}_valor`)}
+                        className={cn(
+                          isFieldInvalid(`contato_${index}_valor`, contato.valor) && 
+                          "border-destructive focus-visible:ring-destructive"
+                        )}
+                      />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label>Observação</Label>
+                      <Input
+                        value={contato.observacao || ""}
+                        onChange={(e) => handleContatoChange(index, "observacao", e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </ExpandableCard>
+
+            <ExpandableCard 
+              title={
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5" />
+                  <span>Informações Fiscais</span>
+                </div>
+              }
+              description="Gerencie as informações fiscais da pessoa"
+              defaultExpanded={false}
+              className="bg-white p-6"
+            >
+              {/* Conteúdo dos documentos */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <RequiredLabel value={pessoa.inscricao_estadual}>
+                    <Label>Inscrição Estadual</Label>
+                  </RequiredLabel>
+                  <Input
+                    value={pessoa?.inscricao_estadual || ""}
+                    onChange={(e) => handlePessoaChange("inscricao_estadual", e.target.value)}
+                    onBlur={() => markFieldAsTouched("inscricao_estadual")}
+                    className={cn(
+                      isFieldInvalid("inscricao_estadual", pessoa.inscricao_estadual) && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <RequiredLabel value={pessoa.inscricao_municipal}>
+                    <Label>Inscrição Municipal</Label>
+                  </RequiredLabel>
+                  <Input
+                    value={pessoa?.inscricao_municipal || ""}
+                    onChange={(e) => handlePessoaChange("inscricao_municipal", e.target.value)}
+                    onBlur={() => markFieldAsTouched("inscricao_municipal")}
+                    className={cn(
+                      isFieldInvalid("inscricao_municipal", pessoa.inscricao_municipal) && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <RequiredLabel value={pessoa.regime_tributario}>
+                    <Label>Regime Tributário</Label>
+                  </RequiredLabel>
+                  <Select
+                    value={pessoa?.regime_tributario || ""}
+                    onValueChange={(value) => handlePessoaChange("regime_tributario", value)}
+                    onBlur={() => markFieldAsTouched("regime_tributario")}
+                    className={cn(
+                      isFieldInvalid("regime_tributario", pessoa.regime_tributario) && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o regime" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="simples">Simples Nacional</SelectItem>
+                      <SelectItem value="presumido">Lucro Presumido</SelectItem>
+                      <SelectItem value="real">Lucro Real</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <RequiredLabel value={pessoa.contribuinte_icms}>
+                    <Label>Contribuinte ICMS</Label>
+                  </RequiredLabel>
+                  <Select
+                    value={pessoa?.contribuinte_icms || ""}
+                    onValueChange={(value) => handlePessoaChange("contribuinte_icms", value)}
+                    onBlur={() => markFieldAsTouched("contribuinte_icms")}
+                    className={cn(
+                      isFieldInvalid("contribuinte_icms", pessoa.contribuinte_icms) && 
+                      "border-destructive focus-visible:ring-destructive"
+                    )}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Contribuinte ICMS</SelectItem>
+                      <SelectItem value="2">Contribuinte isento</SelectItem>
+                      <SelectItem value="9">Não Contribuinte</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-          </ExpandableCard>
+            </ExpandableCard>
+
+            <ExpandableCard 
+              title={
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  <span>Outras Informações</span>
+                </div>
+              }
+              description="Gerencie as outras informações da pessoa"
+              defaultExpanded={false}
+              className="bg-white p-6"
+            >
+              {/* Conteúdo das observações */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Observações</Label>
+                  <Input
+                    value={pessoa?.obs || ""}
+                    onChange={(e) => handlePessoaChange("obs", e.target.value)}
+                  />
+                </div>
+              </div>
+            </ExpandableCard>
+          </div>
         </div>
       </PessoaEditSheetContent>
     </PessoaEditSheet>

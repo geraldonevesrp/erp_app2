@@ -5,18 +5,20 @@ import { ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ExpandableCardProps extends React.HTMLAttributes<HTMLDivElement> {
-  title: string
-  icon?: React.ReactNode
+  title: React.ReactNode
+  description?: string
   defaultExpanded?: boolean
   children: React.ReactNode
+  actions?: React.ReactNode
 }
 
 export function ExpandableCard({ 
   title, 
-  icon, 
+  description,
   defaultExpanded = false,
   children,
   className,
+  actions,
   ...props 
 }: ExpandableCardProps) {
   const [isExpanded, setIsExpanded] = React.useState(defaultExpanded)
@@ -29,20 +31,30 @@ export function ExpandableCard({
       )}
       {...props}
     >
-      <div
-        className="flex items-center justify-between p-4 cursor-pointer select-none"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center gap-2">
-          {icon}
-          <h3 className="text-lg font-semibold">{title}</h3>
-        </div>
-        <ChevronDown
-          className={cn(
-            "h-5 w-5 transition-transform duration-200",
-            isExpanded && "transform rotate-180"
+      <div className="flex items-center justify-between p-4">
+        <div 
+          className="flex-1 cursor-pointer select-none"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex items-center gap-2">
+            {title}
+          </div>
+          {description && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {description}
+            </p>
           )}
-        />
+        </div>
+        <div className="flex items-center gap-4">
+          {actions}
+          <ChevronDown
+            className={cn(
+              "h-5 w-5 transition-transform duration-200 cursor-pointer",
+              isExpanded && "transform rotate-180"
+            )}
+            onClick={() => setIsExpanded(!isExpanded)}
+          />
+        </div>
       </div>
       <div
         className={cn(

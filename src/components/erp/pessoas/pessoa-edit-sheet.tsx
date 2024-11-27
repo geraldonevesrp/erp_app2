@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button"
 interface PessoaEditSheetProps extends React.HTMLAttributes<HTMLDivElement> {
   open?: boolean
   children: React.ReactNode
-  onClose?: () => void
+  onOpenChange?: (open: boolean) => void
   onSave?: () => void
   loading?: boolean
+  hasChanges?: boolean
   pessoa?: {
     apelido?: string
     nome_razao?: string
@@ -21,9 +22,10 @@ export function PessoaEditSheet({
   open = false, 
   children, 
   className,
-  onClose,
+  onOpenChange,
   onSave,
   loading,
+  hasChanges,
   pessoa,
   ...props 
 }: PessoaEditSheetProps) {
@@ -31,8 +33,8 @@ export function PessoaEditSheet({
     <div
       data-state={open ? "open" : "closed"}
       className={cn(
-        "fixed top-16 bottom-[6px] right-0 w-[calc(100%-16rem)] bg-slate-50/95 z-50 flex flex-col border-l",
-        "transition-transform duration-300 ease-in-out transform",
+        "fixed top-16 bottom-0 right-0 w-[calc(100%-16rem)] bg-slate-50/95 z-50 flex flex-col border-l",
+        "transition-all duration-300 ease-in-out transform will-change-transform",
         "pessoa-edit-sheet",
         open ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none",
         className
@@ -45,6 +47,7 @@ export function PessoaEditSheet({
             {pessoa ? (
               <>
                 Editando Pessoa: {pessoa.apelido} - {pessoa.nome_razao}
+                {hasChanges && <span className="ml-2 text-sm text-yellow-600">(não salvo)</span>}
               </>
             ) : (
               "Editando Pessoa"
@@ -52,17 +55,40 @@ export function PessoaEditSheet({
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onClose} disabled={loading}>
-            Cancelar
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => onOpenChange?.(false)} 
+            disabled={loading}
+            className={cn(
+              hasChanges && "border-yellow-500 hover:border-yellow-600"
+            )}
+          >
+            {hasChanges ? "Cancelar*" : "Cancelar"}
           </Button>
-          <Button size="sm" onClick={onSave} disabled={loading}>
-            Salvar
+          <Button 
+            size="sm" 
+            onClick={onSave} 
+            disabled={loading}
+            className={cn(
+              hasChanges && "bg-blue-600 hover:bg-blue-700"
+            )}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="animate-spin">⏳</span>
+                Salvando...
+              </span>
+            ) : (
+              "Salvar"
+            )}
           </Button>
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8 ml-2"
-            onClick={onClose}
+            onClick={() => onOpenChange?.(false)}
+            disabled={loading}
           >
             <X className="h-5 w-5" />
           </Button>
