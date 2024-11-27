@@ -7,6 +7,12 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { RotateCcw, Settings2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { defaultVisibleColumns } from "@/components/data-tables/pessoas/columns"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>
@@ -93,10 +99,21 @@ export function DataTableViewOptions<TData>({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="ml-auto">
-          <Settings2 className="mr-2 h-4 w-4" />
-          Colunas
-        </Button>
+        <div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 w-8 p-0 rounded-full">
+                  <Settings2 className="h-4 w-4" />
+                  <span className="sr-only">Colunas</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Configurar colunas</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </SheetTrigger>
       <SheetContent className="w-[300px] sm:w-[400px]">
         <div className="flex flex-col h-full">

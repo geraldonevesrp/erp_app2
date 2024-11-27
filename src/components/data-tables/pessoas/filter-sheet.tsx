@@ -28,6 +28,12 @@ import { useState, useEffect } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Pessoa } from "@/types/pessoas"
 import { MultiSelect } from "@/components/ui/multi-select"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface FilterSheetProps {
   table: Table<Pessoa>
@@ -278,15 +284,26 @@ export function FilterSheet({ table }: FilterSheetProps) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="ml-auto h-8">
-          <Filter className="mr-2 h-4 w-4" />
-          Filtrar
-          {Object.keys(activeFilters).length > 0 && (
-            <Badge variant="secondary" className="ml-2 rounded-sm px-1 font-normal">
-              {Object.keys(activeFilters).length}
-            </Badge>
-          )}
-        </Button>
+        <div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8 w-8 p-0 rounded-full">
+                  <Filter className="h-4 w-4" />
+                  {Object.keys(activeFilters).length > 0 && (
+                    <Badge variant="secondary" className="absolute -top-2 -right-2 h-4 w-4 p-0 text-xs rounded-full">
+                      {Object.keys(activeFilters).length}
+                    </Badge>
+                  )}
+                  <span className="sr-only">Filtrar</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Filtrar dados</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </SheetTrigger>
       <SheetContent 
         className="w-3/4 sm:w-[500px] md:w-[500px] lg:w-[500px] border-l shadow-lg !max-w-[500px]" 

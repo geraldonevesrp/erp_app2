@@ -23,15 +23,20 @@ import {
 
 import { DataTablePagination } from "../base/data-table-pagination"
 import { DataTableViewOptions } from "../base/data-table-view-options"
+import { DataTableExport } from "../base/data-table-export"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, X } from "lucide-react"
+import { Search, X, Plus } from "lucide-react"
 import { FilterSheet } from "./filter-sheet"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useRouter } from "next/navigation"
 
 interface PessoasDataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   loading?: boolean
+  pageSize?: number
+  onAddClick: () => void
 }
 
 const STORAGE_KEY = 'pessoas-table-column-visibility'
@@ -40,6 +45,8 @@ export function PessoasDataTable<TData, TValue>({
   columns,
   data,
   loading = false,
+  pageSize = 10,
+  onAddClick
 }: PessoasDataTableProps<TData, TValue>) {
   // Inicializa o estado com os valores salvos no localStorage
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(() => {
@@ -82,39 +89,72 @@ export function PessoasDataTable<TData, TValue>({
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: (visibility) => {
+      setColumnVisibility(visibility)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(visibility))
+      }
+    },
     onGlobalFilterChange: setGlobalFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: pageSize,
+      },
+    },
   })
+
+  const router = useRouter()
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
-          <div className="relative w-72">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Pesquisar em todos os campos..."
-              value={globalFilter ?? ""}
-              onChange={(event) => setGlobalFilter(event.target.value)}
-              className="pl-8 pr-8"
-            />
-            {globalFilter && (
-              <Button
-                variant="ghost"
-                onClick={() => setGlobalFilter("")}
-                className="absolute right-0 top-0 h-full px-2 py-2 hover:bg-transparent"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </Button>
-            )}
-          </div>
-          <FilterSheet table={table} />
+        <div className="relative w-72">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Pesquisar em todos os campos..."
+            value={globalFilter ?? ""}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="pl-8 pr-8"
+          />
+          {globalFilter && (
+            <Button
+              variant="ghost"
+              onClick={() => setGlobalFilter("")}
+              className="absolute right-0 top-0 h-full px-2 py-2 hover:bg-transparent"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          )}
         </div>
-        <DataTableViewOptions table={table} />
+        <div className="flex items-center gap-2">
+          <div className="flex items-center space-x-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={onAddClick}
+                    variant="outline"
+                    size="sm"
+                    className="h-8 w-8 p-0 rounded-full"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="sr-only">Adicionar Pessoa</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Adicionar Pessoa</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <FilterSheet table={table} />
+            <DataTableViewOptions table={table} />
+            <DataTableExport table={table} />
+          </div>
+        </div>
       </div>
       
       <div className="rounded-md border flex-1 min-h-0 overflow-auto">

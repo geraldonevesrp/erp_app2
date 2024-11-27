@@ -66,7 +66,7 @@ function PessoasPageContent() {
     }
   }, [])
 
-  const handlePessoaAdded = async () => {
+  const handlePessoaAdded = async (id: number) => {
     setIsAddDialogOpen(false)
     await loadPessoas()
   }
@@ -76,15 +76,16 @@ function PessoasPageContent() {
     setEditingPessoaId(null)
   }
 
+  const handleNewPessoaClick = () => {
+    console.log("Abrindo diálogo de adicionar pessoa");
+    setIsAddDialogOpen(true);
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between py-4 px-8 border-b">
         <h2 className="text-2xl font-semibold tracking-tight">Pessoas</h2>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Adicionar Pessoa
-        </Button>
       </div>
 
       {/* Conteúdo com altura dinâmica */}
@@ -94,12 +95,13 @@ function PessoasPageContent() {
           data={pessoas || []} 
           loading={loading}
           pageSize={10}
+          onAddClick={() => setIsAddDialogOpen(true)}
         />
 
         <AddPessoaDialog
-          open={isAddDialogOpen}
-          onOpenChange={setIsAddDialogOpen}
-          onPessoaAdded={handlePessoaAdded}
+          isOpen={isAddDialogOpen}
+          onClose={() => setIsAddDialogOpen(false)}
+          onSuccess={handlePessoaAdded}
         />
 
         {editingPessoaId && (
