@@ -214,8 +214,8 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
         if (!endereco.logradouro?.trim()) {
           errors[`endereco_${index}_logradouro`] = "Logradouro é obrigatório"
         }
-        if (!endereco.cidade?.trim()) {
-          errors[`endereco_${index}_cidade`] = "Cidade é obrigatória"
+        if (!endereco.localidade?.trim()) {
+          errors[`endereco_${index}_localidade`] = "Cidade é obrigatória"
         }
         if (!endereco.uf?.trim()) {
           errors[`endereco_${index}_uf`] = "UF é obrigatória"
@@ -300,7 +300,7 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                 numero: endereco.numero,
                 complemento: endereco.complemento,
                 bairro: endereco.bairro,
-                cidade: endereco.cidade,
+                localidade: endereco.localidade,
                 uf: endereco.uf,
                 ibge: endereco.ibge,
                 principal: endereco.principal,
@@ -520,7 +520,7 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
           ...newEnderecos[index],
           logradouro: data.logradouro || newEnderecos[index].logradouro,
           bairro: data.bairro || newEnderecos[index].bairro,
-          cidade: data.localidade || newEnderecos[index].cidade,
+          localidade: data.localidade || newEnderecos[index].localidade,
           uf: data.uf || newEnderecos[index].uf
         }
         setPessoa(prev => ({
@@ -859,6 +859,13 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
       // Atualiza o estado local
       setPessoa(prev => ({
         ...prev,
+        foto_url: publicUrl
+      }))
+
+      // Atualiza apenas o campo foto_url no originalData, mantendo os outros campos como estavam
+      const originalDataObj = JSON.parse(originalData || '{}')
+      setOriginalData(JSON.stringify({
+        ...originalDataObj,
         foto_url: publicUrl
       }))
 
@@ -1237,15 +1244,15 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                       />
                     </div>
                     <div className="space-y-2">
-                      <RequiredLabel value={endereco.cidade}>
+                      <RequiredLabel value={endereco.localidade}>
                         <Label>Cidade</Label>
                       </RequiredLabel>
                       <Input
-                        value={endereco.cidade || ""}
-                        onChange={(e) => handleEnderecoChange(index, "cidade", e.target.value)}
-                        onBlur={() => markFieldAsTouched(`endereco_${index}_cidade`)}
+                        value={endereco.localidade || ""}
+                        onChange={(e) => handleEnderecoChange(index, "localidade", e.target.value)}
+                        onBlur={() => markFieldAsTouched(`endereco_${index}_localidade`)}
                         className={cn(
-                          isFieldInvalid(`endereco_${index}_cidade`, endereco.cidade) && 
+                          isFieldInvalid(`endereco_${index}_localidade`, endereco.localidade) && 
                           "border-destructive focus-visible:ring-destructive"
                         )}
                       />
