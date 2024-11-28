@@ -26,9 +26,8 @@ const menuItems = [
         href: '/erp/pessoas'
       },
       {
-        name: 'Grupo de Pessoas',
-        href: '/erp/cadastros/grupos',
-        disabled: true
+        name: 'Grupos de Pessoas',
+        href: '/erp/pessoas/grupos'
       },
       {
         name: 'Empresas',

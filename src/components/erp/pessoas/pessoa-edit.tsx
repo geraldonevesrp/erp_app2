@@ -40,6 +40,7 @@ import { Switch } from "@/components/ui/switch"
 import { useHeader } from "@/contexts/header-context"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Camera, PencilLine, X } from "lucide-react"
+import { ImageCropDialog } from "@/components/ui/image-crop-dialog"
 
 interface PessoaEditProps {
   pessoaId: number | null
@@ -51,6 +52,19 @@ interface PessoaEditProps {
 interface PessoaTipo {
   id: number
   tipo: string
+}
+
+interface Grupo {
+  id: number
+  grupo: string
+  tipo: number
+  perfis_id: number
+}
+
+interface SubGrupo {
+  id: number
+  subgrupo: string
+  grupos_id: number
 }
 
 export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProps) {
@@ -68,6 +82,11 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
   const [originalData, setOriginalData] = useState<any>(null)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [selectedFileUrl, setSelectedFileUrl] = useState<string>("")
+  const [grupos, setGrupos] = useState<Grupo[]>([])
+  const [subGrupos, setSubGrupos] = useState<SubGrupo[]>([])
 
   const RequiredLabel = ({ children, value }: { children: React.ReactNode, value: any }) => (
     <div className="flex items-center gap-1">
@@ -221,6 +240,19 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
           errors[`endereco_${index}_uf`] = "UF é obrigatória"
         }
       })
+    }
+
+    // Validação de grupos e subgrupos
+    if (pessoa.subgrupos_ids?.length > 0) {
+      // Verifica se todos os subgrupos pertencem a grupos selecionados
+      const invalidSubgrupos = pessoa.subgrupos_ids.filter(subId => {
+        const subgrupo = subGrupos.find(s => s.id === subId)
+        return !subgrupo || !pessoa.grupos_ids?.includes(subgrupo.grupos_id)
+      })
+
+      if (invalidSubgrupos.length > 0) {
+        errors.subgrupos = "Existem subgrupos selecionados que não pertencem aos grupos escolhidos"
+      }
     }
 
     setValidationErrors(errors)
@@ -769,6 +801,78 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
     fetchTiposPessoa()
   }, [supabase])
 
+  // Buscar grupos e subgrupos
+  useEffect(() => {
+    async function fetchGruposSubgrupos() {
+      try {
+        // Carrega grupos
+        const { data: gruposData, error: gruposError } = await supabase
+          .from("grupos")
+          .select("*")
+          .eq("tipo", 1)  // tipo 1 = grupos de pessoas
+          .eq("perfis_id", perfil?.id)
+          .order("grupo")
+
+        if (gruposError) throw gruposError
+        setGrupos(gruposData || [])
+
+        // Carrega subgrupos apenas dos grupos carregados
+        if (gruposData && gruposData.length > 0) {
+          const gruposIds = gruposData.map(g => g.id)
+          const { data: subGruposData, error: subGruposError } = await supabase
+            .from("sub_grupos")
+            .select("*")
+            .in("grupos_id", gruposIds)
+            .order("subgrupo")
+
+          if (subGruposError) throw subGruposError
+          setSubGrupos(subGruposData || [])
+        } else {
+          setSubGrupos([])
+        }
+      } catch (err: any) {
+        toast({
+          title: "Erro ao carregar grupos",
+          description: err.message,
+          variant: "destructive"
+        })
+      }
+    }
+
+    if (isOpen && perfil?.id) {
+      fetchGruposSubgrupos()
+    }
+  }, [isOpen, perfil?.id, supabase, toast])
+
+  // Função para atualizar grupos da pessoa
+  const handleGruposChange = (selectedGrupos: number[]) => {
+    // Filtra subgrupos que não pertencem mais aos grupos selecionados
+    const validSubgrupos = (pessoa?.subgrupos_ids || []).filter(subId => {
+      const subgrupo = subGrupos.find(s => s.id === subId)
+      return subgrupo && selectedGrupos.includes(subgrupo.grupos_id)
+    })
+
+    setPessoa(prev => ({
+      ...prev,
+      grupos_ids: selectedGrupos,
+      subgrupos_ids: validSubgrupos
+    }))
+  }
+
+  // Função para obter o nome do grupo pai do subgrupo
+  const getGrupoNome = (grupoId: number) => {
+    const grupo = grupos.find(g => g.id === grupoId)
+    return grupo?.grupo || ""
+  }
+
+  // Função para atualizar subgrupos da pessoa
+  const handleSubGruposChange = (selectedSubGrupos: number[]) => {
+    setPessoa(prev => ({
+      ...prev,
+      subgrupos_ids: selectedSubGrupos
+    }))
+  }
+
   // Função para formatar CPF/CNPJ
   const formatDocument = (doc: string) => {
     if (!doc) return ""
@@ -799,7 +903,30 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
         throw new Error('Arquivo muito grande. O tamanho máximo permitido é 2MB.')
       }
 
+      // Criar URL temporária para a imagem
+      const fileUrl = URL.createObjectURL(file)
+      setSelectedFile(file)
+      setSelectedFileUrl(fileUrl)
+      setIsCropDialogOpen(true)
+    } catch (err: any) {
+      console.error('Erro ao processar arquivo:', err)
+      toast({
+        title: "Erro ao processar imagem",
+        description: err.message,
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleCropComplete = async (croppedImageUrl: string) => {
+    if (!pessoaId || !perfil?.id || !selectedFile) return
+
+    try {
       setLoading(true)
+      
+      // Converter base64 para blob
+      const response = await fetch(croppedImageUrl)
+      const blob = await response.blob()
       
       // Remove foto antiga se existir
       if (pessoa.foto_url) {
@@ -813,8 +940,8 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
         }
       }
       
-      // Cria um nome único para o arquivo
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      // Criar nome único para o arquivo
+      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase() || 'jpg'
       const fileName = `${Date.now()}.${fileExt}`
       const filePath = `${perfil.id}/pessoas_fotos/${pessoaId}/${fileName}`
 
@@ -822,7 +949,7 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
       const { error: uploadError } = await supabase
         .storage
         .from('Perfis')
-        .upload(filePath, file, {
+        .upload(filePath, blob, {
           cacheControl: '3600',
           upsert: false
         })
@@ -883,6 +1010,12 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
       })
     } finally {
       setLoading(false)
+      // Limpar URLs temporárias
+      if (selectedFileUrl) {
+        URL.revokeObjectURL(selectedFileUrl)
+      }
+      setSelectedFile(null)
+      setSelectedFileUrl("")
     }
   }
 
@@ -969,6 +1102,20 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                 </div>
               </DialogContent>
             </Dialog>
+
+            <ImageCropDialog
+              isOpen={isCropDialogOpen}
+              onClose={() => {
+                setIsCropDialogOpen(false)
+                if (selectedFileUrl) {
+                  URL.revokeObjectURL(selectedFileUrl)
+                }
+                setSelectedFile(null)
+                setSelectedFileUrl("")
+              }}
+              imageUrl={selectedFileUrl}
+              onCropComplete={handleCropComplete}
+            />
 
             {/* Card Principal - Dados Básicos */}
             <div className="rounded-lg border bg-white shadow-sm p-6">
@@ -1124,271 +1271,283 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
             </div>
 
             {/* Cards Expansíveis */}
-            <ExpandableCard 
-              title={
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  <span>Endereços</span>
-                </div>
-              }
-              description="Gerencie os endereços da pessoa"
-              defaultExpanded={true}
-              className="bg-white p-6"
-            >
-              {/* Conteúdo dos endereços */}
-              {pessoa.pessoas_enderecos.map((endereco: any, index: number) => (
-                <div key={endereco.id} className="border rounded-lg p-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Endereço {index + 1}</h4>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSetPrincipal(endereco.id)}
-                        disabled={endereco.principal}
-                      >
-                        {endereco.principal ? "Principal" : "Tornar Principal"}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveEndereco(endereco.id)}
-                        disabled={endereco.principal}
-                      >
-                        Remover
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <RequiredLabel value={endereco.cep}>
-                        <Label>CEP</Label>
-                      </RequiredLabel>
-                      <Input
-                        value={formatCEP(endereco.cep || "")}
-                        onChange={(e) => handleCepChange(index, e.target.value)}
-                        onBlur={() => markFieldAsTouched(`endereco_${index}_cep`)}
-                        className={cn(
-                          isFieldInvalid(`endereco_${index}_cep`, endereco.cep) && 
-                          "border-destructive focus-visible:ring-destructive"
-                        )}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <RequiredLabel value={endereco.logradouro}>
-                        <Label>Logradouro</Label>
-                      </RequiredLabel>
-                      <Input
-                        value={endereco.logradouro || ""}
-                        onChange={(e) => handleEnderecoChange(index, "logradouro", e.target.value)}
-                        onBlur={() => markFieldAsTouched(`endereco_${index}_logradouro`)}
-                        className={cn(
-                          isFieldInvalid(`endereco_${index}_logradouro`, endereco.logradouro) && 
-                          "border-destructive focus-visible:ring-destructive"
-                        )}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <RequiredLabel value={endereco.sem_numero ? "Sem Número" : endereco.numero}>
-                        <Label>Número</Label>
-                      </RequiredLabel>
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <Input
-                            value={endereco.numero || ""}
-                            onChange={(e) => handleNumeroChange(index, e.target.value)}
-                            onBlur={() => markFieldAsTouched(`endereco_${index}_numero`)}
-                            disabled={endereco.sem_numero}
-                            className={cn(
-                              !endereco.sem_numero && 
-                              isFieldInvalid(`endereco_${index}_numero`, endereco.numero) && 
-                              "border-destructive focus-visible:ring-destructive"
-                            )}
-                          />
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id={`sem-numero-${index}`}
-                            checked={endereco.sem_numero || false}
-                            onCheckedChange={(checked) => handleSemNumeroChange(checked, index)}
-                          />
-                          <label
-                            htmlFor={`sem-numero-${index}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            Sem Número
-                          </label>
-                        </div>
+            <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+              <h4 className="text-sm font-medium mb-4">Endereços</h4>
+              <div className="space-y-6">
+                {pessoa.pessoas_enderecos.map((endereco: any, index: number) => (
+                  <div key={endereco.id} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">Endereço {index + 1}</h4>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSetPrincipal(endereco.id)}
+                          disabled={endereco.principal}
+                        >
+                          {endereco.principal ? "Principal" : "Tornar Principal"}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRemoveEndereco(endereco.id)}
+                          disabled={endereco.principal}
+                        >
+                          Remover
+                        </Button>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Complemento</Label>
-                      <Input
-                        value={endereco.complemento || ""}
-                        onChange={(e) => handleEnderecoChange(index, "complemento", e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <RequiredLabel value={endereco.bairro}>
-                        <Label>Bairro</Label>
-                      </RequiredLabel>
-                      <Input
-                        value={endereco.bairro || ""}
-                        onChange={(e) => handleEnderecoChange(index, "bairro", e.target.value)}
-                        onBlur={() => markFieldAsTouched(`endereco_${index}_bairro`)}
-                        className={cn(
-                          isFieldInvalid(`endereco_${index}_bairro`, endereco.bairro) && 
-                          "border-destructive focus-visible:ring-destructive"
-                        )}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <RequiredLabel value={endereco.localidade}>
-                        <Label>Cidade</Label>
-                      </RequiredLabel>
-                      <Input
-                        value={endereco.localidade || ""}
-                        onChange={(e) => handleEnderecoChange(index, "localidade", e.target.value)}
-                        onBlur={() => markFieldAsTouched(`endereco_${index}_localidade`)}
-                        className={cn(
-                          isFieldInvalid(`endereco_${index}_localidade`, endereco.localidade) && 
-                          "border-destructive focus-visible:ring-destructive"
-                        )}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <RequiredLabel value={endereco.uf}>
-                        <Label>UF</Label>
-                      </RequiredLabel>
-                      <Input
-                        value={endereco.uf || ""}
-                        onChange={(e) => handleEnderecoChange(index, "uf", e.target.value)}
-                        onBlur={() => markFieldAsTouched(`endereco_${index}_uf`)}
-                        className={cn(
-                          isFieldInvalid(`endereco_${index}_uf`, endereco.uf) && 
-                          "border-destructive focus-visible:ring-destructive"
-                        )}
-                      />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <RequiredLabel value={endereco.cep}>
+                          <Label>CEP</Label>
+                        </RequiredLabel>
+                        <Input
+                          value={formatCEP(endereco.cep || "")}
+                          onChange={(e) => handleCepChange(index, e.target.value)}
+                          onBlur={() => markFieldAsTouched(`endereco_${index}_cep`)}
+                          className={cn(
+                            isFieldInvalid(`endereco_${index}_cep`, endereco.cep) && 
+                            "border-destructive focus-visible:ring-destructive"
+                          )}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <RequiredLabel value={endereco.logradouro}>
+                          <Label>Logradouro</Label>
+                        </RequiredLabel>
+                        <Input
+                          value={endereco.logradouro || ""}
+                          onChange={(e) => handleEnderecoChange(index, "logradouro", e.target.value)}
+                          onBlur={() => markFieldAsTouched(`endereco_${index}_logradouro`)}
+                          className={cn(
+                            isFieldInvalid(`endereco_${index}_logradouro`, endereco.logradouro) && 
+                            "border-destructive focus-visible:ring-destructive"
+                          )}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <RequiredLabel value={endereco.sem_numero ? "Sem Número" : endereco.numero}>
+                          <Label>Número</Label>
+                        </RequiredLabel>
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <Input
+                              value={endereco.numero || ""}
+                              onChange={(e) => handleNumeroChange(index, e.target.value)}
+                              onBlur={() => markFieldAsTouched(`endereco_${index}_numero`)}
+                              disabled={endereco.sem_numero}
+                              className={cn(
+                                !endereco.sem_numero && 
+                                isFieldInvalid(`endereco_${index}_numero`, endereco.numero) && 
+                                "border-destructive focus-visible:ring-destructive"
+                              )}
+                            />
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id={`sem-numero-${index}`}
+                              checked={endereco.sem_numero || false}
+                              onCheckedChange={(checked) => handleSemNumeroChange(checked, index)}
+                            />
+                            <label
+                              htmlFor={`sem-numero-${index}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              Sem Número
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Complemento</Label>
+                        <Input
+                          value={endereco.complemento || ""}
+                          onChange={(e) => handleEnderecoChange(index, "complemento", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <RequiredLabel value={endereco.bairro}>
+                          <Label>Bairro</Label>
+                        </RequiredLabel>
+                        <Input
+                          value={endereco.bairro || ""}
+                          onChange={(e) => handleEnderecoChange(index, "bairro", e.target.value)}
+                          onBlur={() => markFieldAsTouched(`endereco_${index}_bairro`)}
+                          className={cn(
+                            isFieldInvalid(`endereco_${index}_bairro`, endereco.bairro) && 
+                            "border-destructive focus-visible:ring-destructive"
+                          )}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <RequiredLabel value={endereco.localidade}>
+                          <Label>Cidade</Label>
+                        </RequiredLabel>
+                        <Input
+                          value={endereco.localidade || ""}
+                          onChange={(e) => handleEnderecoChange(index, "localidade", e.target.value)}
+                          onBlur={() => markFieldAsTouched(`endereco_${index}_localidade`)}
+                          className={cn(
+                            isFieldInvalid(`endereco_${index}_localidade`, endereco.localidade) && 
+                            "border-destructive focus-visible:ring-destructive"
+                          )}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <RequiredLabel value={endereco.uf}>
+                          <Label>UF</Label>
+                        </RequiredLabel>
+                        <Input
+                          value={endereco.uf || ""}
+                          onChange={(e) => handleEnderecoChange(index, "uf", e.target.value)}
+                          onBlur={() => markFieldAsTouched(`endereco_${index}_uf`)}
+                          className={cn(
+                            isFieldInvalid(`endereco_${index}_uf`, endereco.uf) && 
+                            "border-destructive focus-visible:ring-destructive"
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-              
-              {/* Botão de adicionar no rodapé */}
-              <Button
-                onClick={handleAddEndereco}
-                className="w-full mt-4"
-                variant="outline"
-                disabled={loading}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Adicionar Endereço
-              </Button>
-            </ExpandableCard>
+                ))}
+                
+                {/* Botão de adicionar no rodapé */}
+                <Button
+                  onClick={handleAddEndereco}
+                  className="w-full mt-4"
+                  variant="outline"
+                  disabled={loading}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Endereço
+                </Button>
+              </div>
+            </div>
 
-            <ExpandableCard 
-              title={
-                <div className="flex items-center gap-2">
-                  <Phone className="h-5 w-5" />
-                  <span>Contatos</span>
-                </div>
-              }
-              description="Gerencie os contatos da pessoa"
-              defaultExpanded={true}
-              className="bg-white p-6"
-            >
-              {/* Conteúdo dos contatos */}
-              {pessoa.pessoas_contatos.map((contato: any, index: number) => (
-                <div key={contato.id} className="border rounded-lg p-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-medium">Contato {index + 1}</h4>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleSetPrincipalContato(contato.id)}
-                        disabled={contato.principal}
-                      >
-                        {contato.principal ? "Principal" : "Tornar Principal"}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveContato(contato.id)}
-                        disabled={contato.principal}
-                      >
-                        Remover
-                      </Button>
+            <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+              <h4 className="text-sm font-medium mb-4">Contatos</h4>
+              <div className="space-y-6">
+                {pessoa.pessoas_contatos.map((contato: any, index: number) => (
+                  <div key={contato.id} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">Contato {index + 1}</h4>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSetPrincipalContato(contato.id)}
+                          disabled={contato.principal}
+                        >
+                          {contato.principal ? "Principal" : "Tornar Principal"}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRemoveContato(contato.id)}
+                          disabled={contato.principal}
+                        >
+                          Remover
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <RequiredLabel value={contato.tipo}>
+                          <Label>Tipo</Label>
+                        </RequiredLabel>
+                        <Select
+                          value={contato.tipo || ""}
+                          onValueChange={(value) => handleContatoChange(index, "tipo", value)}
+                          onBlur={() => markFieldAsTouched(`contato_${index}_tipo`)}
+                          className={cn(
+                            isFieldInvalid(`contato_${index}_tipo`, contato.tipo) && 
+                            "border-destructive focus-visible:ring-destructive"
+                          )}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="telefone">Telefone</SelectItem>
+                            <SelectItem value="celular">Celular</SelectItem>
+                            <SelectItem value="email">E-mail</SelectItem>
+                            <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <RequiredLabel value={contato.valor}>
+                          <Label>Valor</Label>
+                        </RequiredLabel>
+                        <Input
+                          value={contato.tipo === "telefone" || contato.tipo === "celular" ? 
+                            formatPhoneNumber(contato.valor || "") : 
+                            contato.valor || ""
+                          }
+                          onChange={(e) => handleContatoChange(index, "valor", e.target.value)}
+                          onBlur={() => markFieldAsTouched(`contato_${index}_valor`)}
+                          className={cn(
+                            isFieldInvalid(`contato_${index}_valor`, contato.valor) && 
+                            "border-destructive focus-visible:ring-destructive"
+                          )}
+                        />
+                      </div>
+                      <div className="col-span-2 space-y-2">
+                        <Label>Observação</Label>
+                        <Input
+                          value={contato.observacao || ""}
+                          onChange={(e) => handleContatoChange(index, "observacao", e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <RequiredLabel value={contato.tipo}>
-                        <Label>Tipo</Label>
-                      </RequiredLabel>
-                      <Select
-                        value={contato.tipo || ""}
-                        onValueChange={(value) => handleContatoChange(index, "tipo", value)}
-                        onBlur={() => markFieldAsTouched(`contato_${index}_tipo`)}
-                        className={cn(
-                          isFieldInvalid(`contato_${index}_tipo`, contato.tipo) && 
-                          "border-destructive focus-visible:ring-destructive"
-                        )}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="telefone">Telefone</SelectItem>
-                          <SelectItem value="celular">Celular</SelectItem>
-                          <SelectItem value="email">E-mail</SelectItem>
-                          <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <RequiredLabel value={contato.valor}>
-                        <Label>Valor</Label>
-                      </RequiredLabel>
-                      <Input
-                        value={contato.tipo === "telefone" || contato.tipo === "celular" ? 
-                          formatPhoneNumber(contato.valor || "") : 
-                          contato.valor || ""
-                        }
-                        onChange={(e) => handleContatoChange(index, "valor", e.target.value)}
-                        onBlur={() => markFieldAsTouched(`contato_${index}_valor`)}
-                        className={cn(
-                          isFieldInvalid(`contato_${index}_valor`, contato.valor) && 
-                          "border-destructive focus-visible:ring-destructive"
-                        )}
-                      />
-                    </div>
-                    <div className="col-span-2 space-y-2">
-                      <Label>Observação</Label>
-                      <Input
-                        value={contato.observacao || ""}
-                        onChange={(e) => handleContatoChange(index, "observacao", e.target.value)}
-                      />
-                    </div>
-                  </div>
+            <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+              <h4 className="text-sm font-medium mb-4">Grupos e Subgrupos</h4>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label>Grupos</Label>
+                  <MultiSelect
+                    options={grupos.map(grupo => ({
+                      label: grupo.grupo,
+                      value: grupo.id.toString()
+                    }))}
+                    selected={pessoa?.grupos_ids?.map(id => id.toString()) || []}
+                    onChange={values => handleGruposChange(values.map(v => parseInt(v)))}
+                    placeholder="Selecione os grupos..."
+                  />
                 </div>
-              ))}
-            </ExpandableCard>
+                <div className="space-y-2">
+                  <Label>Subgrupos</Label>
+                  <MultiSelect
+                    options={subGrupos
+                      .filter(sub => pessoa?.grupos_ids?.includes(sub.grupos_id))
+                      .map(sub => ({
+                        label: `${getGrupoNome(sub.grupos_id)} › ${sub.subgrupo}`,
+                        value: sub.id.toString()
+                      }))}
+                    selected={pessoa?.subgrupos_ids?.map(id => id.toString()) || []}
+                    onChange={values => handleSubGruposChange(values.map(v => parseInt(v)))}
+                    placeholder="Selecione os subgrupos..."
+                    disabled={!pessoa?.grupos_ids?.length}
+                  />
+                  {!pessoa?.grupos_ids?.length && (
+                    <p className="text-sm text-muted-foreground">
+                      Selecione pelo menos um grupo para ver os subgrupos disponíveis
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
 
-            <ExpandableCard 
-              title={
-                <div className="flex items-center gap-2">
-                  <Receipt className="h-5 w-5" />
-                  <span>Informações Fiscais</span>
-                </div>
-              }
-              description="Gerencie as informações fiscais da pessoa"
-              defaultExpanded={false}
-              className="bg-white p-6"
-            >
-              {/* Conteúdo dos documentos */}
+            <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+              <h4 className="text-sm font-medium mb-4">Informações Fiscais</h4>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <RequiredLabel value={pessoa.inscricao_estadual}>
@@ -1465,20 +1624,10 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                   </Select>
                 </div>
               </div>
-            </ExpandableCard>
+            </div>
 
-            <ExpandableCard 
-              title={
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  <span>Outras Informações</span>
-                </div>
-              }
-              description="Gerencie as outras informações da pessoa"
-              defaultExpanded={false}
-              className="bg-white p-6"
-            >
-              {/* Conteúdo das observações */}
+            <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
+              <h4 className="text-sm font-medium mb-4">Outras Informações</h4>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label>Observações</Label>
@@ -1488,7 +1637,7 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                   />
                 </div>
               </div>
-            </ExpandableCard>
+            </div>
           </div>
         </div>
       </PessoaEditSheetContent>

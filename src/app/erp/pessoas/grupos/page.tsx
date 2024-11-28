@@ -160,11 +160,22 @@ export default function GruposPessoas() {
     if (!newSubgroup.trim()) return
 
     try {
+      // Verifica se o subgrupo já existe neste grupo
+      const { data: existingSubgrupos } = await supabase
+        .from("sub_grupos")
+        .select("*")
+        .eq("grupos_id", grupoId)
+        .eq("subgrupo", newSubgroup.trim())
+
+      if (existingSubgrupos && existingSubgrupos.length > 0) {
+        throw new Error("Já existe um subgrupo com este nome neste grupo")
+      }
+
       const { error } = await supabase
         .from("sub_grupos")
         .insert({
           grupos_id: grupoId,
-          subgrupo: newSubgroup
+          subgrupo: newSubgroup.trim()
         })
 
       if (error) throw error

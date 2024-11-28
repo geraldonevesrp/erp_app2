@@ -108,6 +108,12 @@ export function MultiSelect({
             value={search}
             onChange={handleInputChange}
             onFocus={() => setOpen(true)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck="false"
+            aria-autocomplete="none"
+            data-form-type="other"
             className="flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[120px]"
             placeholder={selected.length === 0 ? placeholder : ""}
           />
@@ -115,8 +121,8 @@ export function MultiSelect({
       </div>
       
       {open && availableOptions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 rounded-md border border-input bg-background shadow-md">
-          <div className="max-h-[200px] overflow-auto p-1">
+        <div className="absolute z-[100] w-full mt-1 rounded-md border border-input bg-background shadow-md" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+          <div className="p-1">
             {availableOptions.map((option) => (
               <div
                 key={option.value}
@@ -134,7 +140,7 @@ export function MultiSelect({
       )}
 
       {open && search && availableOptions.length === 0 && (
-        <div className="absolute z-50 w-full mt-1 rounded-md border border-input bg-background shadow-md">
+        <div className="absolute z-[100] w-full mt-1 rounded-md border border-input bg-background shadow-md">
           <div className="p-2 text-sm text-muted-foreground">
             Nenhum resultado encontrado
           </div>
