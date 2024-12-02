@@ -58,8 +58,8 @@ export function ExpandableCard({
       </div>
       <div
         className={cn(
-          "overflow-hidden transition-all duration-200 ease-in-out",
-          isExpanded ? "max-h-[2000px] pb-4" : "max-h-0"
+          "transition-all duration-200 ease-in-out",
+          isExpanded ? "max-h-[2000px] pb-4" : "max-h-0 !overflow-hidden"
         )}
       >
         <div className="px-4 space-y-4">

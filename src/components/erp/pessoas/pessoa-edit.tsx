@@ -80,20 +80,29 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
   const { setSubtitle } = useHeader()
   const [hasChanges, setHasChanges] = useState(false)
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({})
-  const [originalData, setOriginalData] = useState<any>(null)
+  const [originalPessoa, setOriginalPessoa] = useState<any>(null)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
   const [isCropDialogOpen, setIsCropDialogOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [selectedFileUrl, setSelectedFileUrl] = useState<string>("")
   const [grupos, setGrupos] = useState<Grupo[]>([])
   const [subGrupos, setSubGrupos] = useState<SubGrupo[]>([])
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false)
+  const [isConfirmRemoveDialogOpen, setIsConfirmRemoveDialogOpen] = useState(false)
+  const [itemToRemove, setItemToRemove] = useState<{ type: 'contato' | 'endereco', id: number } | null>(null)
+  const [pendingClose, setPendingClose] = useState(false)
+  const [newContatos, setNewContatos] = useState<any[]>([])
+  const [deletedContatos, setDeletedContatos] = useState<number[]>([])
+  const [newEnderecos, setNewEnderecos] = useState<any[]>([])
+  const [deletedEnderecos, setDeletedEnderecos] = useState<number[]>([])
 
   const RequiredLabel = ({ children, value }: { children: React.ReactNode, value: any }) => (
     <div className="flex items-center gap-1">
       {children}
-      {(!value || value.trim() === "") && (
-        <Asterisk className="h-3 w-3 text-destructive" />
-      )}
+      <span className={cn(
+        "text-destructive",
+        (value !== null && value !== undefined && value !== '') && "invisible"
+      )}>*</span>
     </div>
   )
 
@@ -103,7 +112,7 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
 
   useEffect(() => {
     if (pessoaId && isOpen && mounted) {
-      loadPessoa()
+      loadData()
     }
   }, [pessoaId, isOpen, mounted])
 
@@ -135,62 +144,135 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
 
   useEffect(() => {
     if (!isOpen) {
+      setPessoa(null)
+      setOriginalPessoa(null)
       setHasChanges(false)
       setValidationErrors({})
-      setOriginalData(null)
+      setTouchedFields({})
+      setNewContatos([])
+      setDeletedContatos([])
+      setNewEnderecos([])
+      setDeletedEnderecos([])
     }
   }, [isOpen])
 
   useEffect(() => {
-    if (pessoa && originalData) {
-      const currentData = JSON.stringify(pessoa)
-      setHasChanges(currentData !== originalData)
+    if (pessoa && originalPessoa) {
+      const isEqual = (obj1: any, obj2: any): boolean => {
+        if (obj1 === obj2) return true
+        if (typeof obj1 !== 'object' || typeof obj2 !== 'object') return obj1 === obj2
+        if (obj1 === null || obj2 === null) return obj1 === obj2
+        
+        const keys1 = Object.keys(obj1)
+        const keys2 = Object.keys(obj2)
+        
+        if (keys1.length !== keys2.length) return false
+        
+        for (const key of keys1) {
+          if (!keys2.includes(key)) return false
+          if (!isEqual(obj1[key], obj2[key])) return false
+        }
+        
+        return true
+      }
+
+      const cleanObject = (obj: any): any => {
+        if (obj === null || typeof obj !== 'object') return obj
+        
+        const cleaned: any = {}
+        for (const [key, value] of Object.entries(obj)) {
+          if (value === null || value === undefined || value === '') continue
+          if (Array.isArray(value)) {
+            // Para arrays de endereços, filtrar os que estão vazios
+            if (key === 'pessoas_enderecos') {
+              const validEnderecos = value.filter((endereco: any) => 
+                endereco && endereco.cep && endereco.numero && !deletedEnderecos.includes(endereco.id)
+              ).map(cleanObject)
+              if (validEnderecos.length > 0) {
+                cleaned[key] = validEnderecos
+              }
+            } else {
+              cleaned[key] = value.map(cleanObject).filter(Boolean)
+            }
+          } else if (typeof value === 'object') {
+            cleaned[key] = cleanObject(value)
+          } else {
+            cleaned[key] = value
+          }
+        }
+        return cleaned
+      }
+
+      const cleanedPessoa = cleanObject(pessoa)
+      const cleanedOriginal = cleanObject(originalPessoa)
+      
+      setHasChanges(!isEqual(cleanedPessoa, cleanedOriginal))
     }
-  }, [pessoa, originalData])
+  }, [pessoa, originalPessoa])
 
   useEffect(() => {
-    if (pessoa && !originalData) {
-      setOriginalData(JSON.stringify(pessoa))
+    if (pessoa && !originalPessoa) {
+      setOriginalPessoa(pessoa)
     }
   }, [pessoa])
 
-  const loadPessoa = async () => {
+  const loadData = async () => {
     try {
       setLoading(true)
       setError("")
-      setOriginalData(null) // Reseta os dados originais antes de carregar novos dados
+      setOriginalPessoa(null)
 
-      // Primeiro carrega os dados da view para ter todos os campos calculados
       const { data: viewData, error: viewError } = await supabase
         .from("v_pessoas")
-        .select("*")
+        .select()
         .eq("id", pessoaId)
         .eq("perfis_id", perfil.id)
         .single()
 
-      if (viewError) throw viewError
+      if (viewError) {
+        console.error("Erro ao carregar dados da view:", viewError)
+        throw new Error(`Erro ao carregar dados: ${viewError.message}`)
+      }
 
-      // Depois carrega os dados relacionados
-      const { data: relData, error: relError } = await supabase
+      if (!viewData) {
+        throw new Error("Dados não encontrados")
+      }
+
+      const { data: pessoaData, error: pessoaError } = await supabase
         .from("pessoas")
         .select(`
-          pessoas_enderecos(*),
-          pessoas_contatos(*)
+          *,
+          pessoas_contatos (*),
+          pessoas_enderecos (*)
         `)
+        .single()
         .eq("id", pessoaId)
         .eq("perfis_id", perfil.id)
-        .single()
 
-      if (relError) throw relError
+      if (pessoaError) {
+        console.error("Erro ao carregar dados da pessoa:", pessoaError)
+        throw new Error(`Erro ao carregar dados: ${pessoaError.message}`)
+      }
 
-      // Combina os dados da view com os relacionamentos
-      setPessoa({
-        ...viewData,
-        pessoas_enderecos: relData?.pessoas_enderecos || [],
-        pessoas_contatos: relData?.pessoas_contatos || []
-      })
+      if (!pessoaData) {
+        throw new Error("Dados não encontrados")
+      }
+
+      const mergedData = {
+        ...pessoaData,
+        ...viewData
+      }
+
+      setPessoa(mergedData)
+      setOriginalPessoa(mergedData)
+
     } catch (err: any) {
       setError(err.message)
+      toast({
+        title: "Erro",
+        description: err.message,
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
@@ -220,27 +302,26 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
     }
 
     // Validação de endereços
-    if (pessoa.pessoas_enderecos?.length > 0) {
-      const principalCount = pessoa.pessoas_enderecos.filter((e: any) => e.principal).length
-      if (principalCount !== 1) {
-        errors.enderecos = "Deve haver exatamente um endereço principal"
+    pessoa.pessoas_enderecos.forEach((endereco, index) => {
+      if (!endereco.cep?.trim()) {
+        errors[`endereco_${index}_cep`] = "CEP é obrigatório"
       }
-
-      pessoa.pessoas_enderecos.forEach((endereco: any, index: number) => {
-        if (!endereco.cep?.trim()) {
-          errors[`endereco_${index}_cep`] = "CEP é obrigatório"
-        }
-        if (!endereco.logradouro?.trim()) {
-          errors[`endereco_${index}_logradouro`] = "Logradouro é obrigatório"
-        }
-        if (!endereco.localidade?.trim()) {
-          errors[`endereco_${index}_localidade`] = "Cidade é obrigatória"
-        }
-        if (!endereco.uf?.trim()) {
-          errors[`endereco_${index}_uf`] = "UF é obrigatória"
-        }
-      })
-    }
+      if (!endereco.logradouro?.trim()) {
+        errors[`endereco_${index}_logradouro`] = "Logradouro é obrigatório"
+      }
+      if (!endereco.numero?.trim()) {
+        errors[`endereco_${index}_numero`] = "Número é obrigatório"
+      }
+      if (!endereco.bairro?.trim()) {
+        errors[`endereco_${index}_bairro`] = "Bairro é obrigatório"
+      }
+      if (!endereco.localidade?.trim()) {
+        errors[`endereco_${index}_localidade`] = "Cidade é obrigatória"
+      }
+      if (!endereco.uf?.trim()) {
+        errors[`endereco_${index}_uf`] = "UF é obrigatória"
+      }
+    })
 
     // Validação de grupos e subgrupos
     if (pessoa.subgrupos_ids?.length > 0) {
@@ -275,149 +356,127 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
         throw new Error("Dados necessários não encontrados")
       }
 
-      // Atualiza a pessoa
-      const { data: pessoaData, error: pessoaError } = await supabase
+      // Validação de contatos
+      const allContatos = pessoa.pessoas_contatos || []
+      const invalidContatos = allContatos.filter(c => !c.contato?.trim())
+      if (invalidContatos.length > 0) {
+        throw new Error("Todos os contatos precisam ter um nome preenchido")
+      }
+
+      // Remover contatos marcados para deleção
+      if (deletedContatos.length > 0) {
+        const { error: deleteContatosError } = await supabase
+          .from("pessoas_contatos")
+          .delete()
+          .in('id', deletedContatos)
+
+        if (deleteContatosError) throw deleteContatosError
+      }
+
+      // Remover endereços marcados para deleção
+      if (deletedEnderecos.length > 0) {
+        const { error: deleteEnderecosError } = await supabase
+          .from("pessoas_enderecos")
+          .delete()
+          .in('id', deletedEnderecos)
+
+        if (deleteEnderecosError) throw deleteEnderecosError
+      }
+
+      // Adicionar novos contatos
+      const contatosToAdd = newContatos.map(({ id, isNew, ...contato }) => contato)
+      if (contatosToAdd.length > 0) {
+        const { error: insertContatosError } = await supabase
+          .from("pessoas_contatos")
+          .insert(contatosToAdd)
+
+        if (insertContatosError) throw insertContatosError
+      }
+
+      // Adicionar novos endereços
+      const enderecosToAdd = pessoa.pessoas_enderecos
+        .filter((e: any) => e.isNew && !deletedEnderecos.includes(e.id))
+        .map(({ id, isNew, ...endereco }) => ({
+          pessoa_id: pessoa.id,
+          titulo: endereco.titulo || '',
+          cep: endereco.cep || '',
+          logradouro: endereco.logradouro || '',
+          numero: endereco.numero || '',
+          complemento: endereco.complemento || '',
+          bairro: endereco.bairro || '',
+          localidade: endereco.localidade || '',
+          uf: endereco.uf || '',
+          ibge: endereco.ibge || '',
+          gia: endereco.gia || '',
+          ddd: endereco.ddd || '',
+          siafi: endereco.siafi || '',
+          principal: endereco.principal || false
+        }))
+
+      if (enderecosToAdd.length > 0) {
+        const { error: insertEnderecosError } = await supabase
+          .from("pessoas_enderecos")
+          .insert(enderecosToAdd)
+
+        if (insertEnderecosError) throw insertEnderecosError
+      }
+
+      // Atualizar contatos existentes (apenas os que já existem no banco)
+      const existingContatos = pessoa.pessoas_contatos
+        .filter((c: any) => !c.isNew && !deletedContatos.includes(c.id) && typeof c.id === 'number')
+        .map(({ isNew, ...contato }: any) => contato)
+
+      for (const contato of existingContatos) {
+        const { error: updateContatoError } = await supabase
+          .from("pessoas_contatos")
+          .update(contato)
+          .eq('id', contato.id)
+
+        if (updateContatoError) throw updateContatoError
+      }
+
+      // Atualizar endereços existentes (apenas os que já existem no banco)
+      const existingEnderecos = pessoa.pessoas_enderecos
+        .filter((e: any) => !e.isNew && !deletedEnderecos.includes(e.id) && typeof e.id === 'number')
+        .map(({ isNew, ...endereco }: any) => endereco)
+
+      for (const endereco of existingEnderecos) {
+        const { error: updateEnderecoError } = await supabase
+          .from("pessoas_enderecos")
+          .update(endereco)
+          .eq('id', endereco.id)
+
+        if (updateEnderecoError) throw updateEnderecoError
+      }
+
+      // Limpar estados locais
+      setNewContatos([])
+      setDeletedContatos([])
+      setNewEnderecos([])
+      setDeletedEnderecos([])
+      setTouchedFields({})
+      setHasChanges(false)
+      
+      // Recarregar dados
+      const { data: refreshedData, error: refreshError } = await supabase
         .from("pessoas")
-        .update({
-          nome_razao: pessoa.nome_razao,
-          apelido: pessoa.apelido,
-          tipo: pessoa.tipo,
-          cpf_cnpj: pessoa.cpf_cnpj || null,
-          rg_ie: pessoa.rg_ie || null,
-          "IM": pessoa.IM || null,
-          nascimento: pessoa.nascimento || null,
-          renda: pessoa.renda || null,
-          obs: pessoa.obs || null,
-          "indIEDest": pessoa.indIEDest || null,
-          "ISUF": pessoa.ISUF || null,
-          pessoas_tipos: pessoa.pessoas_tipos || null,
-          status_id: pessoa.status_id || 1,
-          genero: pessoa.genero || null,
-          grupos_ids: pessoa.grupos_ids || null,
-          subgrupos_ids: pessoa.subgrupos_ids || null,
-          ramo_id: pessoa.ramo_id || null,
-          atividades_ids: pessoa.atividades_ids || null,
-          natureza_juridica: pessoa.natureza_juridica || null,
-          porte: pessoa.porte || null,
-          situacao_cadastral: pessoa.situacao_cadastral || null,
-          atividade_principal: pessoa.atividade_principal || null,
-          atividades_secundarias: pessoa.atividades_secundarias || null,
-          socios: pessoa.socios || null,
-          capital_social: pessoa.capital_social || null,
-          data_inicio_atividades: pessoa.data_inicio_atividades || null,
-          matriz: pessoa.matriz || null
-        })
-        .eq("id", pessoaId)
-        .eq("perfis_id", perfil.id)
-        .select()
+        .select(`
+          *,
+          pessoas_contatos (*),
+          pessoas_enderecos (*)
+        `)
+        .eq('id', pessoaId)
+        .single()
 
-      if (pessoaError) {
-        console.error("Erro ao atualizar pessoa:", pessoaError)
-        throw new Error(`Erro ao atualizar pessoa: ${pessoaError.message}`)
-      }
+      if (refreshError) throw refreshError
 
-      if (!pessoaData || pessoaData.length === 0) {
-        throw new Error("Não foi possível atualizar a pessoa")
-      }
-
-      // Atualiza os endereços
-      if (pessoa.pessoas_enderecos?.length > 0) {
-        for (const endereco of pessoa.pessoas_enderecos) {
-          if (endereco.id) {
-            const { error: enderecoError } = await supabase
-              .from("pessoas_enderecos")
-              .update({
-                cep: endereco.cep,
-                logradouro: endereco.logradouro,
-                numero: endereco.numero,
-                complemento: endereco.complemento,
-                bairro: endereco.bairro,
-                localidade: endereco.localidade,
-                uf: endereco.uf,
-                ibge: endereco.ibge,
-                principal: endereco.principal,
-                sem_numero: endereco.sem_numero
-              })
-              .eq("id", endereco.id)
-              .eq("pessoa_id", pessoaId)
-
-            if (enderecoError) {
-              console.error("Erro ao atualizar endereço:", enderecoError)
-              throw new Error(`Erro ao atualizar endereço: ${enderecoError.message}`)
-            }
-          }
-        }
-      }
-
-      // Atualiza os contatos
-      if (pessoa.pessoas_contatos?.length > 0) {
-        for (const contato of pessoa.pessoas_contatos) {
-          if (contato.id) {
-            const { error: contatoError } = await supabase
-              .from("pessoas_contatos")
-              .update({
-                tipo: contato.tipo,
-                valor: contato.valor,
-                observacao: contato.observacao,
-                principal: contato.principal
-              })
-              .eq("id", contato.id)
-              .eq("pessoa_id", pessoaId)
-
-            if (contatoError) {
-              console.error("Erro ao atualizar contato:", contatoError)
-              throw new Error(`Erro ao atualizar contato: ${contatoError.message}`)
-            }
-          }
-        }
-      }
+      // Atualizar estados com os dados atualizados
+      setPessoa(refreshedData)
+      setOriginalPessoa(refreshedData)
 
       toast({
         title: "Sucesso",
-        description: "Pessoa atualizada com sucesso!",
-        variant: "success"
-      })
-
-      // Notifica que salvou com sucesso
-      onSave?.()
-      onClose()
-    } catch (err: any) {
-      const errorMessage = err?.message || "Ocorreu um erro ao salvar os dados"
-      console.error("Erro ao salvar:", errorMessage)
-      setError(errorMessage)
-      toast({
-        title: "Erro ao salvar",
-        description: errorMessage,
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleAddEndereco = async () => {
-    try {
-      setLoading(true)
-      setError("")
-
-      const { data, error } = await supabase
-        .from("pessoas_enderecos")
-        .insert({
-          pessoa_id: pessoaId,
-          principal: pessoa.pessoas_enderecos.length === 0
-        })
-        .select()
-
-      if (error) throw error
-
-      setPessoa((prevPessoa: any) => ({
-        ...prevPessoa,
-        pessoas_enderecos: [...prevPessoa.pessoas_enderecos, data[0]]
-      }))
-
-      toast({
-        title: "Sucesso",
-        description: "Novo endereço adicionado!",
+        description: "Dados salvos com sucesso!",
         variant: "success"
       })
     } catch (err: any) {
@@ -432,283 +491,75 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
     }
   }
 
-  const handleRemoveEndereco = async (enderecoId: number) => {
-    try {
-      setLoading(true)
-      setError("")
-
-      const { error } = await supabase
-        .from("pessoas_enderecos")
-        .delete()
-        .eq("id", enderecoId)
-
-      if (error) throw error
-
-      setPessoa((prevPessoa: any) => ({
-        ...prevPessoa,
-        pessoas_enderecos: prevPessoa.pessoas_enderecos.filter((endereco: any) => endereco.id !== enderecoId)
-      }))
-
-      toast({
-        title: "Sucesso",
-        description: "Endereço removido com sucesso!",
-        variant: "success"
-      })
-    } catch (err: any) {
-      setError(err.message)
-      toast({
-        title: "Erro",
-        description: err.message,
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
+  const handleAddContato = () => {
+    const newContato = {
+      id: `temp_${Date.now()}`, // ID temporário para identificação local
+      pessoa_id: pessoaId,
+      contato: "",
+      cargo: "",
+      departamento: "",
+      email: "",
+      celular: "",
+      telefone: "",
+      zap: false,
+      isNew: true
     }
-  }
 
-  const handleSetPrincipal = async (enderecoId: number) => {
-    try {
-      setLoading(true)
-      setError("")
-
-      // Primeiro, remove o principal de todos os endereços
-      const { error: updateError } = await supabase
-        .from("pessoas_enderecos")
-        .update({ principal: false })
-        .eq("pessoa_id", pessoaId)
-
-      if (updateError) throw updateError
-
-      // Depois, define o novo endereço principal
-      const { error: setPrincipalError } = await supabase
-        .from("pessoas_enderecos")
-        .update({ principal: true })
-        .eq("id", enderecoId)
-
-      if (setPrincipalError) throw setPrincipalError
-
-      setPessoa((prevPessoa: any) => ({
-        ...prevPessoa,
-        pessoas_enderecos: prevPessoa.pessoas_enderecos.map((endereco: any) => ({
-          ...endereco,
-          principal: endereco.id === enderecoId
-        }))
-      }))
-
-      toast({
-        title: "Sucesso",
-        description: "Endereço principal atualizado!",
-        variant: "success"
-      })
-    } catch (err: any) {
-      setError(err.message)
-      toast({
-        title: "Erro",
-        description: err.message,
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleEnderecoChange = (index: number, field: string, value: string) => {
-    setPessoa((prevPessoa: any) => {
-      const newPessoasEnderecos = prevPessoa.pessoas_enderecos.map((endereco: any, enderecoIndex: number) => {
-        if (enderecoIndex === index) {
-          endereco[field] = value
-        }
-        return endereco
-      })
-      return { ...prevPessoa, pessoas_enderecos: newPessoasEnderecos }
-    })
-  }
-
-  const handleCepChange = async (index: number, value: string) => {
-    // Limita a 8 dígitos e remove caracteres não numéricos
-    const cepNumerico = value.replace(/\D/g, '')
-    if (cepNumerico.length > 8) return
-
-    // Atualiza o valor do CEP com a máscara
-    handleEnderecoChange(index, "cep", formatCEP(cepNumerico))
-    
-    // Se o CEP estiver completo (8 dígitos), faz a busca
-    if (cepNumerico.length === 8) {
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cepNumerico}/json/`)
-        const data = await response.json()
-
-        if (data.erro) {
-          toast({
-            title: "CEP não encontrado",
-            description: "O CEP informado não foi encontrado na base dos Correios.",
-            variant: "destructive"
-          })
-          return
-        }
-
-        const newEnderecos = [...pessoa.pessoas_enderecos]
-        newEnderecos[index] = {
-          ...newEnderecos[index],
-          logradouro: data.logradouro || newEnderecos[index].logradouro,
-          bairro: data.bairro || newEnderecos[index].bairro,
-          localidade: data.localidade || newEnderecos[index].localidade,
-          uf: data.uf || newEnderecos[index].uf
-        }
-        setPessoa(prev => ({
-          ...prev,
-          pessoas_enderecos: newEnderecos
-        }))
-
-        toast({
-          title: "CEP encontrado",
-          description: "Endereço preenchido automaticamente.",
-          variant: "success"
-        })
-      } catch (error) {
-        console.error('Erro ao buscar CEP:', error)
-        toast({
-          title: "Erro ao buscar CEP",
-          description: "Ocorreu um erro ao buscar o CEP. Tente novamente.",
-          variant: "destructive"
-        })
-      }
-    }
-  }
-
-  const handleAddContato = async () => {
-    try {
-      setLoading(true)
-      setError("")
-
-      const { data, error } = await supabase
-        .from("pessoas_contatos")
-        .insert({
-          pessoa_id: pessoaId,
-          principal: pessoa.pessoas_contatos.length === 0
-        })
-        .select()
-
-      if (error) throw error
-
-      setPessoa((prevPessoa: any) => ({
-        ...prevPessoa,
-        pessoas_contatos: [...prevPessoa.pessoas_contatos, data[0]]
-      }))
-
-      toast({
-        title: "Sucesso",
-        description: "Novo contato adicionado!",
-        variant: "success"
-      })
-    } catch (err: any) {
-      setError(err.message)
-      toast({
-        title: "Erro",
-        description: err.message,
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleRemoveContato = async (contatoId: number) => {
-    try {
-      setLoading(true)
-      setError("")
-
-      const { error } = await supabase
-        .from("pessoas_contatos")
-        .delete()
-        .eq("id", contatoId)
-
-      if (error) throw error
-
-      setPessoa((prevPessoa: any) => ({
-        ...prevPessoa,
-        pessoas_contatos: prevPessoa.pessoas_contatos.filter((contato: any) => contato.id !== contatoId)
-      }))
-
-      toast({
-        title: "Sucesso",
-        description: "Contato removido com sucesso!",
-        variant: "success"
-      })
-    } catch (err: any) {
-      setError(err.message)
-      toast({
-        title: "Erro",
-        description: err.message,
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSetPrincipalContato = async (contatoId: number) => {
-    try {
-      setLoading(true)
-      setError("")
-
-      // Primeiro, remove o principal de todos os contatos
-      const { error: updateError } = await supabase
-        .from("pessoas_contatos")
-        .update({ principal: false })
-        .eq("pessoa_id", pessoaId)
-
-      if (updateError) throw updateError
-
-      // Depois, define o novo contato principal
-      const { error: setPrincipalError } = await supabase
-        .from("pessoas_contatos")
-        .update({ principal: true })
-        .eq("id", contatoId)
-
-      if (setPrincipalError) throw setPrincipalError
-
-      setPessoa((prevPessoa: any) => ({
-        ...prevPessoa,
-        pessoas_contatos: prevPessoa.pessoas_contatos.map((contato: any) => ({
-          ...contato,
-          principal: contato.id === contatoId
-        }))
-      }))
-
-      toast({
-        title: "Sucesso",
-        description: "Contato principal atualizado!",
-        variant: "success"
-      })
-    } catch (err: any) {
-      setError(err.message)
-      toast({
-        title: "Erro",
-        description: err.message,
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleContatoChange = (index: number, field: string, value: string) => {
-    setPessoa((prevPessoa: any) => {
-      const newPessoasContatos = prevPessoa.pessoas_contatos.map((contato: any, contatoIndex: number) => {
-        if (contatoIndex === index) {
-          contato[field] = value
-        }
-        return contato
-      })
-      return { ...prevPessoa, pessoas_contatos: newPessoasContatos }
-    })
-  }
-
-  const handlePessoaChange = (field: string, value: string) => {
+    setNewContatos(prev => [...prev, newContato])
     setPessoa((prevPessoa: any) => ({
       ...prevPessoa,
-      [field]: value
+      pessoas_contatos: [...prevPessoa.pessoas_contatos, newContato]
+    }))
+  }
+
+  const handleRemoveContato = (id: number | string) => {
+    if (typeof id === 'number') {
+      setDeletedContatos(prev => [...prev, id])
+    }
+    
+    setNewContatos(prev => prev.filter(c => c.id !== id))
+    setPessoa((prevPessoa: any) => ({
+      ...prevPessoa,
+      pessoas_contatos: prevPessoa.pessoas_contatos.filter((c: any) => c.id !== id)
+    }))
+  }
+
+  const handleAddEndereco = () => {
+    const newEndereco = {
+      id: `temp_${Date.now()}`,
+      pessoa_id: pessoaId,
+      titulo: "",
+      cep: "",
+      logradouro: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
+      localidade: "",
+      uf: "",
+      ibge: "",
+      gia: "",
+      ddd: "",
+      siafi: "",
+      principal: pessoa.pessoas_enderecos.length === 0,
+      isNew: true
+    }
+
+    setNewEnderecos(prev => [...prev, newEndereco])
+    setPessoa((prevPessoa: any) => ({
+      ...prevPessoa,
+      pessoas_enderecos: [...prevPessoa.pessoas_enderecos, newEndereco]
+    }))
+  }
+
+  const handleRemoveEndereco = (id: number | string) => {
+    if (typeof id === 'number') {
+      setDeletedEnderecos(prev => [...prev, id])
+    }
+    
+    setNewEnderecos(prev => prev.filter(e => e.id !== id))
+    setPessoa((prevPessoa: any) => ({
+      ...prevPessoa,
+      pessoas_enderecos: prevPessoa.pessoas_enderecos.filter((e: any) => e.id !== id)
     }))
   }
 
@@ -888,8 +739,71 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
   }
 
   // Função para formatar CEP
-  const formatCepNumber = (cep: string) => {
-    return formatCEP(cep)
+  const formatCEP = (cep: string) => {
+    cep = cep.replace(/\D/g, '')
+    if (cep.length <= 8) {
+      cep = cep.replace(/^(\d{5})(\d)/, '$1-$2')
+    }
+    return cep
+  }
+
+  // Busca endereço pelo CEP
+  const handleCepChange = async (index: number, value: string) => {
+    try {
+      const cep = value.replace(/\D/g, '')
+      
+      if (cep.length === 8) {
+        toast({
+          title: "Buscando CEP...",
+          description: "Aguarde enquanto buscamos o endereço",
+          variant: "default"
+        })
+
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        const data = await response.json()
+
+        if (data.erro) {
+          toast({
+            title: "CEP não encontrado",
+            description: "Verifique o CEP digitado",
+            variant: "destructive"
+          })
+          return
+        }
+
+        const newEnderecos = [...pessoa.pessoas_enderecos]
+        newEnderecos[index] = {
+          ...newEnderecos[index],
+          cep: cep,
+          logradouro: data.logradouro || newEnderecos[index].logradouro,
+          bairro: data.bairro || newEnderecos[index].bairro,
+          localidade: data.localidade || newEnderecos[index].localidade,
+          uf: data.uf || newEnderecos[index].uf,
+          ibge: data.ibge || newEnderecos[index].ibge,
+          gia: data.gia || newEnderecos[index].gia,
+          ddd: data.ddd || newEnderecos[index].ddd,
+          siafi: data.siafi || newEnderecos[index].siafi
+        }
+
+        setPessoa(prevPessoa => ({
+          ...prevPessoa,
+          pessoas_enderecos: newEnderecos
+        }))
+
+        toast({
+          title: "Sucesso",
+          description: "Endereço preenchido automaticamente",
+          variant: "success"
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao buscar o CEP. Tente novamente.",
+        variant: "destructive"
+      })
+    }
   }
 
   const handleUploadFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -989,10 +903,10 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
         foto_url: publicUrl
       }))
 
-      // Atualiza apenas o campo foto_url no originalData, mantendo os outros campos como estavam
-      const originalDataObj = JSON.parse(originalData || '{}')
-      setOriginalData(JSON.stringify({
-        ...originalDataObj,
+      // Atualiza apenas o campo foto_url no originalPessoa, mantendo os outros campos como estavam
+      const originalPessoaObj = JSON.parse(originalPessoa || '{}')
+      setOriginalPessoa(JSON.stringify({
+        ...originalPessoaObj,
         foto_url: publicUrl
       }))
 
@@ -1019,14 +933,143 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
     }
   }
 
+  const handleConfirmRemove = async () => {
+    if (!itemToRemove) return
+
+    try {
+      setLoading(true)
+
+      if (itemToRemove.type === 'contato') {
+        if (typeof itemToRemove.id === 'number') {
+          const { error } = await supabase
+            .from("pessoas_contatos")
+            .delete()
+            .eq("id", itemToRemove.id)
+
+          if (error) throw error
+        }
+        
+        const newPessoa = {
+          ...pessoa,
+          pessoas_contatos: pessoa.pessoas_contatos.filter((c: any) => c.id !== itemToRemove.id)
+        }
+        setPessoa(newPessoa)
+        setOriginalPessoa(newPessoa)
+        setNewContatos(prev => prev.filter(c => c.id !== itemToRemove.id))
+      } else {
+        if (typeof itemToRemove.id === 'number') {
+          const { error } = await supabase
+            .from("pessoas_enderecos")
+            .delete()
+            .eq("id", itemToRemove.id)
+
+          if (error) throw error
+        }
+        
+        const newPessoa = {
+          ...pessoa,
+          pessoas_enderecos: pessoa.pessoas_enderecos.filter((e: any) => e.id !== itemToRemove.id)
+        }
+        setPessoa(newPessoa)
+        setOriginalPessoa(newPessoa)
+        setNewEnderecos(prev => prev.filter(e => e.id !== itemToRemove.id))
+      }
+
+      toast({
+        title: "Sucesso",
+        description: `${itemToRemove.type === 'contato' ? 'Contato' : 'Endereço'} removido com sucesso!`,
+        variant: "success"
+      })
+    } catch (err: any) {
+      setError(err.message)
+      toast({
+        title: "Erro",
+        description: err.message,
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+      setIsConfirmRemoveDialogOpen(false)
+      setItemToRemove(null)
+    }
+  }
+
+  const handleCancelRemove = () => {
+    setIsConfirmRemoveDialogOpen(false)
+    setItemToRemove(null)
+  }
+
+  const confirmRemove = (type: 'contato' | 'endereco', id: number | string) => {
+    setItemToRemove({ type, id })
+    setIsConfirmRemoveDialogOpen(true)
+  }
+
   const handleClose = () => {
     if (hasChanges) {
-      if (window.confirm("Existem alterações não salvas. Deseja realmente fechar?")) {
-        onClose()
-      }
+      setIsConfirmDialogOpen(true)
+      setPendingClose(true)
     } else {
       onClose()
     }
+  }
+
+  const handleConfirmClose = () => {
+    setIsConfirmDialogOpen(false)
+    setPendingClose(false)
+    onClose()
+  }
+
+  const handleCancelClose = () => {
+    setIsConfirmDialogOpen(false)
+    setPendingClose(false)
+  }
+
+  const handlePessoaChange = (field: string, value: string) => {
+    setPessoa(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleContatoChange = (index: number, field: string, value: string) => {
+    const newContatos = [...pessoa.pessoas_contatos]
+    newContatos[index] = {
+      ...newContatos[index],
+      [field]: value
+    }
+    setPessoa(prev => ({
+      ...prev,
+      pessoas_contatos: newContatos
+    }))
+  }
+
+  const handleSetPrincipal = (id: number) => {
+    const newEnderecos = pessoa.pessoas_enderecos.map((endereco: any) => {
+      if (endereco.id === id) {
+        return {
+          ...endereco,
+          principal: true
+        }
+      } else {
+        return {
+          ...endereco,
+          principal: false
+        }
+      }
+    })
+    setPessoa(prev => ({
+      ...prev,
+      pessoas_enderecos: newEnderecos
+    }))
+  }
+
+  const handleEnderecoChange = (index: number, field: string, value: string) => {
+    setPessoa(prevPessoa => ({
+      ...prevPessoa,
+      pessoas_enderecos: prevPessoa.pessoas_enderecos.map((endereco: any, i: number) =>
+        i === index ? { ...endereco, [field]: value } : endereco
+      )
+    }))
   }
 
   if (!pessoa || loading) {
@@ -1116,6 +1159,61 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
               imageUrl={selectedFileUrl}
               onCropComplete={handleCropComplete}
             />
+
+            <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogTitle>Alterações não salvas</DialogTitle>
+                <div className="grid gap-4 py-4">
+                  <p>Existem alterações não salvas. Deseja realmente sair sem salvar?</p>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelClose}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={handleConfirmClose}
+                  >
+                    Sair sem salvar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isConfirmRemoveDialogOpen} onOpenChange={setIsConfirmRemoveDialogOpen}>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogTitle>Confirmar Remoção</DialogTitle>
+                <div className="grid gap-4 py-4">
+                  <p>
+                    {itemToRemove?.type === 'contato' 
+                      ? "Tem certeza que deseja remover este contato?" 
+                      : "Tem certeza que deseja remover este endereço?"
+                    }
+                  </p>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelRemove}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={handleConfirmRemove}
+                  >
+                    Remover
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             {/* Card Principal - Dados Básicos */}
             <div className="rounded-lg border bg-white shadow-sm p-6">
@@ -1271,8 +1369,16 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
             </div>
 
             {/* Cards Expansíveis */}
-            <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-              <h4 className="text-sm font-medium mb-4">Endereços</h4>
+            <ExpandableCard
+              title={
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Endereços</h3>
+                </div>
+              }
+              defaultExpanded={false}
+              className="overflow-visible"
+            >
               <div className="space-y-6">
                 {pessoa.pessoas_enderecos.map((endereco: any, index: number) => (
                   <div key={endereco.id} className="border rounded-lg p-4 space-y-4">
@@ -1290,7 +1396,7 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => handleRemoveEndereco(endereco.id)}
+                          onClick={() => confirmRemove('endereco', endereco.id)}
                           disabled={endereco.principal}
                         >
                           Remover
@@ -1305,12 +1411,21 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                         </RequiredLabel>
                         <Input
                           value={formatCEP(endereco.cep || "")}
-                          onChange={(e) => handleCepChange(index, e.target.value)}
+                          onChange={(e) => {
+                            e.preventDefault()
+                            const formattedCep = formatCEP(e.target.value)
+                            handleEnderecoChange(index, 'cep', formattedCep)
+                            if (formattedCep.length === 9) { // 12345-678
+                              handleCepChange(index, formattedCep)
+                            }
+                          }}
                           onBlur={() => markFieldAsTouched(`endereco_${index}_cep`)}
                           className={cn(
                             isFieldInvalid(`endereco_${index}_cep`, endereco.cep) && 
-                            "border-destructive focus-visible:ring-destructive"
+                            "border-destructive",
+                            "w-full"
                           )}
+                          placeholder="CEP"
                         />
                       </div>
                       <div className="space-y-2">
@@ -1331,7 +1446,7 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                         <RequiredLabel value={endereco.sem_numero ? "Sem Número" : endereco.numero}>
                           <Label>Número</Label>
                         </RequiredLabel>
-                        <div className="flex items-center gap-4">
+                        <div className="flex gap-4">
                           <div className="flex-1">
                             <Input
                               value={endereco.numero || ""}
@@ -1381,33 +1496,39 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                           )}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <RequiredLabel value={endereco.localidade}>
-                          <Label>Cidade</Label>
-                        </RequiredLabel>
-                        <Input
-                          value={endereco.localidade || ""}
-                          onChange={(e) => handleEnderecoChange(index, "localidade", e.target.value)}
-                          onBlur={() => markFieldAsTouched(`endereco_${index}_localidade`)}
-                          className={cn(
-                            isFieldInvalid(`endereco_${index}_localidade`, endereco.localidade) && 
-                            "border-destructive focus-visible:ring-destructive"
-                          )}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <RequiredLabel value={endereco.uf}>
-                          <Label>UF</Label>
-                        </RequiredLabel>
-                        <Input
-                          value={endereco.uf || ""}
-                          onChange={(e) => handleEnderecoChange(index, "uf", e.target.value)}
-                          onBlur={() => markFieldAsTouched(`endereco_${index}_uf`)}
-                          className={cn(
-                            isFieldInvalid(`endereco_${index}_uf`, endereco.uf) && 
-                            "border-destructive focus-visible:ring-destructive"
-                          )}
-                        />
+                      <div className="flex gap-4">
+                        <div className="flex-1 space-y-2">
+                          <RequiredLabel value={endereco.localidade}>
+                            <Label>Cidade</Label>
+                          </RequiredLabel>
+                          <Input
+                            value={endereco.localidade || ""}
+                            onChange={(e) => handleEnderecoChange(index, "localidade", e.target.value)}
+                            onBlur={() => markFieldAsTouched(`endereco_${index}_localidade`)}
+                            className={cn(
+                              isFieldInvalid(`endereco_${index}_localidade`, endereco.localidade) && 
+                              "border-destructive focus-visible:ring-destructive"
+                            )}
+                          />
+                        </div>
+                        <div className="w-20 space-y-2">
+                          <RequiredLabel value={endereco.uf}>
+                            <Label>UF</Label>
+                          </RequiredLabel>
+                          <Input
+                            value={endereco.uf || ""}
+                            onChange={(e) => {
+                              const upperValue = e.target.value.toUpperCase();
+                              handleEnderecoChange(index, "uf", upperValue);
+                            }}
+                            onBlur={() => markFieldAsTouched(`endereco_${index}_uf`)}
+                            className={cn(
+                              isFieldInvalid(`endereco_${index}_uf`, endereco.uf) && 
+                              "border-destructive focus-visible:ring-destructive"
+                            )}
+                            maxLength={2}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1424,119 +1545,158 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                   Adicionar Endereço
                 </Button>
               </div>
-            </div>
+            </ExpandableCard>
 
-            <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-              <h4 className="text-sm font-medium mb-4">Contatos</h4>
+            <ExpandableCard
+              title={
+                <div className="flex items-center gap-2">
+                  <Phone className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Contatos</h3>
+                </div>
+              }
+              defaultExpanded={false}
+              className="overflow-visible"
+            >
               <div className="space-y-6">
                 {pessoa.pessoas_contatos.map((contato: any, index: number) => (
                   <div key={contato.id} className="border rounded-lg p-4 space-y-4">
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium">Contato {index + 1}</h4>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSetPrincipalContato(contato.id)}
-                          disabled={contato.principal}
-                        >
-                          {contato.principal ? "Principal" : "Tornar Principal"}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleRemoveContato(contato.id)}
-                          disabled={contato.principal}
-                        >
-                          Remover
-                        </Button>
-                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => confirmRemove('contato', contato.id)}
+                      >
+                        Remover
+                      </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <RequiredLabel value={contato.tipo}>
-                          <Label>Tipo</Label>
-                        </RequiredLabel>
-                        <Select
-                          value={contato.tipo || ""}
-                          onValueChange={(value) => handleContatoChange(index, "tipo", value)}
-                          onBlur={() => markFieldAsTouched(`contato_${index}_tipo`)}
-                          className={cn(
-                            isFieldInvalid(`contato_${index}_tipo`, contato.tipo) && 
-                            "border-destructive focus-visible:ring-destructive"
-                          )}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="telefone">Telefone</SelectItem>
-                            <SelectItem value="celular">Celular</SelectItem>
-                            <SelectItem value="email">E-mail</SelectItem>
-                            <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <RequiredLabel value={contato.valor}>
-                          <Label>Valor</Label>
-                        </RequiredLabel>
+                        <div className="flex items-center gap-1">
+                          <Label>Nome do Contato</Label>
+                          <span className={cn("text-destructive", contato.contato && "invisible")}>*</span>
+                        </div>
                         <Input
-                          value={contato.tipo === "telefone" || contato.tipo === "celular" ? 
-                            formatPhoneNumber(contato.valor || "") : 
-                            contato.valor || ""
-                          }
-                          onChange={(e) => handleContatoChange(index, "valor", e.target.value)}
-                          onBlur={() => markFieldAsTouched(`contato_${index}_valor`)}
+                          value={contato.contato || ""}
+                          onChange={(e) => handleContatoChange(index, "contato", e.target.value)}
+                          onBlur={() => markFieldAsTouched(`contato_${index}_contato`)}
                           className={cn(
-                            isFieldInvalid(`contato_${index}_valor`, contato.valor) && 
+                            isFieldInvalid(`contato_${index}_contato`, contato.contato) && 
                             "border-destructive focus-visible:ring-destructive"
                           )}
                         />
                       </div>
-                      <div className="col-span-2 space-y-2">
-                        <Label>Observação</Label>
+                      <div className="space-y-2">
+                        <Label>E-mail</Label>
                         <Input
-                          value={contato.observacao || ""}
-                          onChange={(e) => handleContatoChange(index, "observacao", e.target.value)}
+                          type="email"
+                          value={contato.email || ""}
+                          onChange={(e) => handleContatoChange(index, "email", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Celular</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={formatPhoneNumber(contato.celular || "")}
+                            onChange={(e) => handleContatoChange(index, "celular", e.target.value)}
+                          />
+                          <div className="flex items-center gap-2 min-w-[120px]">
+                            <Switch
+                              id={`zap_${contato.id}`}
+                              checked={contato.zap || false}
+                              onCheckedChange={(checked) => 
+                                handleContatoChange(index, "zap", checked)
+                              }
+                            />
+                            <label
+                              htmlFor={`zap_${contato.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              WhatsApp
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Cargo</Label>
+                        <Input
+                          value={contato.cargo || ""}
+                          onChange={(e) => handleContatoChange(index, "cargo", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Departamento</Label>
+                        <Input
+                          value={contato.departamento || ""}
+                          onChange={(e) => handleContatoChange(index, "departamento", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Telefone</Label>
+                        <Input
+                          value={formatPhoneNumber(contato.telefone || "")}
+                          onChange={(e) => handleContatoChange(index, "telefone", e.target.value)}
                         />
                       </div>
                     </div>
                   </div>
                 ))}
+                
+                <Button
+                  onClick={handleAddContato}
+                  className="w-full mt-4"
+                  variant="outline"
+                  disabled={loading}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Contato
+                </Button>
               </div>
-            </div>
+            </ExpandableCard>
 
-            <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-              <h4 className="text-sm font-medium mb-4">Grupos e Subgrupos</h4>
-              <div className="space-y-6">
+            <ExpandableCard
+              title={
+                <div className="flex items-center gap-2">
+                  <Tags className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Grupos e Subgrupos</h3>
+                </div>
+              }
+              defaultExpanded={false}
+              className="!overflow-visible"
+            >
+              <div className="space-y-6 overflow-visible">
                 <div className="space-y-2">
                   <Label>Grupos</Label>
-                  <MultiSelect
-                    options={grupos.map(grupo => ({
-                      label: grupo.grupo,
-                      value: grupo.id.toString()
-                    }))}
-                    selected={pessoa?.grupos_ids?.map(id => id.toString()) || []}
-                    onChange={values => handleGruposChange(values.map(v => parseInt(v)))}
-                    placeholder="Selecione os grupos..."
-                  />
+                  <div className="relative">
+                    <MultiSelect
+                      options={grupos.map(grupo => ({
+                        label: grupo.grupo,
+                        value: grupo.id.toString()
+                      }))}
+                      selected={pessoa?.grupos_ids?.map(id => id.toString()) || []}
+                      onChange={values => handleGruposChange(values.map(v => parseInt(v)))}
+                      placeholder="Selecione os grupos..."
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Subgrupos</Label>
-                  <MultiSelect
-                    options={subGrupos
-                      .filter(sub => pessoa?.grupos_ids?.includes(sub.grupos_id))
-                      .map(sub => ({
-                        label: `${getGrupoNome(sub.grupos_id)} › ${sub.subgrupo}`,
-                        value: sub.id.toString()
-                      }))}
-                    selected={pessoa?.subgrupos_ids?.map(id => id.toString()) || []}
-                    onChange={values => handleSubGruposChange(values.map(v => parseInt(v)))}
-                    placeholder="Selecione os subgrupos..."
-                    disabled={!pessoa?.grupos_ids?.length}
-                  />
+                  <div className="relative">
+                    <MultiSelect
+                      options={subGrupos
+                        .filter(sub => pessoa?.grupos_ids?.includes(sub.grupos_id))
+                        .map(sub => ({
+                          label: `${getGrupoNome(sub.grupos_id)} › ${sub.subgrupo}`,
+                          value: sub.id.toString()
+                        }))}
+                      selected={pessoa?.subgrupos_ids?.map(id => id.toString()) || []}
+                      onChange={values => handleSubGruposChange(values.map(v => parseInt(v)))}
+                      placeholder="Selecione os subgrupos..."
+                      disabled={!pessoa?.grupos_ids?.length}
+                    />
+                  </div>
                   {!pessoa?.grupos_ids?.length && (
                     <p className="text-sm text-muted-foreground">
                       Selecione pelo menos um grupo para ver os subgrupos disponíveis
@@ -1544,10 +1704,18 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                   )}
                 </div>
               </div>
-            </div>
+            </ExpandableCard>
 
-            <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
-              <h4 className="text-sm font-medium mb-4">Informações Fiscais</h4>
+            <ExpandableCard
+              title={
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">Informações Fiscais</h3>
+                </div>
+              }
+              defaultExpanded={false}
+              className="overflow-visible"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <RequiredLabel value={pessoa.inscricao_estadual}>
@@ -1624,7 +1792,7 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
                   </Select>
                 </div>
               </div>
-            </div>
+            </ExpandableCard>
 
             <div className="bg-white rounded-lg border shadow-sm p-6 mb-6">
               <h4 className="text-sm font-medium mb-4">Outras Informações</h4>
