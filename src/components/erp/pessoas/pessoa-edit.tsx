@@ -216,6 +216,33 @@ export function PessoaEdit({ pessoaId, isOpen, onClose, onSave }: PessoaEditProp
     }
   }, [pessoa])
 
+  useEffect(() => {
+    if (pessoa && originalPessoa) {
+      const isEqual = (obj1: any, obj2: any): boolean => {
+        if (obj1 === obj2) return true
+        if (typeof obj1 !== 'object' || typeof obj2 !== 'object') return obj1 === obj2
+        if (obj1 === null || obj2 === null) return obj1 === obj2
+        
+        const keys1 = Object.keys(obj1)
+        const keys2 = Object.keys(obj2)
+        
+        if (keys1.length !== keys2.length) return false
+        
+        for (const key of keys1) {
+          if (!keys2.includes(key)) return false
+          if (!isEqual(obj1[key], obj2[key])) return false
+        }
+        
+        return true
+      }
+
+      const hasEnderecoChanges = !isEqual(pessoa.pessoas_enderecos, originalPessoa.pessoas_enderecos)
+      if (hasEnderecoChanges) {
+        setHasChanges(true)
+      }
+    }
+  }, [pessoa?.pessoas_enderecos, originalPessoa?.pessoas_enderecos])
+
   const loadData = async () => {
     try {
       setLoading(true)
