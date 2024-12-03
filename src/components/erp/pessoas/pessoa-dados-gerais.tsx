@@ -157,16 +157,16 @@ export function PessoaDadosGerais({
             </div>
 
             <div>
-              <RequiredLabel value={pessoa?.nome}>
+              <RequiredLabel value={pessoa?.nome_razao}>
                 <Label>{pessoa?.tipo === "J" ? "Razão Social" : "Nome"}</Label>
               </RequiredLabel>
               <Input
-                value={pessoa?.nome || ""}
-                onChange={(e) => onPessoaChange({ ...pessoa, nome: e.target.value })}
+                value={pessoa?.nome_razao || ""}
+                onChange={(e) => handleFieldChange("nome_razao", e.target.value)}
                 disabled={loading}
               />
-              {validationErrors.nome && touchedFields.nome && (
-                <span className="text-sm text-destructive">{validationErrors.nome}</span>
+              {validationErrors.nome_razao && touchedFields.nome_razao && (
+                <span className="text-sm text-destructive">{validationErrors.nome_razao}</span>
               )}
             </div>
 
