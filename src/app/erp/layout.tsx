@@ -40,29 +40,12 @@ const menuItems = [
     title: 'Estoque',
     items: [
       {
-        name: 'Categorias',
-        href: '/erp/estoque/categorias',
-        disabled: true
-      },
-      {
         name: 'Produtos',
-        href: '/erp/estoque/produtos',
-        disabled: true
+        href: '/erp/produtos'
       },
       {
-        name: 'Tabela de Preços',
-        href: '/erp/estoque/precos',
-        disabled: true
-      },
-      {
-        name: 'Depósitos',
-        href: '/erp/estoque/depositos',
-        disabled: true
-      },
-      {
-        name: 'Compras',
-        href: '/erp/estoque/compras',
-        disabled: true
+        name: 'Movimentações',
+        href: '/erp/estoque'
       }
     ]
   },
