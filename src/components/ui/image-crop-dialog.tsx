@@ -12,14 +12,16 @@ interface ImageCropDialogProps {
   isOpen: boolean
   onClose: () => void
   imageUrl: string
-  onCropComplete: (croppedImageUrl: string) => void
+  onComplete: (croppedImageUrl: string) => void
+  aspectRatio?: number
 }
 
 export function ImageCropDialog({
   isOpen,
   onClose,
   imageUrl,
-  onCropComplete,
+  onComplete,
+  aspectRatio = 1
 }: ImageCropDialogProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -74,106 +76,37 @@ export function ImageCropDialog({
     ctx.rotate((rotation * Math.PI) / 180)
     ctx.translate(-canvas.width / 2, -canvas.height / 2)
 
-    // Calcular posição de crop considerando o zoom
-    const sourceX = pixelCrop.x
-    const sourceY = pixelCrop.y
-    const sourceWidth = pixelCrop.width
-    const sourceHeight = pixelCrop.height
-
-    // Se for circular, criar máscara
-    if (isCircular) {
-      ctx.beginPath()
-      ctx.arc(
-        canvas.width / 2,
-        canvas.height / 2,
-        Math.min(canvas.width, canvas.height) / 2,
-        0,
-        2 * Math.PI
-      )
-      ctx.clip()
-    }
-
     // Desenhar a imagem cropada
     ctx.drawImage(
       image,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height,
       0,
       0,
       canvas.width,
       canvas.height
     )
 
-    // Redimensionar se necessário
-    const maxSize = 400
-    let finalWidth = canvas.width
-    let finalHeight = canvas.height
-
-    if (finalWidth > finalHeight) {
-      if (finalWidth > maxSize) {
-        finalHeight = Math.round((finalHeight * maxSize) / finalWidth)
-        finalWidth = maxSize
-      }
-    } else {
-      if (finalHeight > maxSize) {
-        finalWidth = Math.round((finalWidth * maxSize) / finalHeight)
-        finalHeight = maxSize
-      }
-    }
-
-    // Criar canvas final com o tamanho ajustado
-    const finalCanvas = document.createElement("canvas")
-    finalCanvas.width = finalWidth
-    finalCanvas.height = finalHeight
-    const finalCtx = finalCanvas.getContext("2d")
-
-    if (!finalCtx) {
-      throw new Error("No 2d context")
-    }
-
-    // Se for circular, criar máscara no canvas final
+    // Se for circular, criar máscara
     if (isCircular) {
-      finalCtx.beginPath()
-      finalCtx.arc(
-        finalWidth / 2,
-        finalHeight / 2,
-        Math.min(finalWidth, finalHeight) / 2,
-        0,
-        2 * Math.PI
-      )
-      finalCtx.clip()
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const centerX = canvas.width / 2
+      const centerY = canvas.height / 2
+      const radius = Math.min(canvas.width, canvas.height) / 2
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.putImageData(imageData, 0, 0)
+
+      ctx.globalCompositeOperation = 'destination-in'
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalCompositeOperation = 'source-over'
     }
 
-    // Desenhar imagem redimensionada
-    finalCtx.drawImage(
-      canvas,
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-      0,
-      0,
-      finalWidth,
-      finalHeight
-    )
-
-    // Se for circular, adicionar fundo transparente
-    if (isCircular) {
-      finalCtx.globalCompositeOperation = 'destination-in'
-      finalCtx.beginPath()
-      finalCtx.arc(
-        finalWidth / 2,
-        finalHeight / 2,
-        Math.min(finalWidth, finalHeight) / 2,
-        0,
-        2 * Math.PI
-      )
-      finalCtx.fill()
-    }
-
-    return finalCanvas.toDataURL("image/png", 1.0)
+    return canvas.toDataURL("image/png")
   }
 
   const handleSave = async () => {
@@ -185,7 +118,7 @@ export function ImageCropDialog({
           rotation,
           cropShape === "round"
         )
-        onCropComplete(croppedImage)
+        onComplete(croppedImage)
         onClose()
       }
     } catch (e) {
@@ -199,25 +132,25 @@ export function ImageCropDialog({
         <DialogHeader className="p-6 pb-0">
           <DialogTitle>Editar Foto</DialogTitle>
         </DialogHeader>
-        <div className="relative h-[400px] w-full mt-4">
+
+        <div className="relative h-[400px]">
           <Cropper
             image={imageUrl}
             crop={crop}
             zoom={zoom}
             rotation={rotation}
-            aspect={1}
-            cropShape={cropShape}
+            aspect={aspectRatio}
             onCropChange={handleCropChange}
             onCropComplete={handleCropComplete}
-            onZoomChange={handleZoomChange}
-            onRotationChange={handleRotationChange}
+            onZoomChange={setZoom}
           />
         </div>
+
         <div className="p-6 space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Formato</label>
-            <ToggleGroup type="single" value={cropShape} onValueChange={(value: "rect" | "round") => value && setCropShape(value)}>
-              <ToggleGroupItem value="rect" aria-label="Retangular">
+            <ToggleGroup type="single" value={cropShape} onValueChange={(value: any) => value && setCropShape(value)}>
+              <ToggleGroupItem value="rect" aria-label="Quadrado">
                 <Square className="h-4 w-4" />
               </ToggleGroupItem>
               <ToggleGroupItem value="round" aria-label="Circular">
@@ -225,28 +158,29 @@ export function ImageCropDialog({
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium">Zoom</label>
             <Slider
               value={[zoom]}
-              onValueChange={handleZoomChange}
               min={1}
               max={3}
               step={0.1}
-              className="w-full"
+              onValueChange={handleZoomChange}
             />
           </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium">Rotação</label>
             <Slider
               value={[rotation]}
-              onValueChange={handleRotationChange}
               min={0}
               max={360}
               step={1}
-              className="w-full"
+              onValueChange={handleRotationChange}
             />
           </div>
+
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={onClose}>
               Cancelar
