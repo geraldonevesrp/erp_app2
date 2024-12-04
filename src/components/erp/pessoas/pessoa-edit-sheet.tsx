@@ -63,8 +63,7 @@ export function PessoaEditSheet({
             onClick={() => onOpenChange?.(false)} 
             disabled={loading}
             className={cn(
-              "border-yellow-500 hover:border-yellow-600 dark:border-yellow-600 dark:hover:border-yellow-500",
-              hasChanges
+              hasChanges && "border-yellow-500 hover:border-yellow-600 dark:border-yellow-600 dark:hover:border-yellow-500"
             )}
           >
             {hasChanges ? "Cancelar*" : "Cancelar"}

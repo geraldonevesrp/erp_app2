@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState } from "react"
 import { usePerfil } from '@/contexts/perfil'
 import { PessoaEditSheet, PessoaEditSheetContent } from "./pessoa-edit-sheet"
@@ -9,6 +11,17 @@ import { usePessoaState } from "@/hooks/use-pessoa-state"
 import { usePessoaValidation } from "@/hooks/use-pessoa-validation"
 import { usePessoaOperations } from "@/hooks/use-pessoa-operations"
 import { Grupo, SubGrupo } from "@/types/pessoa"
+import { useToast } from "@/components/ui/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface PessoaEditProps {
   isOpen: boolean
@@ -24,6 +37,8 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
   const [grupos, setGrupos] = useState<Grupo[]>([])
   const [subGrupos, setSubGrupos] = useState<SubGrupo[]>([])
   const [mounted, setMounted] = useState(false)
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false)
+  const { toast } = useToast()
 
   const {
     pessoa,
@@ -74,6 +89,7 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
       // Carregar pessoa
       const pessoaData = await loadPessoa(pessoaId, perfil.id)
       setOriginalPessoa(pessoaData)
+      setPessoa(pessoaData, true)
 
       // Carregar grupos
       const gruposData = await loadGrupos(perfil.id)
@@ -95,13 +111,20 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
 
   const handleClose = () => {
     if (hasChanges) {
-      // Implementar confirmação de fechamento
-      if (confirm("Existem alterações não salvas. Deseja realmente fechar?")) {
-        onClose()
-      }
+      setShowDiscardDialog(true)
     } else {
       onClose()
     }
+  }
+
+  const handleDiscardChanges = () => {
+    if (originalPessoa) {
+      setPessoa(originalPessoa, true) // true para não marcar como alterado
+      toast({
+        description: "Alterações descartadas"
+      })
+    }
+    setShowDiscardDialog(false)
   }
 
   const handleSave = async () => {
@@ -139,71 +162,99 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
 
       // Chamar callback de sucesso se existir
       onSave?.()
+
+      toast({
+        description: "Dados salvos com sucesso"
+      })
     } catch (err: any) {
       setError(err.message)
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar",
+        description: err.message
+      })
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <PessoaEditSheet 
-      open={isOpen} 
-      onOpenChange={handleClose}
-      loading={loading}
-      hasChanges={hasChanges}
-      pessoa={pessoa}
-      onSave={handleSave}
-    >
-      <PessoaEditSheetContent>
-        <div className="h-full flex flex-col">
-          <div className="flex-1 overflow-y-auto">
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-4 rounded-md m-6">
-                {error}
-              </div>
-            )}
-            <div className="space-y-6 p-6 pb-[100px]">
-              {pessoa && (
-                <>
-                  <PessoaDadosGerais
-                    pessoa={pessoa}
-                    loading={loading}
-                    validationErrors={validatePessoa(pessoa)}
-                    touchedFields={touchedFields}
-                    onPessoaChange={setPessoa}
-                    onFotoUpdated={handleFotoUpdated}
-                  />
+    <>
+      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Existem alterações não salvas. Deseja realmente descartar as alterações?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDiscardChanges}>
+              Descartar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-                  <PessoaContatos
-                    pessoa={pessoa}
-                    loading={loading}
-                    validationErrors={validatePessoa(pessoa)}
-                    touchedFields={touchedFields}
-                    onPessoaChange={setPessoa}
-                    onRemoveContato={handleRemoveContato}
-                    onAddContato={() => handleAddContato(pessoa.id)}
-                  />
-
-                  <PessoaEnderecos 
-                    pessoa={pessoa}
-                    loading={loading}
-                  />
-
-                  <PessoaGrupos
-                    pessoa={pessoa}
-                    loading={loading}
-                    grupos={grupos}
-                    subGrupos={subGrupos}
-                    onGruposChange={(selectedGrupos) => handleGruposChange(selectedGrupos, subGrupos)}
-                    onSubGruposChange={handleSubGruposChange}
-                  />
-                </>
+      <PessoaEditSheet 
+        open={isOpen} 
+        onOpenChange={handleClose}
+        loading={loading}
+        hasChanges={hasChanges}
+        pessoa={pessoa}
+        onSave={handleSave}
+      >
+        <PessoaEditSheetContent>
+          <div className="h-full flex flex-col">
+            <div className="flex-1 overflow-y-auto">
+              {error && (
+                <div className="bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 p-4 rounded-md m-6">
+                  {error}
+                </div>
               )}
+              <div className="space-y-6 p-6 pb-[100px]">
+                {pessoa && (
+                  <>
+                    <PessoaDadosGerais
+                      pessoa={pessoa}
+                      loading={loading}
+                      validationErrors={validatePessoa(pessoa)}
+                      touchedFields={touchedFields}
+                      onPessoaChange={setPessoa}
+                      onFotoUpdated={handleFotoUpdated}
+                    />
+
+                    <PessoaContatos
+                      pessoa={pessoa}
+                      loading={loading}
+                      validationErrors={validatePessoa(pessoa)}
+                      touchedFields={touchedFields}
+                      onPessoaChange={setPessoa}
+                      onRemoveContato={handleRemoveContato}
+                      onAddContato={() => handleAddContato(pessoa.id)}
+                    />
+
+                    <PessoaEnderecos 
+                      pessoa={pessoa}
+                      loading={loading}
+                    />
+
+                    <PessoaGrupos
+                      pessoa={pessoa}
+                      loading={loading}
+                      grupos={grupos}
+                      subGrupos={subGrupos}
+                      onGruposChange={(selectedGrupos) => handleGruposChange(selectedGrupos, subGrupos)}
+                      onSubGruposChange={handleSubGruposChange}
+                    />
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </PessoaEditSheetContent>
-    </PessoaEditSheet>
+        </PessoaEditSheetContent>
+      </PessoaEditSheet>
+    </>
   )
 }
