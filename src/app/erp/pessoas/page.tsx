@@ -78,8 +78,6 @@ function PessoasPageContent() {
 
   const handlePessoaSaved = async (id: number) => {
     await updatePessoa(id)
-    setEditingPessoaId(null)
-    setIsPessoaEditSheetOpen(false)
   }
 
   const handleNewPessoaClick = () => {
