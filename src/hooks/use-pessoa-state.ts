@@ -6,269 +6,148 @@ export interface PessoaState {
   pessoa: Pessoa | null
   originalPessoa: Pessoa | null
   hasChanges: boolean
-  touchedFields: { [key: string]: boolean }
+  touchedFields: Set<string>
   newContatos: PessoaContato[]
-  deletedContatos: number[]
+  deletedContatos: PessoaContato[]
   newEnderecos: PessoaEndereco[]
   deletedEnderecos: number[]
 }
 
 export function usePessoaState() {
-  const [state, setState] = useState<PessoaState>({
-    pessoa: null,
-    originalPessoa: null,
-    hasChanges: false,
-    touchedFields: {},
-    newContatos: [],
-    deletedContatos: [],
-    newEnderecos: [],
-    deletedEnderecos: []
-  })
+  const [pessoa, setPessoaInternal] = useState<Pessoa | null>(null)
+  const [originalPessoa, setOriginalPessoaInternal] = useState<Pessoa | null>(null)
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set())
+  const [hasChanges, setHasChanges] = useState(false)
+  const [newContatos, setNewContatos] = useState<PessoaContato[]>([])
+  const [deletedContatos, setDeletedContatos] = useState<PessoaContato[]>([])
+  const [newEnderecos, setNewEnderecos] = useState<PessoaEndereco[]>([])
+  const [deletedEnderecos, setDeletedEnderecos] = useState<number[]>([])
 
-  const setPessoa = (updates: Pessoa | null, isInitialLoad: boolean = false) => {
-    setState(prev => {
-      // Se for carregamento inicial, não marca como alterado
-      if (isInitialLoad) {
-        return {
-          ...prev,
-          pessoa: updates,
-          hasChanges: false
-        }
-      }
+  const setPessoa = (updatedPessoa: Pessoa | null, isOriginal = false) => {
+    if (isOriginal) {
+      setOriginalPessoaInternal(updatedPessoa)
+      setPessoaInternal({
+        ...updatedPessoa,
+        pessoas_telefones: updatedPessoa?.pessoas_telefones?.map(tel => ({
+          ...tel,
+          _isDeleted: false // Remove a flag de deletado ao restaurar
+        }))
+      })
+      setNewContatos([])
+      setDeletedContatos([])
+      setTouchedFields(new Set())
+      setHasChanges(false)
+      return
+    }
 
-      // Verifica se há diferenças entre o estado atual e o original
-      const hasRealChanges = !isEqual(updates, prev.originalPessoa)
+    setPessoaInternal(updatedPessoa)
 
-      return {
-        ...prev,
-        pessoa: updates,
-        hasChanges: hasRealChanges
-      }
-    })
-  }
+    if (updatedPessoa && originalPessoa) {
+      const hasFieldChanges = 
+        updatedPessoa.nome_razao !== originalPessoa.nome_razao ||
+        updatedPessoa.apelido !== originalPessoa.apelido ||
+        updatedPessoa.tipo !== originalPessoa.tipo ||
+        updatedPessoa.foto_url !== originalPessoa.foto_url ||
+        !isEqual(updatedPessoa.grupos, originalPessoa.grupos) ||
+        !isEqual(updatedPessoa.sub_grupos, originalPessoa.sub_grupos)
 
-  const setOriginalPessoa = (pessoa: Pessoa | null) => {
-    setState(prev => ({
-      ...prev,
-      pessoa,
-      originalPessoa: pessoa,
-      hasChanges: false,
-      touchedFields: {},
-      newContatos: [],
-      deletedContatos: [],
-      newEnderecos: [],
-      deletedEnderecos: []
-    }))
+      const hasContatoChanges = newContatos.length > 0 || deletedContatos.length > 0
+
+      const hasTelefoneChanges = updatedPessoa.pessoas_telefones?.some(tel => 
+        tel._isNew || tel._isDeleted || 
+        (tel.id && originalPessoa.pessoas_telefones?.find(origTel => 
+          origTel.id === tel.id && (origTel.tipo !== tel.tipo || origTel.numero !== tel.numero)
+        ))
+      ) || false
+
+      setHasChanges(hasFieldChanges || hasContatoChanges || hasTelefoneChanges)
+    }
   }
 
   const resetState = () => {
-    setState({
-      pessoa: null,
-      originalPessoa: null,
-      hasChanges: false,
-      touchedFields: {},
-      newContatos: [],
-      deletedContatos: [],
-      newEnderecos: [],
-      deletedEnderecos: []
+    setPessoaInternal(null)
+    setOriginalPessoaInternal(null)
+    setTouchedFields(new Set())
+    setHasChanges(false)
+    setNewContatos([])
+    setDeletedContatos([])
+    setNewEnderecos([])
+    setDeletedEnderecos([])
+  }
+
+  const updateField = (field: keyof Pessoa, value: any) => {
+    if (!pessoa) return
+
+    setTouchedFields(prev => {
+      const updated = new Set(prev)
+      updated.add(field)
+      return updated
+    })
+
+    setPessoa({
+      ...pessoa,
+      [field]: value
     })
   }
 
-  const setTouchedField = (field: string) => {
-    setState(prev => ({
-      ...prev,
-      touchedFields: {
-        ...prev.touchedFields,
-        [field]: true
-      }
-    }))
-  }
-
-  const handleFotoUpdated = (novaUrl: string) => {
-    setState(prev => {
-      const newPessoa = prev.pessoa ? {
-        ...prev.pessoa,
-        foto_url: novaUrl
-      } : null
-
-      // Verifica se há diferenças reais
-      const hasRealChanges = !isEqual(newPessoa, prev.originalPessoa)
-
-      return {
-        ...prev,
-        pessoa: newPessoa,
-        hasChanges: hasRealChanges
-      }
+  const addContato = (contato: PessoaContato) => {
+    setNewContatos([...newContatos, contato])
+    setPessoa({
+      ...pessoa!,
+      pessoas_contatos: [...(pessoa?.pessoas_contatos || []), contato]
     })
   }
 
-  const handleAddContato = (pessoaId: number) => {
-    setState(prev => {
-      const novoContato: PessoaContato = {
-        id: `new-${Date.now()}`,
-        pessoa_id: pessoaId,
-        contato: "",
-        telefone: "",
-        email: "",
-        isNew: true
-      }
+  const removeContato = (contato: PessoaContato) => {
+    if (contato.id) {
+      setDeletedContatos([...deletedContatos, contato])
+    } else {
+      setNewContatos(newContatos.filter(c => c !== contato))
+    }
 
-      const newPessoa = prev.pessoa ? {
-        ...prev.pessoa,
-        pessoas_contatos: [...(prev.pessoa.pessoas_contatos || []), novoContato]
-      } : null
-
-      return {
-        ...prev,
-        pessoa: newPessoa,
-        newContatos: [...prev.newContatos, novoContato],
-        hasChanges: true // Adicionar contato sempre marca como alterado
-      }
+    setPessoa({
+      ...pessoa!,
+      pessoas_contatos: pessoa?.pessoas_contatos?.filter(c => c !== contato) || []
     })
   }
 
-  const handleRemoveContato = (contato: PessoaContato) => {
-    setState(prev => {
-      if (!prev.pessoa) return prev
-
-      const contatos = [...(prev.pessoa.pessoas_contatos || [])]
-      const removedContato = contatos.find(c => c.id === contato.id)
-      contatos.splice(contatos.indexOf(removedContato), 1)
-
-      const newPessoa = {
-        ...prev.pessoa,
-        pessoas_contatos: contatos
-      }
-
-      return {
-        ...prev,
-        pessoa: newPessoa,
-        deletedContatos: removedContato.id 
-          ? [...prev.deletedContatos, removedContato.id]
-          : prev.deletedContatos,
-        newContatos: prev.newContatos.filter(c => c.id !== contato.id),
-        hasChanges: true // Remover contato sempre marca como alterado
-      }
+  const addEndereco = (endereco: PessoaEndereco) => {
+    setNewEnderecos([...newEnderecos, endereco])
+    setPessoa({
+      ...pessoa!,
+      pessoas_enderecos: [...(pessoa?.pessoas_enderecos || []), endereco]
     })
   }
 
-  const handleAddEndereco = (pessoaId: number) => {
-    setState(prev => {
-      const newEndereco: PessoaEndereco = {
-        id: `new-${Date.now()}`,
-        pessoa_id: pessoaId,
-        titulo: "",
-        cep: "",
-        logradouro: "",
-        numero: "",
-        complemento: "",
-        bairro: "",
-        localidade: "",
-        uf: "",
-        ibge: "",
-        gia: "",
-        ddd: "",
-        siafi: "",
-        principal: false,
-        isNew: true
-      }
+  const removeEndereco = (endereco: PessoaEndereco) => {
+    if (endereco.id) {
+      setDeletedEnderecos([...deletedEnderecos, endereco.id])
+    } else {
+      setNewEnderecos(newEnderecos.filter(e => e !== endereco))
+    }
 
-      const newPessoa = prev.pessoa ? {
-        ...prev.pessoa,
-        pessoas_enderecos: [...(prev.pessoa.pessoas_enderecos || []), newEndereco]
-      } : null
-
-      return {
-        ...prev,
-        pessoa: newPessoa,
-        newEnderecos: [...prev.newEnderecos, newEndereco],
-        hasChanges: true
-      }
-    })
-  }
-
-  const handleRemoveEndereco = (endereco: PessoaEndereco) => {
-    setState(prev => {
-      if (!prev.pessoa) return prev
-
-      const enderecos = [...(prev.pessoa.pessoas_enderecos || [])]
-      const removedEndereco = enderecos.find(e => e.id === endereco.id)
-      enderecos.splice(enderecos.indexOf(removedEndereco), 1)
-
-      const newPessoa = {
-        ...prev.pessoa,
-        pessoas_enderecos: enderecos
-      }
-
-      return {
-        ...prev,
-        pessoa: newPessoa,
-        deletedEnderecos: removedEndereco.id 
-          ? [...prev.deletedEnderecos, removedEndereco.id]
-          : prev.deletedEnderecos,
-        newEnderecos: prev.newEnderecos.filter(e => e.id !== endereco.id),
-        hasChanges: true
-      }
-    })
-  }
-
-  const handleGruposChange = (selectedGrupos: number[], subGrupos: any[]) => {
-    setState(prev => {
-      if (!prev.pessoa) return prev
-
-      // Filtra subgrupos que não pertencem mais aos grupos selecionados
-      const validSubgrupos = (prev.pessoa.subgrupos_ids || []).filter(subId => {
-        const subgrupo = subGrupos.find(s => s.id === subId)
-        return subgrupo && selectedGrupos.includes(subgrupo.grupos_id)
-      })
-
-      const newPessoa = {
-        ...prev.pessoa,
-        grupos_ids: selectedGrupos,
-        subgrupos_ids: validSubgrupos
-      }
-
-      // Verifica se há diferenças reais
-      const hasRealChanges = !isEqual(newPessoa, prev.originalPessoa)
-
-      return {
-        ...prev,
-        pessoa: newPessoa,
-        hasChanges: hasRealChanges
-      }
-    })
-  }
-
-  const handleSubGruposChange = (selectedSubGrupos: number[]) => {
-    setState(prev => {
-      const newPessoa = prev.pessoa ? {
-        ...prev.pessoa,
-        subgrupos_ids: selectedSubGrupos
-      } : null
-
-      // Verifica se há diferenças reais
-      const hasRealChanges = !isEqual(newPessoa, prev.originalPessoa)
-
-      return {
-        ...prev,
-        pessoa: newPessoa,
-        hasChanges: hasRealChanges
-      }
+    setPessoa({
+      ...pessoa!,
+      pessoas_enderecos: pessoa?.pessoas_enderecos?.filter(e => e !== endereco) || []
     })
   }
 
   return {
-    ...state,
+    pessoa,
+    originalPessoa,
+    hasChanges,
+    touchedFields,
+    newContatos,
+    deletedContatos,
+    newEnderecos,
+    deletedEnderecos,
     setPessoa,
-    setOriginalPessoa,
+    setOriginalPessoa: setOriginalPessoaInternal,
     resetState,
-    setTouchedField,
-    handleFotoUpdated,
-    handleAddContato,
-    handleRemoveContato,
-    handleAddEndereco,
-    handleRemoveEndereco,
-    handleGruposChange,
-    handleSubGruposChange
+    updateField,
+    addContato,
+    removeContato,
+    addEndereco,
+    removeEndereco
   }
 }

@@ -33,6 +33,17 @@ A estrutura completa do banco de dados está documentada no arquivo `banco_supab
 
 Consulte este arquivo ao implementar novas funcionalidades para garantir consistência com o banco de dados.
 
+### Tipos do Supabase
+
+Os tipos do banco de dados são gerados automaticamente do Supabase e estão em `src/types/database.types.ts`.
+
+Para atualizar os tipos após alterações no banco:
+```bash
+npm run update-types
+```
+
+> ⚠️ **Importante**: Sempre execute este comando após fazer alterações no esquema do banco no Supabase!
+
 ## Como Instalar
 
 1. Clone o repositório

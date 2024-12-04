@@ -39,16 +39,24 @@ export interface SubGrupo {
   subgrupo: string
 }
 
+export interface PessoaTelefone {
+  id?: number
+  tipo: string
+  numero: string
+  pessoa_id: number
+  _isNew?: boolean
+  _isDeleted?: boolean
+  _tempId?: number
+}
+
 export interface Pessoa {
   id: number
-  perfis_id: number
-  apelido: string
   nome_razao: string
-  cpf_cnpj: string
-  genero_porte: string
-  grupos_ids: number[]
-  subgrupos_ids: number[]
-  pessoas_contatos: PessoaContato[]
-  pessoas_enderecos: PessoaEndereco[]
+  apelido: string
+  tipo: string
   foto_url?: string
+  grupos_ids?: number[]
+  subgrupos_ids?: number[]
+  pessoas_contatos: PessoaContato[]
+  pessoas_telefones?: PessoaTelefone[]
 }

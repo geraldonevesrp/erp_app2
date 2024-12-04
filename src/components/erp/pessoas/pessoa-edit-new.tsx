@@ -7,6 +7,7 @@ import { PessoaDadosGerais } from "./pessoa-dados-gerais"
 import { PessoaContatos } from "./pessoa-contatos"
 import { PessoaEnderecos } from "./pessoa-enderecos"
 import { PessoaGrupos } from "./pessoa-grupos"
+import { PessoaTelefones } from "./pessoa-telefones"
 import { usePessoaState } from "@/hooks/use-pessoa-state"
 import { usePessoaValidation } from "@/hooks/use-pessoa-validation"
 import { usePessoaOperations } from "@/hooks/use-pessoa-operations"
@@ -237,6 +238,12 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
                     <PessoaEnderecos 
                       pessoa={pessoa}
                       loading={loading}
+                    />
+
+                    <PessoaTelefones
+                      pessoa={pessoa}
+                      loading={loading}
+                      onPessoaChange={setPessoa}
                     />
 
                     <PessoaContatos

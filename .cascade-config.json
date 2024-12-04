@@ -1,0 +1,29 @@
+{
+  "project": {
+    "name": "ERP App",
+    "type": "ERP",
+    "description": "Sistema ERP com gerenciamento de pessoas, grupos e documentos"
+  },
+  "database": {
+    "type": "Supabase",
+    "typesFile": {
+      "path": "src/types/database.types.ts",
+      "description": "Tipos gerados automaticamente do Supabase",
+      "command": "supabase gen types typescript > src/types/database.types.ts"
+    }
+  },
+  "importantPaths": {
+    "components": {
+      "root": "src/components",
+      "erp": "src/components/erp"
+    },
+    "hooks": "src/hooks",
+    "types": "src/types"
+  },
+  "conventions": {
+    "database": {
+      "tablePrefix": "public",
+      "viewPrefix": "v_"
+    }
+  }
+}

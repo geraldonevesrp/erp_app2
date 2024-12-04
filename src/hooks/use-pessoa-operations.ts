@@ -26,7 +26,8 @@ export function usePessoaOperations() {
         .from("pessoas")
         .select(`
           *,
-          pessoas_contatos (*)
+          pessoas_contatos (*),
+          pessoas_telefones (*)
         `)
         .single()
         .eq("id", pessoaId)
@@ -81,71 +82,108 @@ export function usePessoaOperations() {
   const savePessoa = async (
     pessoa: Pessoa,
     perfilId: number,
-    deletedContatos: number[],
+    deletedContatos: PessoaContato[],
     newContatos: PessoaContato[]
   ) => {
     try {
-      // Atualizar dados da pessoa
+      // Salvar dados da pessoa
       const { error: updateError } = await supabase
         .from("pessoas")
         .update({
-          apelido: pessoa.apelido,
           nome_razao: pessoa.nome_razao,
+          apelido: pessoa.apelido,
+          tipo: pessoa.tipo,
+          foto_url: pessoa.foto_url,
           grupos_ids: pessoa.grupos_ids,
-          subgrupos_ids: pessoa.subgrupos_ids,
-          status_id: pessoa.status_id,
-          foto_url: pessoa.foto_url
+          subgrupos_ids: pessoa.subgrupos_ids
         })
         .eq("id", pessoa.id)
         .eq("perfis_id", perfilId)
 
       if (updateError) throw updateError
 
-      // Remover contatos marcados para deleção
+      // Deletar contatos marcados para deleção
       if (deletedContatos.length > 0) {
-        const { error } = await supabase
+        const { error: deleteError } = await supabase
           .from("pessoas_contatos")
           .delete()
-          .in('id', deletedContatos)
+          .in(
+            "id",
+            deletedContatos.map((c) => c.id)
+          )
 
-        if (error) throw error
+        if (deleteError) throw deleteError
       }
 
-      // Adicionar novos contatos
-      const contatosToAdd = newContatos.map(({ id, isNew, ...contato }) => contato)
-      if (contatosToAdd.length > 0) {
-        const { error } = await supabase
+      // Inserir novos contatos
+      if (newContatos.length > 0) {
+        const { error: insertError } = await supabase
           .from("pessoas_contatos")
-          .insert(contatosToAdd)
+          .insert(newContatos)
 
-        if (error) throw error
+        if (insertError) throw insertError
       }
 
-      // Atualizar contatos existentes
-      const existingContatos = pessoa.pessoas_contatos
-        .filter(c => !c.isNew && !deletedContatos.includes(c.id) && typeof c.id === 'number')
-        .map(({ isNew, ...contato }) => contato)
+      // Atualizar telefones existentes e adicionar novos
+      const telefonesToUpdate = (pessoa.pessoas_telefones || [])
+        .filter(tel => !tel._isDeleted && !tel._isNew && tel.id)
+      
+      const telefonesToAdd = (pessoa.pessoas_telefones || [])
+        .filter(tel => tel._isNew)
+        .map(({ _isNew, _isDeleted, _tempId, ...tel }) => tel)
+      
+      const telefonesToDelete = (pessoa.pessoas_telefones || [])
+        .filter(tel => tel._isDeleted && tel.id)
+        .map(tel => tel.id)
 
-      for (const contato of existingContatos) {
-        const { error } = await supabase
-          .from("pessoas_contatos")
-          .update(contato)
-          .eq("id", contato.id)
+      // Deletar telefones marcados para deleção
+      if (telefonesToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("pessoas_telefones")
+          .delete()
+          .in("id", telefonesToDelete)
 
-        if (error) throw error
+        if (deleteError) throw deleteError
       }
 
-      toast({
-        title: "Sucesso",
-        description: "Dados salvos com sucesso",
-      })
+      // Atualizar telefones existentes
+      for (const telefone of telefonesToUpdate) {
+        const { error: updateError } = await supabase
+          .from("pessoas_telefones")
+          .update({
+            tipo: telefone.tipo,
+            numero: telefone.numero
+          })
+          .eq("id", telefone.id)
+
+        if (updateError) throw updateError
+      }
+
+      // Inserir novos telefones
+      if (telefonesToAdd.length > 0) {
+        const { error: insertError } = await supabase
+          .from("pessoas_telefones")
+          .insert(telefonesToAdd)
+
+        if (insertError) throw insertError
+      }
+
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar",
-        description: error.message,
-      })
-      throw error
+      throw new Error(`Erro ao salvar dados: ${error.message}`)
+    }
+  }
+
+  const loadTiposTelefone = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("pessoas_telefones_tipos")
+        .select("tipo")
+        .order("tipo")
+
+      if (error) throw error
+      return data?.map(t => t.tipo) || []
+    } catch (error: any) {
+      throw new Error(`Erro ao carregar tipos de telefone: ${error.message}`)
     }
   }
 
@@ -153,6 +191,7 @@ export function usePessoaOperations() {
     loadPessoa,
     loadGrupos,
     loadSubGrupos,
-    savePessoa
+    savePessoa,
+    loadTiposTelefone
   }
 }

@@ -9,7 +9,8 @@
     "lint": "next lint",
     "clean": "rd /s /q .next",
     "prepare": "husky install",
-    "version-update": "node scripts/update-version.js"
+    "version-update": "node scripts/update-version.js",
+    "update-types": "supabase gen types typescript --linked > src/types/database.types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
