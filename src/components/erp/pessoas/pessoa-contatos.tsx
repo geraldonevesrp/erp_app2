@@ -54,7 +54,7 @@ export function PessoaContatos({
     >
       <div className="space-y-4 p-6">
         {pessoa?.pessoas_contatos?.filter(c => !c._isDeleted)?.map((contato: any, index: number) => (
-          <div key={contato.id || `temp-${contato._tempId}`} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start border-b pb-4">
+          <div key={contato.id || `temp-${contato._tempId}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start border-b pb-4">
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor={`contato-${index}`}>Contato</Label>
               <Input
@@ -85,28 +85,14 @@ export function PessoaContatos({
 
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor={`email-${index}`}>E-mail</Label>
-              <Input
-                id={`email-${index}`}
-                type="email"
-                value={contato.email || ""}
-                onChange={(e) => handleContatoChange(index, "email", e.target.value)}
-                disabled={loading}
-                className={validationErrors?.[`email_${index}`] && touchedFields?.[`email_${index}`] ? "border-destructive" : ""}
-              />
-              {validationErrors?.[`email_${index}`] && touchedFields?.[`email_${index}`] && (
-                <p className="text-sm text-destructive">{validationErrors[`email_${index}`]}</p>
-              )}
-            </div>
-
-            <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor={`github-${index}`}>GitHub</Label>
               <div className="flex gap-2">
                 <Input
-                  id={`github-${index}`}
-                  value={contato.github || ""}
-                  onChange={(e) => handleContatoChange(index, "github", e.target.value)}
+                  id={`email-${index}`}
+                  type="email"
+                  value={contato.email || ""}
+                  onChange={(e) => handleContatoChange(index, "email", e.target.value)}
                   disabled={loading}
-                  className={validationErrors?.[`github_${index}`] && touchedFields?.[`github_${index}`] ? "border-destructive" : ""}
+                  className={validationErrors?.[`email_${index}`] && touchedFields?.[`email_${index}`] ? "border-destructive" : ""}
                 />
                 <Button
                   variant="ghost"
@@ -117,8 +103,8 @@ export function PessoaContatos({
                   <X className="w-4 h-4" />
                 </Button>
               </div>
-              {validationErrors?.[`github_${index}`] && touchedFields?.[`github_${index}`] && (
-                <p className="text-sm text-destructive">{validationErrors[`github_${index}`]}</p>
+              {validationErrors?.[`email_${index}`] && touchedFields?.[`email_${index}`] && (
+                <p className="text-sm text-destructive">{validationErrors[`email_${index}`]}</p>
               )}
             </div>
           </div>
