@@ -51,8 +51,8 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
     setPessoa,
     setOriginalPessoa,
     handleFotoUpdated,
-    handleAddContato,
-    handleRemoveContato,
+    addContato,
+    removeContato,
     handleGruposChange,
     handleSubGruposChange,
     resetState
@@ -252,8 +252,8 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
                       validationErrors={validatePessoa(pessoa)}
                       touchedFields={touchedFields}
                       onPessoaChange={setPessoa}
-                      onRemoveContato={handleRemoveContato}
-                      onAddContato={() => handleAddContato(pessoa.id)}
+                      onRemoveContato={removeContato}
+                      onAddContato={() => addContato(pessoa.id)}
                     />
                   </>
                 )}

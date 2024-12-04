@@ -60,11 +60,22 @@ const formatPhoneNumber = (value: string) => {
 // Função para validar telefone
 const validateTelefone = (telefone: Telefone) => {
   const errors: string[] = []
-  if (!telefone.tipo) errors.push("Tipo é obrigatório")
-  if (!telefone.numero) errors.push("Número é obrigatório")
-  if (telefone.numero && telefone.numero.replace(/\D/g, '').length < 10) {
-    errors.push("Número de telefone inválido")
+  
+  // Validação do tipo
+  if (!telefone.tipo) {
+    errors.push("Selecione um tipo de telefone")
   }
+  
+  // Validação do número
+  if (!telefone.numero) {
+    errors.push("Digite um número de telefone")
+  } else {
+    const numeroLimpo = telefone.numero.replace(/\D/g, '')
+    if (numeroLimpo.length < 10 || numeroLimpo.length > 11) {
+      errors.push("Número de telefone deve ter 10 ou 11 dígitos")
+    }
+  }
+  
   return errors
 }
 
@@ -73,6 +84,7 @@ export function PessoaTelefones({ pessoa, loading, onPessoaChange }: PessoaTelef
   const [telefones, setTelefones] = useState<Telefone[]>([])
   const [uniqueId, setUniqueId] = useState(0)
   const { loadTiposTelefone } = usePessoaOperations()
+  const [editingTelefone, setEditingTelefone] = useState<number | null>(null)
 
   useEffect(() => {
     carregarTiposTelefone()
@@ -110,7 +122,9 @@ export function PessoaTelefones({ pessoa, loading, onPessoaChange }: PessoaTelef
     setUniqueId(prev => prev + 1)
     const updatedTelefones = [...telefones, newTelefone]
     setTelefones(updatedTelefones)
-    updatePessoa(updatedTelefones)
+    updatePessoa(updatedTelefones, false)
+    // Marca o novo telefone como em edição
+    setEditingTelefone(updatedTelefones.length - 1)
   }
 
   const handleRemoveTelefone = (index: number) => {
@@ -119,15 +133,16 @@ export function PessoaTelefones({ pessoa, loading, onPessoaChange }: PessoaTelef
     
     if (telefone.id) {
       telefone._isDeleted = true
-      updatePessoa([...updatedTelefones])
+      updatePessoa([...updatedTelefones], false)
       toast({
-        description: "Telefone removido"
+        description: `Telefone ${telefone.numero} removido com sucesso`
       })
     } else {
       updatedTelefones.splice(index, 1)
       setTelefones(updatedTelefones)
-      updatePessoa(updatedTelefones)
+      updatePessoa(updatedTelefones, false)
     }
+    setEditingTelefone(null)
   }
 
   const handleTelefoneChange = (index: number, field: keyof Telefone, value: string) => {
@@ -142,15 +157,64 @@ export function PessoaTelefones({ pessoa, loading, onPessoaChange }: PessoaTelef
       [field]: newValue
     }
 
-    // Valida o telefone
-    const errors = validateTelefone(updatedTelefones[index])
-    if (errors.length === 0) {
-      setTelefones(updatedTelefones)
-      updatePessoa(updatedTelefones)
+    setTelefones(updatedTelefones)
+    // Só valida quando o usuário terminar de editar
+    updatePessoa(updatedTelefones, false)
+  }
+
+  const handleBlur = (index: number) => {
+    // Valida apenas quando o usuário termina a edição
+    if (editingTelefone === index) {
+      const telefone = telefones[index]
+      const errors = validateTelefone(telefone)
+      
+      if (errors.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Erro no telefone",
+          description: errors.join(", ")
+        })
+      }
+      setEditingTelefone(null)
     }
   }
 
-  const updatePessoa = (updatedTelefones: Telefone[]) => {
+  const updatePessoa = (updatedTelefones: Telefone[], validate: boolean = false) => {
+    // Se não é para validar, apenas atualiza
+    if (!validate) {
+      onPessoaChange({
+        ...pessoa,
+        pessoas_telefones: [
+          ...updatedTelefones,
+          ...(pessoa.pessoas_telefones?.filter(tel => tel._isDeleted) || [])
+        ]
+      })
+      return true
+    }
+
+    // Valida apenas telefones ativos e preenchidos (com tipo ou número)
+    const telefonesParaValidar = updatedTelefones
+      .filter(tel => !tel._isDeleted)
+      .filter(tel => tel.tipo || tel.numero)
+    
+    const allErrors: string[] = []
+
+    telefonesParaValidar.forEach(tel => {
+      const errors = validateTelefone(tel)
+      if (errors.length > 0) {
+        allErrors.push(...errors)
+      }
+    })
+
+    if (allErrors.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Erro nos telefones",
+        description: allErrors.join(", ")
+      })
+      return false
+    }
+
     onPessoaChange({
       ...pessoa,
       pessoas_telefones: [
@@ -158,6 +222,7 @@ export function PessoaTelefones({ pessoa, loading, onPessoaChange }: PessoaTelef
         ...(pessoa.pessoas_telefones?.filter(tel => tel._isDeleted) || [])
       ]
     })
+    return true
   }
 
   return (
@@ -197,12 +262,13 @@ export function PessoaTelefones({ pessoa, loading, onPessoaChange }: PessoaTelef
                 <TableRow key={telefone.id || `temp-${telefone._tempId}`}>
                   <TableCell>
                     <Select
-                      value={telefone.tipo}
+                      value={telefone.tipo || undefined}
                       onValueChange={(value) => handleTelefoneChange(index, 'tipo', value)}
                       disabled={loading}
+                      onOpenChange={() => setEditingTelefone(index)}
                     >
-                      <SelectTrigger className={!telefone.tipo ? "border-red-500" : ""}>
-                        <SelectValue placeholder="Selecione..." />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um tipo" />
                       </SelectTrigger>
                       <SelectContent>
                         {tiposTelefone.map((tipo) => (
@@ -215,11 +281,12 @@ export function PessoaTelefones({ pessoa, loading, onPessoaChange }: PessoaTelef
                   </TableCell>
                   <TableCell>
                     <Input
-                      value={telefone.numero}
+                      value={telefone.numero || ''}
                       onChange={(e) => handleTelefoneChange(index, 'numero', e.target.value)}
+                      onFocus={() => setEditingTelefone(index)}
+                      onBlur={() => handleBlur(index)}
+                      placeholder="(99) 99999-9999"
                       disabled={loading}
-                      placeholder="(00) 00000-0000"
-                      className={!telefone.numero ? "border-red-500" : ""}
                     />
                   </TableCell>
                   <TableCell className="text-right">

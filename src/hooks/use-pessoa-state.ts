@@ -22,6 +22,7 @@ export function usePessoaState() {
   const [deletedContatos, setDeletedContatos] = useState<PessoaContato[]>([])
   const [newEnderecos, setNewEnderecos] = useState<PessoaEndereco[]>([])
   const [deletedEnderecos, setDeletedEnderecos] = useState<number[]>([])
+  const [uniqueId, setUniqueId] = useState(0)
 
   const setPessoa = (updatedPessoa: Pessoa | null, isOriginal = false) => {
     if (isOriginal) {
@@ -30,7 +31,11 @@ export function usePessoaState() {
         ...updatedPessoa,
         pessoas_telefones: updatedPessoa?.pessoas_telefones?.map(tel => ({
           ...tel,
-          _isDeleted: false // Remove a flag de deletado ao restaurar
+          _isDeleted: false
+        })),
+        pessoas_contatos: updatedPessoa?.pessoas_contatos?.map(contato => ({
+          ...contato,
+          _isDeleted: false
         }))
       })
       setNewContatos([])
@@ -51,7 +56,16 @@ export function usePessoaState() {
         !isEqual(updatedPessoa.grupos_ids, originalPessoa.grupos_ids) ||
         !isEqual(updatedPessoa.subgrupos_ids, originalPessoa.subgrupos_ids)
 
-      const hasContatoChanges = newContatos.length > 0 || deletedContatos.length > 0
+      // Verifica mudanças em contatos existentes
+      const hasContatoChanges = newContatos.length > 0 || deletedContatos.length > 0 ||
+        updatedPessoa.pessoas_contatos?.some((contato, index) => {
+          const originalContato = originalPessoa.pessoas_contatos?.[index]
+          if (!originalContato) return true
+          return !isEqual(
+            { contato: contato.contato, telefone: contato.telefone, email: contato.email },
+            { contato: originalContato.contato, telefone: originalContato.telefone, email: originalContato.email }
+          )
+        }) || false
 
       const hasTelefoneChanges = updatedPessoa.pessoas_telefones?.some(tel => 
         tel._isNew || tel._isDeleted || 
@@ -90,25 +104,40 @@ export function usePessoaState() {
     })
   }
 
-  const addContato = (contato: PessoaContato) => {
-    setNewContatos([...newContatos, contato])
+  const addContato = () => {
+    const newContato = {
+      contato: '',
+      telefone: '',
+      email: '',
+      pessoa_id: pessoa?.id,
+      _isNew: true,
+      _tempId: uniqueId
+    }
+    setUniqueId(prev => prev + 1)
+    setNewContatos([...newContatos, newContato])
     setPessoa({
       ...pessoa!,
-      pessoas_contatos: [...(pessoa?.pessoas_contatos || []), contato]
+      pessoas_contatos: [...(pessoa?.pessoas_contatos || []), newContato]
     })
   }
 
   const removeContato = (contato: PessoaContato) => {
     if (contato.id) {
       setDeletedContatos([...deletedContatos, contato])
+      const updatedContatos = pessoa?.pessoas_contatos?.map(c => 
+        c.id === contato.id ? { ...c, _isDeleted: true } : c
+      ) || []
+      setPessoa({
+        ...pessoa!,
+        pessoas_contatos: updatedContatos
+      })
     } else {
-      setNewContatos(newContatos.filter(c => c !== contato))
+      setNewContatos(newContatos.filter(c => c._tempId !== contato._tempId))
+      setPessoa({
+        ...pessoa!,
+        pessoas_contatos: pessoa?.pessoas_contatos?.filter(c => c._tempId !== contato._tempId) || []
+      })
     }
-
-    setPessoa({
-      ...pessoa!,
-      pessoas_contatos: pessoa?.pessoas_contatos?.filter(c => c !== contato) || []
-    })
   }
 
   const addEndereco = (endereco: PessoaEndereco) => {

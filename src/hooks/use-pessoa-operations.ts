@@ -119,9 +119,31 @@ export function usePessoaOperations() {
       if (newContatos.length > 0) {
         const { error: insertError } = await supabase
           .from("pessoas_contatos")
-          .insert(newContatos)
+          .insert(
+            newContatos.map(({ _isNew, _isDeleted, _tempId, ...contato }) => ({
+              ...contato,
+              pessoa_id: pessoa.id
+            }))
+          )
 
         if (insertError) throw insertError
+      }
+
+      // Atualizar contatos existentes
+      const contatosToUpdate = (pessoa.pessoas_contatos || [])
+        .filter(c => !c._isNew && !c._isDeleted && c.id)
+      
+      for (const contato of contatosToUpdate) {
+        const { error: updateError } = await supabase
+          .from("pessoas_contatos")
+          .update({
+            contato: contato.contato,
+            telefone: contato.telefone,
+            email: contato.email
+          })
+          .eq("id", contato.id)
+
+        if (updateError) throw updateError
       }
 
       // Atualizar telefones existentes e adicionar novos

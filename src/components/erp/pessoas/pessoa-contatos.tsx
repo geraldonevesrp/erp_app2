@@ -28,15 +28,13 @@ export function PessoaContatos({
 }: PessoaContatosProps) {
   const handleContatoChange = (index: number, field: string, value: string) => {
     if (field === "telefone") {
-      // Formatar telefone
       value = formatPhone(value)
     }
 
-    const newContatos = [...pessoa.pessoas_contatos]
-    newContatos[index] = {
-      ...newContatos[index],
-      [field]: value
-    }
+    const newContatos = [...(pessoa.pessoas_contatos || [])]
+    const contato = { ...newContatos[index] }
+    contato[field] = value
+    newContatos[index] = contato
 
     onPessoaChange({
       ...pessoa,
@@ -55,8 +53,8 @@ export function PessoaContatos({
       defaultExpanded={false}
     >
       <div className="space-y-4 p-6">
-        {pessoa?.pessoas_contatos?.map((contato: any, index: number) => (
-          <div key={contato.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start border-b pb-4">
+        {pessoa?.pessoas_contatos?.filter(c => !c._isDeleted)?.map((contato: any, index: number) => (
+          <div key={contato.id || `temp-${contato._tempId}`} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start border-b pb-4">
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor={`contato-${index}`}>Contato</Label>
               <Input
@@ -87,14 +85,28 @@ export function PessoaContatos({
 
             <div className="grid w-full items-center gap-1.5">
               <Label htmlFor={`email-${index}`}>E-mail</Label>
+              <Input
+                id={`email-${index}`}
+                type="email"
+                value={contato.email || ""}
+                onChange={(e) => handleContatoChange(index, "email", e.target.value)}
+                disabled={loading}
+                className={validationErrors?.[`email_${index}`] && touchedFields?.[`email_${index}`] ? "border-destructive" : ""}
+              />
+              {validationErrors?.[`email_${index}`] && touchedFields?.[`email_${index}`] && (
+                <p className="text-sm text-destructive">{validationErrors[`email_${index}`]}</p>
+              )}
+            </div>
+
+            <div className="grid w-full items-center gap-1.5">
+              <Label htmlFor={`github-${index}`}>GitHub</Label>
               <div className="flex gap-2">
                 <Input
-                  id={`email-${index}`}
-                  type="email"
-                  value={contato.email || ""}
-                  onChange={(e) => handleContatoChange(index, "email", e.target.value)}
+                  id={`github-${index}`}
+                  value={contato.github || ""}
+                  onChange={(e) => handleContatoChange(index, "github", e.target.value)}
                   disabled={loading}
-                  className={validationErrors?.[`email_${index}`] && touchedFields?.[`email_${index}`] ? "border-destructive" : ""}
+                  className={validationErrors?.[`github_${index}`] && touchedFields?.[`github_${index}`] ? "border-destructive" : ""}
                 />
                 <Button
                   variant="ghost"
@@ -102,16 +114,15 @@ export function PessoaContatos({
                   onClick={() => onRemoveContato(contato)}
                   disabled={loading}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
-              {validationErrors?.[`email_${index}`] && touchedFields?.[`email_${index}`] && (
-                <p className="text-sm text-destructive">{validationErrors[`email_${index}`]}</p>
+              {validationErrors?.[`github_${index}`] && touchedFields?.[`github_${index}`] && (
+                <p className="text-sm text-destructive">{validationErrors[`github_${index}`]}</p>
               )}
             </div>
           </div>
         ))}
-
         <Button
           variant="outline"
           size="sm"
