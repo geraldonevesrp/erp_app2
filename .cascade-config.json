@@ -9,7 +9,19 @@
     "typesFile": {
       "path": "src/types/database.types.ts",
       "description": "Tipos gerados automaticamente do Supabase",
-      "command": "supabase gen types typescript > src/types/database.types.ts"
+      "command": "supabase gen types typescript --linked > src/types/database.types.ts"
+    },
+    "typesStrategy": {
+      "legacy": {
+        "path": "src/types/pessoa.ts",
+        "description": "Tipos manuais para componentes existentes do módulo Pessoas",
+        "status": "maintained"
+      },
+      "new": {
+        "path": "src/types/database.types.ts",
+        "description": "Usar estes tipos para novos componentes",
+        "example": "import { Database } from '@/types/database.types';\ntype Pessoa = Database['public']['Tables']['pessoas']['Row'];"
+      }
     }
   },
   "importantPaths": {

@@ -44,6 +44,28 @@ npm run update-types
 
 > ⚠️ **Importante**: Sempre execute este comando após fazer alterações no esquema do banco no Supabase!
 
+#### Estratégia de Tipos
+
+O projeto utiliza duas abordagens para tipos do banco de dados:
+
+1. **Componentes Existentes** (Módulo Pessoas):
+   - Continuam usando tipos definidos em `src/types/pessoa.ts`
+   - Mantém estabilidade e evita refatoração desnecessária
+   - Tipos são mantidos manualmente
+
+2. **Novos Componentes**:
+   - Devem usar tipos automáticos do Supabase de `database.types.ts`
+   - Exemplo de uso:
+   ```typescript
+   import { Database } from '@/types/database.types';
+   type MinhaTabela = Database['public']['Tables']['nome_tabela']['Row'];
+   ```
+
+Esta estratégia permite:
+- Manter estabilidade do código existente
+- Usar tipos automáticos em código novo
+- Migração gradual quando necessário
+
 ## Como Instalar
 
 1. Clone o repositório
