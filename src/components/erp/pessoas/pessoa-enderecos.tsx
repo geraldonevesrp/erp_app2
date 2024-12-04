@@ -1,264 +1,259 @@
 "use client"
 
-import { MapPin, Plus, X } from "lucide-react"
+import { useState, useEffect } from "react"
+import { MapPin, Plus, Pencil, Trash2 } from "lucide-react"
 import { ExpandableCard } from "@/components/ui/expandable-card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { formatCEP } from "@/lib/masks"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { EnderecoFormDialog } from "./endereco-form-dialog"
+import { Pessoa, PessoaEndereco } from "@/types/pessoa"
+import { useEnderecoOperations } from "@/hooks/use-endereco-operations"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
 
 interface PessoaEnderecosProps {
-  pessoa: any
-  loading: boolean
-  validationErrors: { [key: string]: string }
-  touchedFields: { [key: string]: boolean }
-  onPessoaChange: (updates: any) => void
-  onRemoveEndereco: (endereco: any) => void
-  onAddEndereco: () => void
+  pessoa: Pessoa
+  loading?: boolean
 }
 
 export function PessoaEnderecos({
   pessoa,
-  loading,
-  validationErrors,
-  touchedFields,
-  onPessoaChange,
-  onRemoveEndereco,
-  onAddEndereco
+  loading: parentLoading
 }: PessoaEnderecosProps) {
-  const supabase = createClientComponentClient()
+  const [formOpen, setFormOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [selectedEndereco, setSelectedEndereco] = useState<Partial<PessoaEndereco> | null>(null)
+  const [enderecos, setEnderecos] = useState<PessoaEndereco[]>([])
+  const [loading, setLoading] = useState(false)
+  const { loadEnderecos, deleteEndereco, setPrincipal } = useEnderecoOperations()
 
-  const handleEnderecoChange = async (index: number, field: string, value: any) => {
-    const newEnderecos = [...pessoa.pessoas_enderecos]
+  const isLoading = loading || parentLoading
 
-    if (field === "cep") {
-      // Formatar CEP
-      value = formatCEP(value)
-
-      // Se o CEP estiver completo, buscar dados
-      if (value.length === 9) {
-        try {
-          const response = await fetch(`https://viacep.com.br/ws/${value.replace(/\D/g, "")}/json/`)
-          const data = await response.json()
-
-          if (!data.erro) {
-            newEnderecos[index] = {
-              ...newEnderecos[index],
-              cep: value,
-              logradouro: data.logradouro,
-              bairro: data.bairro,
-              localidade: data.localidade,
-              uf: data.uf,
-              ibge: data.ibge,
-              gia: data.gia,
-              ddd: data.ddd,
-              siafi: data.siafi
-            }
-
-            onPessoaChange({
-              ...pessoa,
-              pessoas_enderecos: newEnderecos
-            })
-            return
-          }
-        } catch (err) {
-          console.error("Erro ao buscar CEP:", err)
-        }
-      }
+  const loadData = async () => {
+    if (!pessoa?.id) return
+    try {
+      setLoading(true)
+      const data = await loadEnderecos(pessoa.id)
+      setEnderecos(data || [])
+    } catch (error: any) {
+      toast.error(`Erro ao carregar endereços: ${error.message}`)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    if (field === "principal") {
-      // Se estiver marcando como principal, desmarcar os outros
-      if (value === true) {
-        newEnderecos.forEach((endereco: any, i: number) => {
-          if (i !== index) {
-            endereco.principal = false
-          }
-        })
-      }
-    }
+  useEffect(() => {
+    loadData()
+  }, [pessoa?.id])
 
-    newEnderecos[index] = {
-      ...newEnderecos[index],
-      [field]: value
-    }
+  const handleEditEndereco = (endereco: PessoaEndereco) => {
+    setSelectedEndereco(endereco)
+    setFormOpen(true)
+  }
 
-    onPessoaChange({
-      ...pessoa,
-      pessoas_enderecos: newEnderecos
+  const handleNewEndereco = () => {
+    setSelectedEndereco({
+      pessoa_id: pessoa.id,
+      titulo: "",
+      cep: "",
+      logradouro: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
+      localidade: "",
+      uf: "",
+      ibge: "",
+      gia: "",
+      ddd: "",
+      siafi: "",
+      principal: false
     })
+    setFormOpen(true)
+  }
+
+  const handleDeleteClick = (endereco: PessoaEndereco) => {
+    setSelectedEndereco(endereco)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!selectedEndereco?.id) return
+    
+    try {
+      setLoading(true)
+      await deleteEndereco(selectedEndereco.id)
+      toast.success('Endereço excluído com sucesso!')
+      await loadData()
+    } catch (error: any) {
+      toast.error(`Erro ao excluir endereço: ${error.message}`)
+    } finally {
+      setLoading(false)
+      setDeleteDialogOpen(false)
+    }
+  }
+
+  const handlePrincipalChange = async (endereco: PessoaEndereco) => {
+    if (!endereco.id) return
+    
+    try {
+      setLoading(true)
+      await setPrincipal(endereco.id)
+      await loadData()
+      toast.success('Endereço principal atualizado!')
+    } catch (error: any) {
+      toast.error(`Erro ao definir endereço principal: ${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleFormClose = (saved?: boolean) => {
+    setFormOpen(false)
+    setSelectedEndereco(null)
+    if (saved) {
+      loadData()
+    }
   }
 
   return (
-    <ExpandableCard
-      title={
-        <div className="flex items-center gap-2">
-          <MapPin className="w-5 h-5" />
-          <span>Endereços</span>
-        </div>
-      }
-      defaultExpanded={false}
-    >
-      <div className="space-y-4 p-6">
-        {pessoa?.pessoas_enderecos?.map((endereco: any, index: number) => (
-          <div key={endereco.id} className="space-y-4 border-b pb-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor={`titulo-${index}`}>Título</Label>
-                <Input
-                  id={`titulo-${index}`}
-                  value={endereco.titulo || ""}
-                  onChange={(e) => handleEnderecoChange(index, "titulo", e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor={`cep-${index}`}>CEP</Label>
-                <Input
-                  id={`cep-${index}`}
-                  value={endereco.cep || ""}
-                  onChange={(e) => handleEnderecoChange(index, "cep", e.target.value)}
-                  disabled={loading}
-                  className={validationErrors?.[`endereco_${index}_cep`] && touchedFields?.[`endereco_${index}_cep`] ? "border-destructive" : ""}
-                />
-                {validationErrors?.[`endereco_${index}_cep`] && touchedFields?.[`endereco_${index}_cep`] && (
-                  <p className="text-sm text-destructive">{validationErrors[`endereco_${index}_cep`]}</p>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between space-x-2">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id={`principal-${index}`}
-                    checked={endereco.principal || false}
-                    onCheckedChange={(checked) => handleEnderecoChange(index, "principal", checked)}
-                    disabled={loading}
-                  />
-                  <Label htmlFor={`principal-${index}`}>Principal</Label>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onRemoveEndereco(endereco)}
-                  disabled={loading}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor={`logradouro-${index}`}>Logradouro</Label>
-                <Input
-                  id={`logradouro-${index}`}
-                  value={endereco.logradouro || ""}
-                  onChange={(e) => handleEnderecoChange(index, "logradouro", e.target.value)}
-                  disabled={loading}
-                  className={validationErrors?.[`endereco_${index}_logradouro`] && touchedFields?.[`endereco_${index}_logradouro`] ? "border-destructive" : ""}
-                />
-                {validationErrors?.[`endereco_${index}_logradouro`] && touchedFields?.[`endereco_${index}_logradouro`] && (
-                  <p className="text-sm text-destructive">{validationErrors[`endereco_${index}_logradouro`]}</p>
-                )}
-              </div>
-
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor={`numero-${index}`}>Número</Label>
-                <Input
-                  id={`numero-${index}`}
-                  value={endereco.numero || ""}
-                  onChange={(e) => handleEnderecoChange(index, "numero", e.target.value)}
-                  disabled={loading}
-                  className={validationErrors?.[`endereco_${index}_numero`] && touchedFields?.[`endereco_${index}_numero`] ? "border-destructive" : ""}
-                />
-                {validationErrors?.[`endereco_${index}_numero`] && touchedFields?.[`endereco_${index}_numero`] && (
-                  <p className="text-sm text-destructive">{validationErrors[`endereco_${index}_numero`]}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor={`complemento-${index}`}>Complemento</Label>
-                <Input
-                  id={`complemento-${index}`}
-                  value={endereco.complemento || ""}
-                  onChange={(e) => handleEnderecoChange(index, "complemento", e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor={`bairro-${index}`}>Bairro</Label>
-                <Input
-                  id={`bairro-${index}`}
-                  value={endereco.bairro || ""}
-                  onChange={(e) => handleEnderecoChange(index, "bairro", e.target.value)}
-                  disabled={loading}
-                  className={validationErrors?.[`endereco_${index}_bairro`] && touchedFields?.[`endereco_${index}_bairro`] ? "border-destructive" : ""}
-                />
-                {validationErrors?.[`endereco_${index}_bairro`] && touchedFields?.[`endereco_${index}_bairro`] && (
-                  <p className="text-sm text-destructive">{validationErrors[`endereco_${index}_bairro`]}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor={`localidade-${index}`}>Cidade</Label>
-                <Input
-                  id={`localidade-${index}`}
-                  value={endereco.localidade || ""}
-                  onChange={(e) => handleEnderecoChange(index, "localidade", e.target.value)}
-                  disabled={loading}
-                  className={validationErrors?.[`endereco_${index}_localidade`] && touchedFields?.[`endereco_${index}_localidade`] ? "border-destructive" : ""}
-                />
-                {validationErrors?.[`endereco_${index}_localidade`] && touchedFields?.[`endereco_${index}_localidade`] && (
-                  <p className="text-sm text-destructive">{validationErrors[`endereco_${index}_localidade`]}</p>
-                )}
-              </div>
-
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor={`uf-${index}`}>UF</Label>
-                <Input
-                  id={`uf-${index}`}
-                  value={endereco.uf || ""}
-                  onChange={(e) => handleEnderecoChange(index, "uf", e.target.value)}
-                  disabled={loading}
-                  className={validationErrors?.[`endereco_${index}_uf`] && touchedFields?.[`endereco_${index}_uf`] ? "border-destructive" : ""}
-                />
-                {validationErrors?.[`endereco_${index}_uf`] && touchedFields?.[`endereco_${index}_uf`] && (
-                  <p className="text-sm text-destructive">{validationErrors[`endereco_${index}_uf`]}</p>
-                )}
-              </div>
-
-              <div className="grid w-full items-center gap-1.5">
-                <Label htmlFor={`ibge-${index}`}>IBGE</Label>
-                <Input
-                  id={`ibge-${index}`}
-                  value={endereco.ibge || ""}
-                  onChange={(e) => handleEnderecoChange(index, "ibge", e.target.value)}
-                  disabled={loading}
-                />
-              </div>
-            </div>
+    <>
+      <ExpandableCard
+        title={
+          <div className="flex items-center gap-2">
+            <MapPin className="w-5 h-5" />
+            <span>Endereços</span>
           </div>
-        ))}
+        }
+        defaultExpanded={false}
+      >
+        <div className="space-y-4 p-6 dark:bg-background">
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNewEndereco}
+              disabled={isLoading}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Endereço
+            </Button>
+          </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onAddEndereco}
-          disabled={loading}
-          className="w-full"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Endereço
-        </Button>
-      </div>
-    </ExpandableCard>
+          <div className="space-y-4">
+            {enderecos.map((endereco) => (
+              <div
+                key={endereco.id}
+                className={cn(
+                  "rounded-lg border p-4",
+                  "dark:border-border",
+                  "hover:shadow-sm transition-shadow",
+                  endereco.principal && "bg-muted/50 dark:bg-muted/10"
+                )}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">{endereco.titulo}</h4>
+                      {endereco.principal && (
+                        <span className="text-xs bg-primary/10 dark:bg-primary/20 text-primary px-2 py-0.5 rounded">
+                          Principal
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {endereco.logradouro}, {endereco.numero}
+                      {endereco.complemento && ` - ${endereco.complemento}`}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {endereco.bairro} - {endereco.localidade}/{endereco.uf}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      CEP: {endereco.cep}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {!endereco.principal && (
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={endereco.principal}
+                          onCheckedChange={() => handlePrincipalChange(endereco)}
+                          disabled={isLoading}
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          Principal
+                        </span>
+                      </div>
+                    )}
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEditEndereco(endereco)}
+                      disabled={isLoading}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteClick(endereco)}
+                      disabled={isLoading || endereco.principal}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {enderecos.length === 0 && !isLoading && (
+              <div className="text-center py-8 text-muted-foreground">
+                Nenhum endereço cadastrado
+              </div>
+            )}
+          </div>
+        </div>
+      </ExpandableCard>
+
+      <EnderecoFormDialog
+        open={formOpen}
+        onOpenChange={handleFormClose}
+        endereco={selectedEndereco}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Endereço</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este endereço? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }

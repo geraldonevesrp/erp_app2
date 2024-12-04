@@ -33,21 +33,23 @@ export function PessoaEditSheet({
     <div
       data-state={open ? "open" : "closed"}
       className={cn(
-        "fixed top-16 bottom-0 right-0 w-[calc(100%-16rem)] bg-slate-50/95 z-50 flex flex-col border-l min-h-screen",
+        "fixed top-16 bottom-0 right-0 w-[calc(100%-16rem)] z-50 flex flex-col border-l min-h-screen",
         "transition-all duration-300 ease-in-out transform will-change-transform",
+        "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "dark:border-slate-800",
         "pessoa-edit-sheet",
         open ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none",
         className
       )}
       {...props}
     >
-      <div className="h-14 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-6 flex-none">
+      <div className="h-14 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-6 flex-none dark:border-slate-800">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">
             {pessoa ? (
               <>
                 Editando Pessoa: {pessoa.apelido} - {pessoa.nome_razao}
-                {hasChanges && <span className="ml-2 text-sm text-yellow-600">(não salvo)</span>}
+                {hasChanges && <span className="ml-2 text-sm text-yellow-600 dark:text-yellow-500">(não salvo)</span>}
               </>
             ) : (
               "Editando Pessoa"
@@ -61,7 +63,8 @@ export function PessoaEditSheet({
             onClick={() => onOpenChange?.(false)} 
             disabled={loading}
             className={cn(
-              hasChanges && "border-yellow-500 hover:border-yellow-600"
+              "border-yellow-500 hover:border-yellow-600 dark:border-yellow-600 dark:hover:border-yellow-500",
+              hasChanges
             )}
           >
             {hasChanges ? "Cancelar*" : "Cancelar"}
@@ -71,7 +74,8 @@ export function PessoaEditSheet({
             onClick={onSave} 
             disabled={loading}
             className={cn(
-              hasChanges && "bg-blue-600 hover:bg-blue-700"
+              "bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600",
+              hasChanges
             )}
           >
             {loading ? (
@@ -111,7 +115,8 @@ export function PessoaEditSheetContent({
   return (
     <div
       className={cn(
-        "flex-1 overflow-y-auto",
+        "flex-1 overflow-y-auto bg-background",
+        "dark:bg-slate-900",
         className
       )}
       {...props}
