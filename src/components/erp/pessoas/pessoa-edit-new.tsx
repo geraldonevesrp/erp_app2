@@ -225,6 +225,20 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
                       onFotoUpdated={handleFotoUpdated}
                     />
 
+                    <PessoaGrupos
+                      pessoa={pessoa}
+                      loading={loading}
+                      grupos={grupos}
+                      subGrupos={subGrupos}
+                      onGruposChange={(selectedGrupos) => handleGruposChange(selectedGrupos, subGrupos)}
+                      onSubGruposChange={handleSubGruposChange}
+                    />
+
+                    <PessoaEnderecos 
+                      pessoa={pessoa}
+                      loading={loading}
+                    />
+
                     <PessoaContatos
                       pessoa={pessoa}
                       loading={loading}
@@ -233,20 +247,6 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
                       onPessoaChange={setPessoa}
                       onRemoveContato={handleRemoveContato}
                       onAddContato={() => handleAddContato(pessoa.id)}
-                    />
-
-                    <PessoaEnderecos 
-                      pessoa={pessoa}
-                      loading={loading}
-                    />
-
-                    <PessoaGrupos
-                      pessoa={pessoa}
-                      loading={loading}
-                      grupos={grupos}
-                      subGrupos={subGrupos}
-                      onGruposChange={(selectedGrupos) => handleGruposChange(selectedGrupos, subGrupos)}
-                      onSubGruposChange={handleSubGruposChange}
                     />
                   </>
                 )}
