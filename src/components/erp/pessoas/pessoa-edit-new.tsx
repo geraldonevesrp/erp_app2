@@ -131,48 +131,27 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
   const handleSave = async () => {
     try {
       setLoading(true)
-      setError("")
 
-      // Validação dos campos
-      const errors = validatePessoa(pessoa)
-      if (Object.keys(errors).length > 0) {
-        const errorMessages = Object.values(errors).join("\n")
-        throw new Error(errorMessages)
-      }
+      // Pegar contatos deletados e novos
+      const deletedContatos = pessoa.pessoas_contatos?.filter(c => c._isDeleted && c.id) || []
+      const newContatos = pessoa.pessoas_contatos?.filter(c => c._isNew && !c._isDeleted) || []
 
-      if (!pessoa || !pessoaId || !perfil?.id) {
-        throw new Error("Dados necessários não encontrados")
-      }
-
-      // Validação de contatos
-      const allContatos = pessoa.pessoas_contatos || []
-      const invalidContatos = allContatos.filter(c => !c.contato?.trim())
-      if (invalidContatos.length > 0) {
-        throw new Error("Todos os contatos precisam ter um nome preenchido")
-      }
-
-      await savePessoa(
-        pessoa,
-        perfil.id,
-        deletedContatos,
-        newContatos
-      )
-
-      // Recarregar dados
-      await loadData()
-
-      // Chamar callback de sucesso se existir
-      onSave?.()
-
+      await savePessoa(pessoa, perfil.id, deletedContatos, newContatos)
+      
       toast({
-        description: "Dados salvos com sucesso"
+        description: "Dados salvos com sucesso!"
       })
-    } catch (err: any) {
-      setError(err.message)
+
+      // Recarregar dados após salvar
+      const updatedPessoa = await loadPessoa(pessoa.id, perfil.id)
+      setPessoa(updatedPessoa)
+
+    } catch (error: any) {
+      console.error('Erro ao salvar:', error)
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
-        description: err.message
+        description: error.message
       })
     } finally {
       setLoading(false)
@@ -253,7 +232,7 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
                       touchedFields={touchedFields}
                       onPessoaChange={setPessoa}
                       onRemoveContato={removeContato}
-                      onAddContato={() => addContato(pessoa.id)}
+                      onAddContato={addContato}
                     />
                   </>
                 )}

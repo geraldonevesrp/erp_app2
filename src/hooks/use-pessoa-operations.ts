@@ -26,7 +26,17 @@ export function usePessoaOperations() {
         .from("pessoas")
         .select(`
           *,
-          pessoas_contatos (*),
+          pessoas_contatos (
+            id,
+            contato,
+            cargo,
+            departamento,
+            email,
+            celular,
+            telefone,
+            zap,
+            pessoa_id
+          ),
           pessoas_telefones (*)
         `)
         .single()
@@ -37,6 +47,11 @@ export function usePessoaOperations() {
 
       if (!pessoaData) {
         throw new Error("Dados não encontrados")
+      }
+
+      // Ordenar contatos por ID
+      if (pessoaData.pessoas_contatos) {
+        pessoaData.pessoas_contatos.sort((a, b) => (a.id || 0) - (b.id || 0))
       }
 
       return {
@@ -104,27 +119,36 @@ export function usePessoaOperations() {
 
       // Deletar contatos marcados para deleção
       if (deletedContatos.length > 0) {
-        const { error: deleteError } = await supabase
-          .from("pessoas_contatos")
-          .delete()
-          .in(
-            "id",
-            deletedContatos.map((c) => c.id)
-          )
+        const contatosIds = deletedContatos
+          .filter(c => c.id) // Garantir que só deleta contatos com ID
+          .map(c => c.id)
 
-        if (deleteError) throw deleteError
+        if (contatosIds.length > 0) {
+          const { error: deleteError } = await supabase
+            .from("pessoas_contatos")
+            .delete()
+            .in("id", contatosIds)
+
+          if (deleteError) throw deleteError
+        }
       }
 
       // Inserir novos contatos
-      if (newContatos.length > 0) {
+      const novosContatos = newContatos
+        .filter(contato => !contato._isDeleted) // Garantir que não insere contatos deletados
+        .map(contato => {
+          // Remover campos temporários
+          const { _isNew, _isDeleted, _tempId, id, ...rest } = contato
+          return {
+            ...rest,
+            pessoa_id: pessoa.id
+          }
+        })
+
+      if (novosContatos.length > 0) {
         const { error: insertError } = await supabase
           .from("pessoas_contatos")
-          .insert(
-            newContatos.map(({ _isNew, _isDeleted, _tempId, ...contato }) => ({
-              ...contato,
-              pessoa_id: pessoa.id
-            }))
-          )
+          .insert(novosContatos)
 
         if (insertError) throw insertError
       }
@@ -138,8 +162,12 @@ export function usePessoaOperations() {
           .from("pessoas_contatos")
           .update({
             contato: contato.contato,
+            cargo: contato.cargo,
+            departamento: contato.departamento,
+            email: contato.email,
+            celular: contato.celular,
             telefone: contato.telefone,
-            email: contato.email
+            zap: contato.zap
           })
           .eq("id", contato.id)
 
