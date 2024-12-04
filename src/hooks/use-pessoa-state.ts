@@ -48,8 +48,8 @@ export function usePessoaState() {
         updatedPessoa.apelido !== originalPessoa.apelido ||
         updatedPessoa.tipo !== originalPessoa.tipo ||
         updatedPessoa.foto_url !== originalPessoa.foto_url ||
-        !isEqual(updatedPessoa.grupos, originalPessoa.grupos) ||
-        !isEqual(updatedPessoa.sub_grupos, originalPessoa.sub_grupos)
+        !isEqual(updatedPessoa.grupos_ids, originalPessoa.grupos_ids) ||
+        !isEqual(updatedPessoa.subgrupos_ids, originalPessoa.subgrupos_ids)
 
       const hasContatoChanges = newContatos.length > 0 || deletedContatos.length > 0
 
@@ -132,6 +132,31 @@ export function usePessoaState() {
     })
   }
 
+  const handleGruposChange = (selectedGrupos: number[], subGrupos: any[]) => {
+    if (!pessoa) return
+
+    // Ao mudar os grupos, limpa os subgrupos que não pertencem aos grupos selecionados
+    const validSubGrupos = pessoa.subgrupos_ids?.filter(subId => {
+      const subGrupo = subGrupos.find(sub => sub.id === subId)
+      return subGrupo && selectedGrupos.includes(subGrupo.grupos_id)
+    }) || []
+
+    setPessoa({
+      ...pessoa,
+      grupos_ids: selectedGrupos,
+      subgrupos_ids: validSubGrupos
+    })
+  }
+
+  const handleSubGruposChange = (selectedSubGrupos: number[]) => {
+    if (!pessoa) return
+
+    setPessoa({
+      ...pessoa,
+      subgrupos_ids: selectedSubGrupos
+    })
+  }
+
   return {
     pessoa,
     originalPessoa,
@@ -148,6 +173,8 @@ export function usePessoaState() {
     addContato,
     removeContato,
     addEndereco,
-    removeEndereco
+    removeEndereco,
+    handleGruposChange,
+    handleSubGruposChange
   }
 }

@@ -1,13 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { ExpandableCard } from "@/components/ui/expandable-card"
 import {
   Table,
   TableBody,
@@ -17,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, Phone } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -167,87 +161,82 @@ export function PessoaTelefones({ pessoa, loading, onPessoaChange }: PessoaTelef
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base font-semibold">Telefones</CardTitle>
-        <CardDescription>Gerencie os números de telefone</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleAddTelefone}
-              disabled={loading}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Telefone
-            </Button>
-          </div>
-
-          <div className="border rounded-lg">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">
-                    Tipo<span className="text-red-500 ml-1">*</span>
-                  </TableHead>
-                  <TableHead>
-                    Número<span className="text-red-500 ml-1">*</span>
-                  </TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {telefones
-                  .filter(tel => !tel._isDeleted)
-                  .map((telefone, index) => (
-                    <TableRow key={telefone.id || `temp-${telefone._tempId}`}>
-                      <TableCell>
-                        <Select
-                          value={telefone.tipo}
-                          onValueChange={(value) => handleTelefoneChange(index, 'tipo', value)}
-                          disabled={loading}
-                        >
-                          <SelectTrigger className={!telefone.tipo ? "border-red-500" : ""}>
-                            <SelectValue placeholder="Selecione..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {tiposTelefone.map((tipo) => (
-                              <SelectItem key={tipo} value={tipo}>
-                                {tipo}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={telefone.numero}
-                          onChange={(e) => handleTelefoneChange(index, 'numero', e.target.value)}
-                          disabled={loading}
-                          placeholder="(00) 00000-0000"
-                          className={!telefone.numero ? "border-red-500" : ""}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveTelefone(index)}
-                          disabled={loading}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </div>
+    <ExpandableCard
+      title={
+        <div className="flex items-center gap-2">
+          <Phone className="h-4 w-4" />
+          <span>Telefones</span>
         </div>
-      </CardContent>
-    </Card>
+      }
+      defaultExpanded={false}
+      className="mb-4"
+    >
+      <div className="space-y-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[200px]">Tipo</TableHead>
+              <TableHead>Número</TableHead>
+              <TableHead className="w-[100px] text-right">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddTelefone}
+                  disabled={loading}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar
+                </Button>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {telefones
+              .filter(tel => !tel._isDeleted)
+              .map((telefone, index) => (
+                <TableRow key={telefone.id || `temp-${telefone._tempId}`}>
+                  <TableCell>
+                    <Select
+                      value={telefone.tipo}
+                      onValueChange={(value) => handleTelefoneChange(index, 'tipo', value)}
+                      disabled={loading}
+                    >
+                      <SelectTrigger className={!telefone.tipo ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tiposTelefone.map((tipo) => (
+                          <SelectItem key={tipo} value={tipo}>
+                            {tipo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      value={telefone.numero}
+                      onChange={(e) => handleTelefoneChange(index, 'numero', e.target.value)}
+                      disabled={loading}
+                      placeholder="(00) 00000-0000"
+                      className={!telefone.numero ? "border-red-500" : ""}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveTelefone(index)}
+                      disabled={loading}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+          </TableBody>
+        </Table>
+      </div>
+    </ExpandableCard>
   )
 }

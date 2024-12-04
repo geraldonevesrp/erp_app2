@@ -53,13 +53,17 @@ export function PessoaGrupos({
     )
   }
 
+  // Garante que os arrays de IDs existam
+  const gruposIds = pessoa?.grupos_ids || []
+  const subgruposIds = pessoa?.subgrupos_ids || []
+
   const hasErrors = validationErrors?.grupos || validationErrors?.subgrupos
 
   return (
     <ExpandableCard
       title={
         <div className="flex items-center gap-2">
-          <Tags className="w-5 h-5" />
+          <Tags className="h-4 w-4" />
           <span>Grupos</span>
           {hasErrors && (
             <TooltipProvider>
@@ -76,23 +80,20 @@ export function PessoaGrupos({
         </div>
       }
       defaultExpanded={false}
+      className="mb-4"
     >
-      <div className="space-y-4 p-6 dark:bg-background">
+      <div className="space-y-4">
         <div className="grid w-full items-center gap-1.5">
-          <Label htmlFor="grupos" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Grupos
-          </Label>
+          <Label htmlFor="grupos">Grupos</Label>
           <MultiSelect
-            id="grupos"
             options={grupos.map(g => ({
               value: g.id,
               label: g.grupo
             }))}
-            selected={pessoa?.grupos_ids || []}
-            onChange={onGruposChange}
+            selected={gruposIds}
+            onChange={(values) => onGruposChange(values as number[])}
             placeholder="Selecione os grupos..."
             disabled={loading}
-            error={!!validationErrors?.grupos}
           />
           {validationErrors?.grupos && (
             <p className="text-sm font-medium text-destructive">{validationErrors.grupos}</p>
@@ -100,20 +101,16 @@ export function PessoaGrupos({
         </div>
 
         <div className="grid w-full items-center gap-1.5">
-          <Label htmlFor="subgrupos" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Subgrupos
-          </Label>
+          <Label htmlFor="subgrupos">Subgrupos</Label>
           <MultiSelect
-            id="subgrupos"
             options={getFilteredSubGrupos().map(sub => ({
               value: sub.id,
               label: `${getGrupoNome(sub.grupos_id)} > ${sub.subgrupo}`
             }))}
-            selected={pessoa?.subgrupos_ids || []}
-            onChange={onSubGruposChange}
-            placeholder={pessoa?.grupos_ids?.length ? "Selecione os subgrupos..." : "Selecione um grupo primeiro"}
-            disabled={loading || !pessoa?.grupos_ids?.length}
-            error={!!validationErrors?.subgrupos}
+            selected={subgruposIds}
+            onChange={(values) => onSubGruposChange(values as number[])}
+            placeholder={gruposIds.length ? "Selecione os subgrupos..." : "Selecione um grupo primeiro"}
+            disabled={loading || !gruposIds.length}
           />
           {validationErrors?.subgrupos && (
             <p className="text-sm font-medium text-destructive">{validationErrors.subgrupos}</p>
