@@ -12,11 +12,16 @@ export function useEnderecoOperations() {
       // Remove campos que não existem na tabela
       const { sem_numero, ...dataToSave } = endereco as any
 
+      // Se for sem número, garante que o número seja S/N
+      if (sem_numero) {
+        dataToSave.numero = 'S/N'
+      }
+
       if (!endereco.id) {
         // Inserir novo endereço
         const { data, error } = await supabase
           .from('pessoas_enderecos')
-          .insert([dataToSave])
+          .insert(dataToSave)
           .select()
           .single()
 
@@ -91,10 +96,27 @@ export function useEnderecoOperations() {
     }
   }
 
+  const searchCep = async (cep: string) => {
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      const data = await response.json()
+      
+      if (data.erro) {
+        throw new Error('CEP não encontrado')
+      }
+      
+      return data
+    } catch (error: any) {
+      toast.error('Erro ao buscar CEP: ' + error.message)
+      throw error
+    }
+  }
+
   return {
     saveEndereco,
     deleteEndereco,
     loadEnderecos,
-    setPrincipal
+    setPrincipal,
+    searchCep
   }
 }

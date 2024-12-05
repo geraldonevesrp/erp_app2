@@ -24,20 +24,27 @@ import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { useEnderecoOperations } from "@/hooks/use-endereco-operations"
 import { PessoaEndereco } from "@/types/pessoa"
+import { Switch } from "@/components/ui/switch"
 
 const enderecoSchema = z.object({
-  titulo: z.string().min(1, "Título é obrigatório"),
-  cep: z.string().min(1, "CEP é obrigatório"),
-  logradouro: z.string().min(1, "Logradouro é obrigatório"),
-  numero: z.string().min(1, "Número é obrigatório"),
-  complemento: z.string().optional(),
-  bairro: z.string().min(1, "Bairro é obrigatório"),
-  localidade: z.string().min(1, "Cidade é obrigatória"),
-  uf: z.string().min(1, "UF é obrigatória"),
-  ibge: z.string().optional(),
-  gia: z.string().optional(),
-  ddd: z.string().optional(),
-  siafi: z.string().optional(),
+  titulo: z.string().min(1, "Título"),
+  cep: z.string()
+    .min(8, "CEP")
+    .max(9, "CEP")
+    .regex(/^[0-9]{5}-?[0-9]{3}$/, "CEP"),
+  logradouro: z.string().min(1, "Logradouro").trim(),
+  numero: z.string().refine((val) => {
+    if (val === "S/N") return true
+    return val && val.length > 0
+  }, "Número"),
+  complemento: z.string().optional().nullable(),
+  bairro: z.string().min(1, "Bairro").trim(),
+  localidade: z.string().min(1, "Cidade").trim(),
+  uf: z.string().length(2, "UF").trim(),
+  ibge: z.string().optional().nullable(),
+  gia: z.string().optional().nullable(),
+  ddd: z.string().optional().nullable(),
+  siafi: z.string().optional().nullable(),
   principal: z.boolean().optional()
 })
 
@@ -55,10 +62,12 @@ export function EnderecoFormDialog({
   endereco
 }: EnderecoFormDialogProps) {
   const [loading, setLoading] = useState(false)
-  const { createEndereco, updateEndereco, searchCep } = useEnderecoOperations()
+  const [semNumero, setSemNumero] = useState(false)
+  const { saveEndereco, searchCep } = useEnderecoOperations()
 
   const form = useForm<EnderecoFormData>({
     resolver: zodResolver(enderecoSchema),
+    mode: "onChange",
     defaultValues: {
       titulo: "",
       cep: "",
@@ -78,6 +87,7 @@ export function EnderecoFormDialog({
 
   useEffect(() => {
     if (endereco) {
+      setSemNumero(!!endereco.sem_numero)
       form.reset({
         titulo: endereco.titulo || "",
         cep: endereco.cep || "",
@@ -94,6 +104,7 @@ export function EnderecoFormDialog({
         principal: endereco.principal || false
       })
     } else {
+      setSemNumero(false)
       form.reset({
         titulo: "",
         cep: "",
@@ -112,26 +123,48 @@ export function EnderecoFormDialog({
     }
   }, [endereco])
 
-  const handleCepBlur = async (cep: string) => {
-    if (!cep || cep.length !== 8) return
+  const handleSemNumeroChange = (checked: boolean) => {
+    setSemNumero(checked)
+    if (checked) {
+      form.setValue("numero", "S/N", { shouldValidate: true })
+    } else {
+      form.setValue("numero", "", { shouldValidate: true })
+    }
+  }
 
-    try {
-      setLoading(true)
-      const data = await searchCep(cep)
-      if (data) {
-        form.setValue("logradouro", data.logradouro || "")
-        form.setValue("bairro", data.bairro || "")
-        form.setValue("localidade", data.localidade || "")
-        form.setValue("uf", data.uf || "")
-        form.setValue("ibge", data.ibge || "")
-        form.setValue("gia", data.gia || "")
-        form.setValue("ddd", data.ddd || "")
-        form.setValue("siafi", data.siafi || "")
+  const formatCep = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 5) return numbers
+    return `${numbers.slice(0, 5)}-${numbers.slice(5, 8)}`
+  }
+
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>, field: any) => {
+    const value = e.target.value
+    const numbers = value.replace(/\D/g, '')
+    field.onChange(formatCep(value))
+    
+    if (numbers.length === 8) {
+      try {
+        setLoading(true)
+        const data = await searchCep(numbers)
+        if (data) {
+          form.setValue("logradouro", data.logradouro || "", { shouldValidate: true })
+          form.setValue("bairro", data.bairro || "", { shouldValidate: true })
+          form.setValue("localidade", data.localidade || "", { shouldValidate: true })
+          form.setValue("uf", data.uf || "", { shouldValidate: true })
+          form.setValue("ibge", data.ibge || "")
+          form.setValue("gia", data.gia || "")
+          form.setValue("ddd", data.ddd || "")
+          form.setValue("siafi", data.siafi || "")
+          
+          // Dispara validação do formulário
+          await form.trigger(["logradouro", "bairro", "localidade", "uf"])
+        }
+      } catch (error: any) {
+        toast.error(`Erro ao buscar CEP: ${error.message}`)
+      } finally {
+        setLoading(false)
       }
-    } catch (error: any) {
-      toast.error(`Erro ao buscar CEP: ${error.message}`)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -139,19 +172,17 @@ export function EnderecoFormDialog({
     try {
       setLoading(true)
 
-      if (endereco?.id) {
-        await updateEndereco(endereco.id, {
-          ...data,
-          pessoa_id: endereco.pessoa_id
-        })
-        toast.success("Endereço atualizado com sucesso!")
-      } else if (endereco?.pessoa_id) {
-        await createEndereco({
-          ...data,
-          pessoa_id: endereco.pessoa_id
-        })
-        toast.success("Endereço criado com sucesso!")
+      if (!endereco?.pessoa_id) {
+        throw new Error("ID da pessoa não informado")
       }
+
+      await saveEndereco({
+        ...data,
+        id: endereco.id,
+        pessoa_id: endereco.pessoa_id,
+        sem_numero: semNumero
+      })
+      toast.success(endereco.id ? "Endereço atualizado com sucesso!" : "Endereço criado com sucesso!")
 
       onOpenChange(true)
     } catch (error: any) {
@@ -163,81 +194,99 @@ export function EnderecoFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={() => onOpenChange()}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
             {endereco?.id ? "Editar Endereço" : "Novo Endereço"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 py-4">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="titulo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Ex: Casa, Trabalho..." />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="cep"
-                  render={({ field }) => (
+                  name="titulo"
+                  render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>CEP</FormLabel>
+                      <FormLabel className={fieldState.error ? "text-destructive" : ""}>
+                        {fieldState.error ? `${fieldState.error.message} *` : "Título"}
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Casa, Trabalho..." />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="cep"
+                  render={({ field, fieldState }) => (
+                    <FormItem>
+                      <FormLabel className={fieldState.error ? "text-destructive" : ""}>
+                        {fieldState.error ? `${fieldState.error.message} *` : "CEP"}
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="00000000"
-                          onBlur={(e) => {
-                            field.onBlur()
-                            handleCepBlur(e.target.value.replace(/\D/g, ""))
-                          }}
+                          placeholder="00000-000"
+                          maxLength={9}
+                          onChange={(e) => handleCepChange(e, field)}
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-6 gap-4">
                 <FormField
                   control={form.control}
                   name="logradouro"
-                  render={({ field }) => (
-                    <FormItem className="col-span-2">
-                      <FormLabel>Logradouro</FormLabel>
+                  render={({ field, fieldState }) => (
+                    <FormItem className="col-span-4">
+                      <FormLabel className={fieldState.error ? "text-destructive" : ""}>
+                        {fieldState.error ? `${fieldState.error.message} *` : "Logradouro"}
+                      </FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="numero"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Número</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="col-span-2 space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="numero"
+                    render={({ field, fieldState }) => (
+                      <FormItem>
+                        <FormLabel className={fieldState.error ? "text-destructive" : ""}>
+                          {fieldState.error ? `${fieldState.error.message} *` : "Número"}
+                        </FormLabel>
+                        <FormControl>
+                          <Input {...field} disabled={semNumero} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="sem-numero"
+                      checked={semNumero}
+                      onCheckedChange={handleSemNumeroChange}
+                    />
+                    <label
+                      htmlFor="sem-numero"
+                      className="text-sm text-muted-foreground cursor-pointer"
+                    >
+                      Sem número
+                    </label>
+                  </div>
+                </div>
               </div>
 
               <FormField
@@ -247,24 +296,24 @@ export function EnderecoFormDialog({
                   <FormItem>
                     <FormLabel>Complemento</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} placeholder="Ex: Apto 101, Bloco B..." />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-6 gap-4">
                 <FormField
                   control={form.control}
                   name="bairro"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bairro</FormLabel>
+                  render={({ field, fieldState }) => (
+                    <FormItem className="col-span-3">
+                      <FormLabel className={fieldState.error ? "text-destructive" : ""}>
+                        {fieldState.error ? `${fieldState.error.message} *` : "Bairro"}
+                      </FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -272,35 +321,35 @@ export function EnderecoFormDialog({
                 <FormField
                   control={form.control}
                   name="localidade"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cidade</FormLabel>
+                  render={({ field, fieldState }) => (
+                    <FormItem className="col-span-2">
+                      <FormLabel className={fieldState.error ? "text-destructive" : ""}>
+                        {fieldState.error ? `${fieldState.error.message} *` : "Cidade"}
+                      </FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} readOnly className="bg-muted" />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="uf"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <FormItem>
-                      <FormLabel>UF</FormLabel>
+                      <FormLabel className={fieldState.error ? "text-destructive" : ""}>
+                        {fieldState.error ? `${fieldState.error.message} *` : "UF"}
+                      </FormLabel>
                       <FormControl>
-                        <Input {...field} maxLength={2} />
+                        <Input {...field} maxLength={2} readOnly className="bg-muted" />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 pt-4">
                 <Button
                   type="button"
                   variant="outline"
