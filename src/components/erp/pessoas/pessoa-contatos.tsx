@@ -1,33 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Phone, Plus, Trash2 } from "lucide-react"
+import { UserRound, Plus, Trash2, Pencil } from "lucide-react"
 import { ExpandableCard } from "@/components/ui/expandable-card"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { formatPhone } from "@/lib/masks"
 import { useToast } from "@/components/ui/use-toast"
-import { useEntityArrayState } from "@/hooks/use-entity-array-state"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { usePessoaOperations } from "@/hooks/use-pessoa-operations"
+import { useTempId } from "@/hooks/use-temp-id"
+import { Database } from "@/types/database.types"
+import { formatPhone } from "@/lib/masks"
 
-interface Contato {
-  id?: number
-  contato: string
-  cargo: string
-  departamento: string
-  email: string
-  celular: string
-  telefone: string
-  zap: boolean
-  pessoa_id: number
+type Contato = Database['public']['Tables']['pessoas_contatos']['Row'] & {
   _isNew?: boolean
   _isDeleted?: boolean
   _tempId?: number
@@ -43,20 +28,17 @@ interface PessoaContatosProps {
 }
 
 // Função para validar contato
-const validateContato = (contato: Contato) => {
+function validateContato(contato: Contato): string[] {
   const errors: string[] = []
   
-  // Validação do nome do contato
   if (!contato.contato?.trim()) {
     errors.push("Nome do contato é obrigatório")
   }
   
-  // Validação do email
   if (contato.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contato.email)) {
     errors.push("E-mail inválido")
   }
 
-  // Validação do telefone e celular
   const validatePhone = (phone: string | undefined, field: string) => {
     if (phone) {
       const cleaned = phone.replace(/\D/g, '')
@@ -72,47 +54,80 @@ const validateContato = (contato: Contato) => {
   return errors
 }
 
-export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContatosProps) {
+export function PessoaContatos({ pessoa, loading: parentLoading, onPessoaChange }: PessoaContatosProps) {
   const [contatos, setContatos] = useState<Contato[]>([])
-  const [uniqueId, setUniqueId] = useState(0)
-  const [editingContato, setEditingContato] = useState<number | null>(null)
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
   const { toast } = useToast()
+  const generateTempId = useTempId()
 
-  // Integração com useEntityArrayState
-  const originalContatos = pessoa?.pessoas_contatos || []
-  const { hasChanges, compareArrays } = useEntityArrayState<Contato>(
-    contatos,
-    originalContatos,
-    ['contato', 'cargo', 'departamento', 'email', 'celular', 'telefone', 'zap']
-  )
+  const isLoading = loading || parentLoading
 
-  useEffect(() => {
-    if (pessoa?.pessoas_contatos) {
-      const contatosAtivos = pessoa.pessoas_contatos
+  // Carrega contatos
+  const loadContatos = async () => {
+    if (!pessoa?.id) return
+    
+    try {
+      setLoading(true)
+      const contatosAtivos = (pessoa.pessoas_contatos || [])
         .filter(c => !c._isDeleted)
         .map(c => ({
           ...c,
-          _isNew: false, // Reseta o estado de novo
-          _isDeleted: false, // Reseta o estado de deletado
-          _tempId: undefined // Remove IDs temporários após salvar
+          _isNew: c._isNew || false,
+          _isDeleted: false,
+          _tempId: c._tempId
         }))
         .sort((a, b) => {
+          if (a.id && !b.id) return -1
+          if (!a.id && b.id) return 1
           if (a.id && b.id) return a.id - b.id
-          if (a.id) return -1
-          if (b.id) return 1
-          return (a._tempId || 0) - (b._tempId || 0)
+          return 0
         })
       
-      setUniqueId(0) // Reseta o contador de IDs temporários
-      setContatos(contatosAtivos)
-    } else {
-      setContatos([])
+      // Manter os valores originais dos campos
+      const novosContatos = contatosAtivos.map(contato => {
+        const contatoAtual = contatos.find(c => 
+          (c.id && c.id === contato.id) || 
+          (c._tempId && c._tempId === contato._tempId)
+        )
+        
+        if (contatoAtual) {
+          return {
+            ...contato,
+            contato: contatoAtual.contato,
+            cargo: contatoAtual.cargo,
+            departamento: contatoAtual.departamento,
+            email: contatoAtual.email,
+            celular: contatoAtual.celular,
+            telefone: contatoAtual.telefone,
+            zap: contatoAtual.zap
+          }
+        }
+        return contato
+      })
+      
+      setContatos(novosContatos)
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar contatos",
+        description: error.message
+      })
+    } finally {
+      setLoading(false)
     }
-  }, [pessoa?.pessoas_contatos])
+  }
+
+  // Carrega dados iniciais e quando a pessoa mudar
+  useEffect(() => {
+    loadContatos()
+  }, [pessoa?.id, pessoa?.pessoas_contatos])
 
   const handleAddContato = () => {
-    const tempId = uniqueId
-    const newContato: Contato = {
+    const _tempId = generateTempId()
+    
+    const novoContato: Contato = {
+      id: undefined,
       contato: '',
       cargo: '',
       departamento: '',
@@ -121,84 +136,69 @@ export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContat
       telefone: '',
       zap: false,
       pessoa_id: pessoa.id,
+      created_at: new Date().toISOString(),
       _isNew: true,
-      _isDeleted: false,
-      _tempId: tempId
+      _tempId
     }
-
-    setUniqueId(prev => prev + 1)
-    const updatedContatos = [...contatos, newContato]
-    setContatos(updatedContatos)
     
-    // Atualiza pessoa com o novo contato
-    onPessoaChange({
+    setContatos(prev => [...prev, novoContato])
+    
+    const pessoaAtualizada = {
       ...pessoa,
       pessoas_contatos: [
-        ...originalContatos,
-        newContato
+        ...(pessoa.pessoas_contatos || []).filter(c => !c._isDeleted),
+        novoContato
       ]
-    })
+    }
     
-    setEditingContato(updatedContatos.length - 1)
+    onPessoaChange(pessoaAtualizada)
+    setEditingIndex(contatos.length)
   }
 
   const handleRemoveContato = (index: number) => {
-    const updatedContatos = [...contatos]
-    const contato = updatedContatos[index]
-
-    if (contato.id) {
-      contato._isDeleted = true
-      setContatos(updatedContatos)
-      
-      // Atualiza pessoa com o contato marcado como deletado
-      onPessoaChange({
-        ...pessoa,
-        pessoas_contatos: [
-          ...originalContatos.filter(c => c.id !== contato.id),
-          contato
-        ]
-      })
-      
-      toast({
-        description: `Contato ${contato.contato} removido com sucesso`
-      })
-    } else {
-      updatedContatos.splice(index, 1)
-      setContatos(updatedContatos)
-      
-      // Remove o contato temporário
-      onPessoaChange({
-        ...pessoa,
-        pessoas_contatos: originalContatos.filter(c => c._tempId !== contato._tempId)
-      })
-    }
-    setEditingContato(null)
+    const contatoRemovido = contatos[index]
+    const novosContatos = contatos.filter((_, i) => i !== index)
+    setContatos(novosContatos)
+    
+    const contatosAtualizados = (pessoa.pessoas_contatos || []).map(c => {
+      if ((c.id && c.id === contatoRemovido.id) || 
+          (c._tempId && c._tempId === contatoRemovido._tempId)) {
+        return { ...c, _isDeleted: true }
+      }
+      return c
+    })
+    
+    onPessoaChange({
+      ...pessoa,
+      pessoas_contatos: contatosAtualizados
+    })
   }
 
   const handleContatoChange = (index: number, field: keyof Contato, value: any) => {
-    const updatedContatos = [...contatos]
-    const contato = { ...updatedContatos[index] }
+    const contatoAtual = contatos[index]
     
+    // Formata telefones
     if (field === 'telefone' || field === 'celular') {
       value = formatPhone(value)
     }
     
-    contato[field] = value
-    updatedContatos[index] = contato
-    setContatos(updatedContatos)
+    const contatoAtualizado = { 
+      ...contatoAtual,
+      [field]: value
+    }
     
-    // Atualiza pessoa com o contato modificado
-    const contatosAtualizados = originalContatos.map(c => {
-      if ((c.id && c.id === contato.id) || (c._tempId && c._tempId === contato._tempId)) {
-        return contato
+    const novosContatos = [...contatos]
+    novosContatos[index] = contatoAtualizado
+    setContatos(novosContatos)
+    
+    const contatosAtualizados = (pessoa.pessoas_contatos || []).map(c => {
+      if ((c.id && c.id === contatoAtual.id) || 
+          (c._tempId && c._tempId === contatoAtual._tempId)) {
+        return contatoAtualizado
       }
       return c
     })
-
-    if (!contatosAtualizados.includes(contato)) {
-      contatosAtualizados.push(contato)
-    }
-
+    
     onPessoaChange({
       ...pessoa,
       pessoas_contatos: contatosAtualizados
@@ -206,7 +206,7 @@ export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContat
   }
 
   const handleBlur = (index: number) => {
-    if (editingContato === index) {
+    if (editingIndex === index) {
       const contato = contatos[index]
       const errors = validateContato(contato)
       
@@ -216,8 +216,9 @@ export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContat
           title: "Erro no contato",
           description: errors.join(", ")
         })
+        return
       }
-      setEditingContato(null)
+      setEditingIndex(null)
     }
   }
 
@@ -225,7 +226,7 @@ export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContat
     <ExpandableCard
       title={
         <div className="flex items-center gap-2">
-          <Phone className="h-4 w-4" />
+          <UserRound className="h-4 w-4" />
           <span>Contatos</span>
         </div>
       }
@@ -233,106 +234,120 @@ export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContat
       className="mb-4"
     >
       <div className="space-y-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Contato</TableHead>
-              <TableHead>Cargo</TableHead>
-              <TableHead>Departamento</TableHead>
-              <TableHead>E-mail</TableHead>
-              <TableHead>Celular</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>WhatsApp</TableHead>
-              <TableHead className="w-[100px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {contatos
-              .filter(c => !c._isDeleted)
-              .map((contato, index) => (
-                <TableRow key={contato.id || `temp-${contato._tempId}`}>
-                  <TableCell>
+        <div className="rounded-md border">
+          {/* Cabeçalho */}
+          <div className="grid grid-cols-[2fr,1fr,1fr,2fr,1fr,1fr,80px,80px] gap-4 p-4 border-b bg-muted/50">
+            <div className="font-medium text-muted-foreground">Nome</div>
+            <div className="font-medium text-muted-foreground">Cargo</div>
+            <div className="font-medium text-muted-foreground">Departamento</div>
+            <div className="font-medium text-muted-foreground">Email</div>
+            <div className="font-medium text-muted-foreground">Celular</div>
+            <div className="font-medium text-muted-foreground">Telefone</div>
+            <div className="font-medium text-muted-foreground text-center">WhatsApp</div>
+            <div></div>
+          </div>
+          
+          {/* Linhas de Contato */}
+          <div className="divide-y">
+            {contatos.map((contato, index) => {
+              const rowKey = contato.id ? `contato-${contato.id}` : `temp-${contato._tempId}`
+              const isEditing = editingIndex === index
+              const hasErrors = validateContato(contato).length > 0
+              
+              return (
+                <div 
+                  key={rowKey} 
+                  className={`grid grid-cols-[2fr,1fr,1fr,2fr,1fr,1fr,80px,80px] gap-4 p-4 items-center hover:bg-muted/50 ${hasErrors ? 'bg-destructive/10' : ''}`}
+                >
+                  <div>
                     <Input
                       value={contato.contato || ''}
                       onChange={(e) => handleContatoChange(index, 'contato', e.target.value)}
-                      onFocus={() => setEditingContato(index)}
+                      onFocus={() => setEditingIndex(index)}
                       onBlur={() => handleBlur(index)}
-                      disabled={loading}
+                      placeholder="Nome do contato"
+                      disabled={isLoading}
+                      className={!contato.contato ? 'border-destructive' : ''}
                     />
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div>
                     <Input
                       value={contato.cargo || ''}
                       onChange={(e) => handleContatoChange(index, 'cargo', e.target.value)}
-                      onFocus={() => setEditingContato(index)}
-                      disabled={loading}
+                      onFocus={() => setEditingIndex(index)}
+                      placeholder="Cargo"
+                      disabled={isLoading}
                     />
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div>
                     <Input
                       value={contato.departamento || ''}
                       onChange={(e) => handleContatoChange(index, 'departamento', e.target.value)}
-                      onFocus={() => setEditingContato(index)}
-                      disabled={loading}
+                      onFocus={() => setEditingIndex(index)}
+                      placeholder="Departamento"
+                      disabled={isLoading}
                     />
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div>
                     <Input
                       type="email"
                       value={contato.email || ''}
                       onChange={(e) => handleContatoChange(index, 'email', e.target.value)}
-                      onFocus={() => setEditingContato(index)}
+                      onFocus={() => setEditingIndex(index)}
                       onBlur={() => handleBlur(index)}
-                      disabled={loading}
+                      placeholder="email@exemplo.com"
+                      disabled={isLoading}
                     />
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div>
                     <Input
                       value={contato.celular || ''}
                       onChange={(e) => handleContatoChange(index, 'celular', e.target.value)}
-                      onFocus={() => setEditingContato(index)}
+                      onFocus={() => setEditingIndex(index)}
                       onBlur={() => handleBlur(index)}
-                      disabled={loading}
+                      placeholder="(99) 99999-9999"
+                      disabled={isLoading}
                     />
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div>
                     <Input
                       value={contato.telefone || ''}
                       onChange={(e) => handleContatoChange(index, 'telefone', e.target.value)}
-                      onFocus={() => setEditingContato(index)}
+                      onFocus={() => setEditingIndex(index)}
                       onBlur={() => handleBlur(index)}
-                      disabled={loading}
+                      placeholder="(99) 9999-9999"
+                      disabled={isLoading}
                     />
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div className="flex justify-center">
                     <Checkbox
                       checked={contato.zap || false}
                       onCheckedChange={(checked) => handleContatoChange(index, 'zap', checked)}
-                      disabled={loading}
+                      disabled={isLoading}
                     />
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div className="flex justify-end">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemoveContato(index)}
-                      disabled={loading}
+                      disabled={isLoading}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
         <Button
           variant="outline"
-          size="sm"
           onClick={handleAddContato}
-          disabled={loading}
-          className="w-full mt-4"
+          disabled={isLoading}
+          className="w-full"
         >
-          <Plus className="w-4 h-4 mr-2" />
           Adicionar Contato
         </Button>
       </div>
