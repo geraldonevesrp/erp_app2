@@ -8,6 +8,7 @@ import { PessoaContatos } from "./pessoa-contatos"
 import { PessoaEnderecos } from "./pessoa-enderecos"
 import { PessoaGrupos } from "./pessoa-grupos"
 import { PessoaTelefones } from "./pessoa-telefones"
+import { PessoaRedesSociais } from "./pessoa-redes-sociais"
 import { usePessoaState } from "@/hooks/use-pessoa-state"
 import { usePessoaValidation } from "@/hooks/use-pessoa-validation"
 import { usePessoaOperations } from "@/hooks/use-pessoa-operations"
@@ -132,6 +133,21 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
     try {
       setLoading(true)
 
+      if (!pessoa) {
+        throw new Error("Dados da pessoa não encontrados")
+      }
+
+      // Validação dos campos
+      const errors = validatePessoa(pessoa)
+      if (Object.keys(errors).length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Erro de validação",
+          description: Object.values(errors).join("\n")
+        })
+        return
+      }
+
       // Pegar contatos deletados e novos
       const deletedContatos = pessoa.pessoas_contatos?.filter(c => c._isDeleted && c.id) || []
       const newContatos = pessoa.pessoas_contatos?.filter(c => c._isNew && !c._isDeleted) || []
@@ -144,10 +160,15 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
 
       // Recarregar dados após salvar
       const updatedPessoa = await loadPessoa(pessoa.id, perfil.id)
+      setOriginalPessoa(updatedPessoa) // Atualiza o estado original também
       setPessoa(updatedPessoa)
 
+      // Chamar callback de sucesso se existir
+      if (onSave) {
+        onSave()
+      }
+
     } catch (error: any) {
-      console.error('Erro ao salvar:', error)
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
@@ -156,6 +177,10 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePessoaChange = (pessoa: any) => {
+    setPessoa(pessoa)
   }
 
   return (
@@ -201,7 +226,7 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
                       loading={loading}
                       validationErrors={validatePessoa(pessoa)}
                       touchedFields={touchedFields}
-                      onPessoaChange={setPessoa}
+                      onPessoaChange={handlePessoaChange}
                       onFotoUpdated={handleFotoUpdated}
                     />
 
@@ -222,7 +247,7 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
                     <PessoaTelefones
                       pessoa={pessoa}
                       loading={loading}
-                      onPessoaChange={setPessoa}
+                      onPessoaChange={handlePessoaChange}
                     />
 
                     <PessoaContatos
@@ -230,10 +255,20 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
                       loading={loading}
                       validationErrors={validatePessoa(pessoa)}
                       touchedFields={touchedFields}
-                      onPessoaChange={setPessoa}
+                      onPessoaChange={handlePessoaChange}
                       onRemoveContato={removeContato}
                       onAddContato={addContato}
                     />
+
+                    <PessoaRedesSociais
+                      pessoa={pessoa}
+                      loading={loading}
+                      onPessoaChange={handlePessoaChange}
+                    />
+
+                    <div className="flex justify-end gap-4 mt-6">
+                      {/* ... */}
+                    </div>
                   </>
                 )}
               </div>

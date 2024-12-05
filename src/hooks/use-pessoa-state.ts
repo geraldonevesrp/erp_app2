@@ -31,11 +31,18 @@ export function usePessoaState() {
         ...updatedPessoa,
         pessoas_telefones: updatedPessoa?.pessoas_telefones?.map(tel => ({
           ...tel,
-          _isDeleted: false
+          _isDeleted: false,
+          _isNew: false
         })),
         pessoas_contatos: updatedPessoa?.pessoas_contatos?.map(contato => ({
           ...contato,
-          _isDeleted: false
+          _isDeleted: false,
+          _isNew: false
+        })),
+        pessoas_redes_sociais: updatedPessoa?.pessoas_redes_sociais?.map(rede => ({
+          ...rede,
+          _isDeleted: false,
+          _isNew: false
         }))
       })
       setNewContatos([])
@@ -62,8 +69,24 @@ export function usePessoaState() {
           const originalContato = originalPessoa.pessoas_contatos?.[index]
           if (!originalContato) return true
           return !isEqual(
-            { contato: contato.contato, telefone: contato.telefone, email: contato.email },
-            { contato: originalContato.contato, telefone: originalContato.telefone, email: originalContato.email }
+            { 
+              contato: contato.contato, 
+              cargo: contato.cargo,
+              departamento: contato.departamento,
+              email: contato.email, 
+              celular: contato.celular,
+              telefone: contato.telefone,
+              zap: contato.zap
+            },
+            { 
+              contato: originalContato.contato, 
+              cargo: originalContato.cargo,
+              departamento: originalContato.departamento,
+              email: originalContato.email, 
+              celular: originalContato.celular,
+              telefone: originalContato.telefone,
+              zap: originalContato.zap
+            }
           )
         }) || false
 
@@ -74,7 +97,24 @@ export function usePessoaState() {
         ))
       ) || false
 
-      setHasChanges(hasFieldChanges || hasContatoChanges || hasTelefoneChanges)
+      // Verifica mudanças em redes sociais
+      const hasRedeSocialChanges = updatedPessoa.pessoas_redes_sociais?.some(rede => {
+        // Se é uma nova rede social ou foi deletada
+        if (rede._isNew || rede._isDeleted) return true
+        
+        // Se é uma rede social existente, verifica se houve mudanças
+        if (rede.id) {
+          const originalRede = originalPessoa.pessoas_redes_sociais?.find(origRede => origRede.id === rede.id)
+          if (!originalRede) return true
+          return !isEqual(
+            { nome: rede.nome, link: rede.link },
+            { nome: originalRede.nome, link: originalRede.link }
+          )
+        }
+        return false
+      }) || false
+
+      setHasChanges(hasFieldChanges || hasContatoChanges || hasTelefoneChanges || hasRedeSocialChanges)
     }
   }
 
@@ -105,20 +145,29 @@ export function usePessoaState() {
   }
 
   const addContato = () => {
-    const newContato = {
+    const newContato: PessoaContato = {
       contato: '',
-      telefone: '',
+      cargo: '',
+      departamento: '',
       email: '',
+      celular: '',
+      telefone: '',
+      zap: false,
       pessoa_id: pessoa?.id,
       _isNew: true,
-      _tempId: uniqueId
+      _tempId: uniqueId,
+      _touchedFields: {} 
     }
     setUniqueId(prev => prev + 1)
-    setNewContatos([...newContatos, newContato])
-    setPessoa({
-      ...pessoa!,
-      pessoas_contatos: [...(pessoa?.pessoas_contatos || []), newContato]
-    })
+    setNewContatos(prev => [...prev, newContato])
+    setPessoa(prev => ({
+      ...prev!,
+      pessoas_contatos: [...(prev?.pessoas_contatos || []), newContato],
+      _touchedFields: {
+        ...prev?._touchedFields,
+        [`contato_${uniqueId}`]: false 
+      }
+    }))
   }
 
   const removeContato = (contato: PessoaContato) => {
