@@ -37,7 +37,22 @@ export function usePessoaOperations() {
             zap,
             pessoa_id
           ),
-          pessoas_telefones (*)
+          pessoas_telefones (*),
+          pessoas_redes_sociais (
+            id,
+            nome,
+            link,
+            pessoa_id
+          ),
+          pessoas_anexos (
+            id,
+            nome,
+            descricao,
+            link,
+            download,
+            pessoa_id,
+            created_at
+          )
         `)
         .single()
         .eq("id", pessoaId)
@@ -49,9 +64,15 @@ export function usePessoaOperations() {
         throw new Error("Dados não encontrados")
       }
 
-      // Ordenar contatos por ID
+      // Ordenar contatos e redes sociais por ID
       if (pessoaData.pessoas_contatos) {
         pessoaData.pessoas_contatos.sort((a, b) => (a.id || 0) - (b.id || 0))
+      }
+      if (pessoaData.pessoas_redes_sociais) {
+        pessoaData.pessoas_redes_sociais.sort((a, b) => (a.id || 0) - (b.id || 0))
+      }
+      if (pessoaData.pessoas_anexos) {
+        pessoaData.pessoas_anexos.sort((a, b) => (a.id || 0) - (b.id || 0))
       }
 
       return {
@@ -174,13 +195,110 @@ export function usePessoaOperations() {
         if (updateError) throw updateError
       }
 
+      // Deletar redes sociais marcadas para deleção
+      const redesSociaisToDelete = (pessoa.pessoas_redes_sociais || [])
+        .filter(r => r._isDeleted && r.id)
+        .map(r => r.id)
+
+      if (redesSociaisToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("pessoas_redes_sociais")
+          .delete()
+          .in("id", redesSociaisToDelete)
+
+        if (deleteError) throw deleteError
+      }
+
+      // Inserir novas redes sociais
+      const novasRedesSociais = (pessoa.pessoas_redes_sociais || [])
+        .filter(r => r._isNew && !r._isDeleted)
+        .map(({ _isNew, _isDeleted, _tempId, id, ...rest }) => ({
+          ...rest,
+          pessoa_id: pessoa.id
+        }))
+
+      if (novasRedesSociais.length > 0) {
+        const { error: insertError } = await supabase
+          .from("pessoas_redes_sociais")
+          .insert(novasRedesSociais)
+
+        if (insertError) throw insertError
+      }
+
+      // Atualizar redes sociais existentes
+      const redesSociaisToUpdate = (pessoa.pessoas_redes_sociais || [])
+        .filter(r => !r._isNew && !r._isDeleted && r.id)
+      
+      for (const redeSocial of redesSociaisToUpdate) {
+        const { error: updateError } = await supabase
+          .from("pessoas_redes_sociais")
+          .update({
+            nome: redeSocial.nome,
+            link: redeSocial.link
+          })
+          .eq("id", redeSocial.id)
+
+        if (updateError) throw updateError
+      }
+
+      // Deletar anexos marcados para deleção
+      const anexosToDelete = (pessoa.pessoas_anexos || [])
+        .filter(a => a._isDeleted && a.id)
+        .map(a => a.id)
+
+      if (anexosToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from("pessoas_anexos")
+          .delete()
+          .in("id", anexosToDelete)
+
+        if (deleteError) throw deleteError
+      }
+
+      // Inserir novos anexos
+      const novosAnexos = (pessoa.pessoas_anexos || [])
+        .filter(a => a._isNew && !a._isDeleted)
+        .map(({ _isNew, _isDeleted, _tempId, id, ...rest }) => ({
+          ...rest,
+          pessoa_id: pessoa.id
+        }))
+
+      if (novosAnexos.length > 0) {
+        const { error: insertError } = await supabase
+          .from("pessoas_anexos")
+          .insert(novosAnexos)
+
+        if (insertError) throw insertError
+      }
+
+      // Atualizar anexos existentes
+      const anexosToUpdate = (pessoa.pessoas_anexos || [])
+        .filter(a => !a._isNew && !a._isDeleted && a.id)
+      
+      for (const anexo of anexosToUpdate) {
+        const { error: updateError } = await supabase
+          .from("pessoas_anexos")
+          .update({
+            nome: anexo.nome,
+            descricao: anexo.descricao,
+            link: anexo.link,
+            download: anexo.download
+          })
+          .eq("id", anexo.id)
+
+        if (updateError) throw updateError
+      }
+
       // Atualizar telefones existentes e adicionar novos
       const telefonesToUpdate = (pessoa.pessoas_telefones || [])
         .filter(tel => !tel._isDeleted && !tel._isNew && tel.id)
       
       const telefonesToAdd = (pessoa.pessoas_telefones || [])
-        .filter(tel => tel._isNew)
-        .map(({ _isNew, _isDeleted, _tempId, ...tel }) => tel)
+        .filter(tel => tel._isNew && !tel._isDeleted)
+        .map(({ _isNew, _isDeleted, _tempId, id, ...tel }) => ({
+          ...tel,
+          pessoa_id: pessoa.id
+        }))
       
       const telefonesToDelete = (pessoa.pessoas_telefones || [])
         .filter(tel => tel._isDeleted && tel.id)

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Pessoa, PessoaContato, PessoaEndereco } from '@/types/pessoa'
 import { isEqual } from 'lodash'
+import { useEntityArrayState } from './use-entity-array-state'
 
 export interface PessoaState {
   pessoa: Pessoa | null
@@ -43,6 +44,11 @@ export function usePessoaState() {
           ...rede,
           _isDeleted: false,
           _isNew: false
+        })),
+        pessoas_anexos: updatedPessoa?.pessoas_anexos?.map(anexo => ({
+          ...anexo,
+          _isDeleted: false,
+          _isNew: false
         }))
       })
       setNewContatos([])
@@ -63,58 +69,37 @@ export function usePessoaState() {
         !isEqual(updatedPessoa.grupos_ids, originalPessoa.grupos_ids) ||
         !isEqual(updatedPessoa.subgrupos_ids, originalPessoa.subgrupos_ids)
 
-      // Verifica mudanças em contatos existentes
-      const hasContatoChanges = newContatos.length > 0 || deletedContatos.length > 0 ||
-        updatedPessoa.pessoas_contatos?.some((contato, index) => {
-          const originalContato = originalPessoa.pessoas_contatos?.[index]
-          if (!originalContato) return true
-          return !isEqual(
-            { 
-              contato: contato.contato, 
-              cargo: contato.cargo,
-              departamento: contato.departamento,
-              email: contato.email, 
-              celular: contato.celular,
-              telefone: contato.telefone,
-              zap: contato.zap
-            },
-            { 
-              contato: originalContato.contato, 
-              cargo: originalContato.cargo,
-              departamento: originalContato.departamento,
-              email: originalContato.email, 
-              celular: originalContato.celular,
-              telefone: originalContato.telefone,
-              zap: originalContato.zap
-            }
-          )
-        }) || false
+      const contatosState = useEntityArrayState(
+        updatedPessoa.pessoas_contatos || [],
+        originalPessoa.pessoas_contatos || [],
+        ['contato', 'cargo', 'departamento', 'email', 'celular', 'telefone', 'zap']
+      )
 
-      const hasTelefoneChanges = updatedPessoa.pessoas_telefones?.some(tel => 
-        tel._isNew || tel._isDeleted || 
-        (tel.id && originalPessoa.pessoas_telefones?.find(origTel => 
-          origTel.id === tel.id && (origTel.tipo !== tel.tipo || origTel.numero !== tel.numero)
-        ))
-      ) || false
+      const telefonesState = useEntityArrayState(
+        updatedPessoa.pessoas_telefones || [],
+        originalPessoa.pessoas_telefones || [],
+        ['tipo', 'numero']
+      )
 
-      // Verifica mudanças em redes sociais
-      const hasRedeSocialChanges = updatedPessoa.pessoas_redes_sociais?.some(rede => {
-        // Se é uma nova rede social ou foi deletada
-        if (rede._isNew || rede._isDeleted) return true
-        
-        // Se é uma rede social existente, verifica se houve mudanças
-        if (rede.id) {
-          const originalRede = originalPessoa.pessoas_redes_sociais?.find(origRede => origRede.id === rede.id)
-          if (!originalRede) return true
-          return !isEqual(
-            { nome: rede.nome, link: rede.link },
-            { nome: originalRede.nome, link: originalRede.link }
-          )
-        }
-        return false
-      }) || false
+      const redesSociaisState = useEntityArrayState(
+        updatedPessoa.pessoas_redes_sociais || [],
+        originalPessoa.pessoas_redes_sociais || [],
+        ['nome', 'link']
+      )
 
-      setHasChanges(hasFieldChanges || hasContatoChanges || hasTelefoneChanges || hasRedeSocialChanges)
+      const anexosState = useEntityArrayState(
+        updatedPessoa.pessoas_anexos || [],
+        originalPessoa.pessoas_anexos || [],
+        ['nome', 'descricao', 'link', 'download']
+      )
+
+      setHasChanges(
+        hasFieldChanges ||
+        contatosState.hasChanges() ||
+        telefonesState.hasChanges() ||
+        redesSociaisState.hasChanges() ||
+        anexosState.hasChanges()
+      )
     }
   }
 

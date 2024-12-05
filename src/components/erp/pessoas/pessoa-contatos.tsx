@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { formatPhone } from "@/lib/masks"
 import { useToast } from "@/components/ui/use-toast"
+import { useEntityArrayState } from "@/hooks/use-entity-array-state"
 import {
   Table,
   TableBody,
@@ -77,26 +78,40 @@ export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContat
   const [editingContato, setEditingContato] = useState<number | null>(null)
   const { toast } = useToast()
 
+  // Integração com useEntityArrayState
+  const originalContatos = pessoa?.pessoas_contatos || []
+  const { hasChanges, compareArrays } = useEntityArrayState<Contato>(
+    contatos,
+    originalContatos,
+    ['contato', 'cargo', 'departamento', 'email', 'celular', 'telefone', 'zap']
+  )
+
   useEffect(() => {
     if (pessoa?.pessoas_contatos) {
       const contatosAtivos = pessoa.pessoas_contatos
         .filter(c => !c._isDeleted)
+        .map(c => ({
+          ...c,
+          _isNew: false, // Reseta o estado de novo
+          _isDeleted: false, // Reseta o estado de deletado
+          _tempId: undefined // Remove IDs temporários após salvar
+        }))
         .sort((a, b) => {
-          // Se ambos têm ID, ordena por ID
-          if (a.id && b.id) {
-            return a.id - b.id
-          }
-          // Se só um tem ID, o que tem ID vem primeiro
+          if (a.id && b.id) return a.id - b.id
           if (a.id) return -1
           if (b.id) return 1
-          // Se nenhum tem ID (são novos), mantém ordem de criação
           return (a._tempId || 0) - (b._tempId || 0)
         })
+      
+      setUniqueId(0) // Reseta o contador de IDs temporários
       setContatos(contatosAtivos)
+    } else {
+      setContatos([])
     }
   }, [pessoa?.pessoas_contatos])
 
   const handleAddContato = () => {
+    const tempId = uniqueId
     const newContato: Contato = {
       contato: '',
       cargo: '',
@@ -108,13 +123,22 @@ export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContat
       pessoa_id: pessoa.id,
       _isNew: true,
       _isDeleted: false,
-      _tempId: uniqueId
+      _tempId: tempId
     }
 
     setUniqueId(prev => prev + 1)
     const updatedContatos = [...contatos, newContato]
     setContatos(updatedContatos)
-    updatePessoa(updatedContatos, false)
+    
+    // Atualiza pessoa com o novo contato
+    onPessoaChange({
+      ...pessoa,
+      pessoas_contatos: [
+        ...originalContatos,
+        newContato
+      ]
+    })
+    
     setEditingContato(updatedContatos.length - 1)
   }
 
@@ -124,29 +148,61 @@ export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContat
 
     if (contato.id) {
       contato._isDeleted = true
-      updatePessoa([...updatedContatos], false)
+      setContatos(updatedContatos)
+      
+      // Atualiza pessoa com o contato marcado como deletado
+      onPessoaChange({
+        ...pessoa,
+        pessoas_contatos: [
+          ...originalContatos.filter(c => c.id !== contato.id),
+          contato
+        ]
+      })
+      
       toast({
         description: `Contato ${contato.contato} removido com sucesso`
       })
     } else {
       updatedContatos.splice(index, 1)
       setContatos(updatedContatos)
-      updatePessoa(updatedContatos, false)
+      
+      // Remove o contato temporário
+      onPessoaChange({
+        ...pessoa,
+        pessoas_contatos: originalContatos.filter(c => c._tempId !== contato._tempId)
+      })
     }
     setEditingContato(null)
   }
 
   const handleContatoChange = (index: number, field: keyof Contato, value: any) => {
     const updatedContatos = [...contatos]
-    const contato = updatedContatos[index]
+    const contato = { ...updatedContatos[index] }
+    
+    if (field === 'telefone' || field === 'celular') {
+      value = formatPhone(value)
+    }
+    
+    contato[field] = value
+    updatedContatos[index] = contato
+    setContatos(updatedContatos)
+    
+    // Atualiza pessoa com o contato modificado
+    const contatosAtualizados = originalContatos.map(c => {
+      if ((c.id && c.id === contato.id) || (c._tempId && c._tempId === contato._tempId)) {
+        return contato
+      }
+      return c
+    })
 
-    updatedContatos[index] = {
-      ...contato,
-      [field]: value
+    if (!contatosAtualizados.includes(contato)) {
+      contatosAtualizados.push(contato)
     }
 
-    setContatos(updatedContatos)
-    updatePessoa(updatedContatos, false)
+    onPessoaChange({
+      ...pessoa,
+      pessoas_contatos: contatosAtualizados
+    })
   }
 
   const handleBlur = (index: number) => {
@@ -163,49 +219,6 @@ export function PessoaContatos({ pessoa, loading, onPessoaChange }: PessoaContat
       }
       setEditingContato(null)
     }
-  }
-
-  const updatePessoa = (updatedContatos: Contato[], validate: boolean = false) => {
-    if (!validate) {
-      onPessoaChange({
-        ...pessoa,
-        pessoas_contatos: [
-          ...updatedContatos,
-          ...(pessoa.pessoas_contatos?.filter(c => c._isDeleted) || [])
-        ]
-      })
-      return true
-    }
-
-    const contatosParaValidar = updatedContatos
-      .filter(c => !c._isDeleted)
-      .filter(c => c.contato || c.email || c.telefone || c.celular)
-    
-    const allErrors: string[] = []
-    contatosParaValidar.forEach(contato => {
-      const errors = validateContato(contato)
-      if (errors.length > 0) {
-        allErrors.push(...errors)
-      }
-    })
-
-    if (allErrors.length > 0) {
-      toast({
-        variant: "destructive",
-        title: "Erro nos contatos",
-        description: allErrors.join(", ")
-      })
-      return false
-    }
-
-    onPessoaChange({
-      ...pessoa,
-      pessoas_contatos: [
-        ...updatedContatos,
-        ...(pessoa.pessoas_contatos?.filter(c => c._isDeleted) || [])
-      ]
-    })
-    return true
   }
 
   return (

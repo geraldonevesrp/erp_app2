@@ -9,6 +9,7 @@ import { PessoaEnderecos } from "./pessoa-enderecos"
 import { PessoaGrupos } from "./pessoa-grupos"
 import { PessoaTelefones } from "./pessoa-telefones"
 import { PessoaRedesSociais } from "./pessoa-redes-sociais"
+import { PessoaAnexos } from "./pessoa-anexos"
 import { usePessoaState } from "@/hooks/use-pessoa-state"
 import { usePessoaValidation } from "@/hooks/use-pessoa-validation"
 import { usePessoaOperations } from "@/hooks/use-pessoa-operations"
@@ -160,8 +161,24 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
 
       // Recarregar dados após salvar
       const updatedPessoa = await loadPessoa(pessoa.id, perfil.id)
-      setOriginalPessoa(updatedPessoa) // Atualiza o estado original também
-      setPessoa(updatedPessoa)
+      
+      // Preservar os valores dos telefones
+      if (updatedPessoa.pessoas_telefones && pessoa.pessoas_telefones) {
+        updatedPessoa.pessoas_telefones = updatedPessoa.pessoas_telefones.map(tel => {
+          const telefoneOriginal = pessoa.pessoas_telefones?.find(t => t.id === tel.id)
+          return {
+            ...tel,
+            tipo: telefoneOriginal?.tipo || tel.tipo,
+            numero: telefoneOriginal?.numero || tel.numero,
+            _isNew: false,
+            _isDeleted: false,
+            _tempId: undefined
+          }
+        })
+      }
+      
+      setOriginalPessoa(updatedPessoa)
+      setPessoa(updatedPessoa, true) // true para não marcar como alterado
 
       // Chamar callback de sucesso se existir
       if (onSave) {
@@ -179,8 +196,12 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
     }
   }
 
-  const handlePessoaChange = (pessoa: any) => {
-    setPessoa(pessoa)
+  const handlePessoaChange = (updatedPessoa: any) => {
+    // Evitar atualizações desnecessárias
+    if (JSON.stringify(updatedPessoa) === JSON.stringify(pessoa)) {
+      return
+    }
+    setPessoa(updatedPessoa)
   }
 
   return (
@@ -262,6 +283,13 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
 
                     <PessoaRedesSociais
                       pessoa={pessoa}
+                      loading={loading}
+                      onPessoaChange={handlePessoaChange}
+                    />
+
+                    <PessoaAnexos
+                      pessoa={pessoa}
+                      perfilId={perfil.id}
                       loading={loading}
                       onPessoaChange={handlePessoaChange}
                     />

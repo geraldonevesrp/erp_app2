@@ -49,14 +49,41 @@ export interface PessoaTelefone {
   _tempId?: number
 }
 
+export interface PessoaRedeSocial {
+  id?: number
+  pessoa_id: number
+  nome: string
+  link: string
+  _isNew?: boolean
+  _isDeleted?: boolean
+  _tempId?: number
+}
+
+export interface PessoaAnexo {
+  id?: number
+  pessoa_id: number
+  nome: string
+  descricao?: string
+  link?: string
+  download?: string
+  created_at?: string
+  _isNew?: boolean
+  _isDeleted?: boolean
+  _tempId?: number
+}
+
 export interface Pessoa {
   id: number
+  created_at?: string
+  perfis_id: number
   nome_razao: string
   apelido: string
-  tipo: string
+  tipo: number
   foto_url?: string
   grupos_ids?: number[]
   subgrupos_ids?: number[]
-  pessoas_contatos: PessoaContato[]
+  pessoas_contatos?: PessoaContato[]
   pessoas_telefones?: PessoaTelefone[]
+  pessoas_redes_sociais?: PessoaRedeSocial[]
+  pessoas_anexos?: PessoaAnexo[]
 }
