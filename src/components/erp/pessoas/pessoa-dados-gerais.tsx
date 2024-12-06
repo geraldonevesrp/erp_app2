@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { User } from "lucide-react"
+import { User, FileText, Briefcase, Calendar, Globe } from "lucide-react"
 import { ExpandableCard } from "@/components/ui/expandable-card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -132,100 +132,265 @@ export function PessoaDadosGerais({
         </div>
 
         {/* Seção dos Campos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-4">
-            <div>
-              <RequiredLabel value={pessoa?.tipo}>
-                <Label>Tipo de Pessoa</Label>
-              </RequiredLabel>
-              <Select
-                value={pessoa?.tipo || ""}
-                onValueChange={(value) => onPessoaChange({ ...pessoa, tipo: value })}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="F">Física</SelectItem>
-                  <SelectItem value="J">Jurídica</SelectItem>
-                </SelectContent>
-              </Select>
-              {validationErrors.tipo && touchedFields.tipo && (
-                <span className="text-sm text-destructive">{validationErrors.tipo}</span>
-              )}
+        <div className="space-y-6">
+          {/* Identificação Principal */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div>
+                <RequiredLabel value={pessoa?.tipo}>
+                  <Label>Tipo de Pessoa</Label>
+                </RequiredLabel>
+                <Select
+                  value={pessoa?.tipo || ""}
+                  onValueChange={(value) => onPessoaChange({ ...pessoa, tipo: value })}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="F">Física</SelectItem>
+                    <SelectItem value="J">Jurídica</SelectItem>
+                  </SelectContent>
+                </Select>
+                {validationErrors.tipo && touchedFields.tipo && (
+                  <span className="text-sm text-destructive">{validationErrors.tipo}</span>
+                )}
+              </div>
+
+              <div>
+                <RequiredLabel value={pessoa?.nome_razao}>
+                  <Label>{pessoa?.tipo === "J" ? "Razão Social" : "Nome"}</Label>
+                </RequiredLabel>
+                <Input
+                  value={pessoa?.nome_razao || ""}
+                  onChange={(e) => handleFieldChange("nome_razao", e.target.value)}
+                  disabled={loading}
+                />
+                {validationErrors.nome_razao && touchedFields.nome_razao && (
+                  <span className="text-sm text-destructive">{validationErrors.nome_razao}</span>
+                )}
+              </div>
+
+              <div>
+                <Label>{pessoa?.tipo === "J" ? "Nome Fantasia" : "Apelido"}</Label>
+                <Input
+                  value={pessoa?.apelido || ""}
+                  onChange={(e) => onPessoaChange({ ...pessoa, apelido: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
             </div>
 
-            <div>
-              <RequiredLabel value={pessoa?.nome_razao}>
-                <Label>{pessoa?.tipo === "J" ? "Razão Social" : "Nome"}</Label>
-              </RequiredLabel>
-              <Input
-                value={pessoa?.nome_razao || ""}
-                onChange={(e) => handleFieldChange("nome_razao", e.target.value)}
-                disabled={loading}
-              />
-              {validationErrors.nome_razao && touchedFields.nome_razao && (
-                <span className="text-sm text-destructive">{validationErrors.nome_razao}</span>
-              )}
-            </div>
+            <div className="space-y-4">
+              <div>
+                <RequiredLabel value={pessoa?.cpf_cnpj}>
+                  <Label>{pessoa?.tipo === "J" ? "CNPJ" : "CPF"}</Label>
+                </RequiredLabel>
+                <Input
+                  value={pessoa?.cpf_cnpj ? (pessoa.tipo === "J" ? formatCNPJ(pessoa.cpf_cnpj) : formatCPF(pessoa.cpf_cnpj)) : ""}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "")
+                    onPessoaChange({ ...pessoa, cpf_cnpj: value })
+                  }}
+                  maxLength={pessoa?.tipo === "J" ? 18 : 14}
+                  disabled={loading}
+                />
+                {validationErrors.cpf_cnpj && touchedFields.cpf_cnpj && (
+                  <span className="text-sm text-destructive">{validationErrors.cpf_cnpj}</span>
+                )}
+              </div>
 
-            <div>
-              <Label>{pessoa?.tipo === "J" ? "Nome Fantasia" : "Apelido"}</Label>
-              <Input
-                value={pessoa?.apelido || ""}
-                onChange={(e) => onPessoaChange({ ...pessoa, apelido: e.target.value })}
-                disabled={loading}
-              />
+              <div>
+                <Label>{pessoa?.tipo === "J" ? "Porte da Empresa" : "Gênero"}</Label>
+                <Select
+                  value={pessoa?.genero_porte || ""}
+                  onValueChange={(value) => onPessoaChange({ ...pessoa, genero_porte: value })}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getGeneroPorteOptions().map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <RequiredLabel value={pessoa?.cpf_cnpj}>
-                <Label>{pessoa?.tipo === "J" ? "CNPJ" : "CPF"}</Label>
-              </RequiredLabel>
-              <Input
-                value={pessoa?.cpf_cnpj ? (pessoa.tipo === "J" ? formatCNPJ(pessoa.cpf_cnpj) : formatCPF(pessoa.cpf_cnpj)) : ""}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "")
-                  onPessoaChange({ ...pessoa, cpf_cnpj: value })
-                }}
-                maxLength={pessoa?.tipo === "J" ? 18 : 14}
-                disabled={loading}
-              />
-              {validationErrors.cpf_cnpj && touchedFields.cpf_cnpj && (
-                <span className="text-sm text-destructive">{validationErrors.cpf_cnpj}</span>
+          {/* Documentos */}
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="w-5 h-5" />
+              <h3 className="font-medium">Documentos</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {pessoa?.tipo === "F" ? (
+                <>
+                  <div>
+                    <Label>RG</Label>
+                    <Input
+                      value={pessoa?.rg || ""}
+                      onChange={(e) => onPessoaChange({ ...pessoa, rg: e.target.value })}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label>Órgão Expedidor</Label>
+                      <Input
+                        value={pessoa?.rg_orgao || ""}
+                        onChange={(e) => onPessoaChange({ ...pessoa, rg_orgao: e.target.value })}
+                        disabled={loading}
+                      />
+                    </div>
+                    <div>
+                      <Label>Data Expedição</Label>
+                      <Input
+                        type="date"
+                        value={pessoa?.rg_data_expedicao || ""}
+                        onChange={(e) => onPessoaChange({ ...pessoa, rg_data_expedicao: e.target.value })}
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <Label>Inscrição Estadual</Label>
+                    <Input
+                      value={pessoa?.inscricao_estadual || ""}
+                      onChange={(e) => onPessoaChange({ ...pessoa, inscricao_estadual: e.target.value })}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div>
+                    <Label>Inscrição Municipal</Label>
+                    <Input
+                      value={pessoa?.inscricao_municipal || ""}
+                      onChange={(e) => onPessoaChange({ ...pessoa, inscricao_municipal: e.target.value })}
+                      disabled={loading}
+                    />
+                  </div>
+                </>
               )}
             </div>
+          </div>
 
-            <div>
-              <Label>{pessoa?.tipo === "J" ? "Porte" : "Gênero"}</Label>
-              <Select
-                value={pessoa?.genero_porte || ""}
-                onValueChange={(value) => onPessoaChange({ ...pessoa, genero_porte: value })}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {getGeneroPorteOptions().map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Dados Pessoais/Empresariais */}
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-2 mb-4">
+              {pessoa?.tipo === "J" ? (
+                <Briefcase className="w-5 h-5" />
+              ) : (
+                <User className="w-5 h-5" />
+              )}
+              <h3 className="font-medium">
+                {pessoa?.tipo === "J" ? "Dados Empresariais" : "Dados Pessoais"}
+              </h3>
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>{pessoa?.tipo === "J" ? "Data de Fundação" : "Data de Nascimento"}</Label>
+                <Input
+                  type="date"
+                  value={pessoa?.data_nascimento_fundacao || ""}
+                  onChange={(e) => onPessoaChange({ ...pessoa, data_nascimento_fundacao: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
 
-            <div>
-              <Label>Observações</Label>
-              <Input
-                value={pessoa?.observacoes || ""}
-                onChange={(e) => onPessoaChange({ ...pessoa, observacoes: e.target.value })}
-                disabled={loading}
-              />
+              {pessoa?.tipo === "F" ? (
+                <>
+                  <div>
+                    <Label>Estado Civil</Label>
+                    <Select
+                      value={pessoa?.estado_civil || ""}
+                      onValueChange={(value) => onPessoaChange({ ...pessoa, estado_civil: value })}
+                      disabled={loading}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="SOLTEIRO">Solteiro(a)</SelectItem>
+                        <SelectItem value="CASADO">Casado(a)</SelectItem>
+                        <SelectItem value="DIVORCIADO">Divorciado(a)</SelectItem>
+                        <SelectItem value="VIUVO">Viúvo(a)</SelectItem>
+                        <SelectItem value="UNIAO_ESTAVEL">União Estável</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Nome do Cônjuge</Label>
+                    <Input
+                      value={pessoa?.nome_conjuge || ""}
+                      onChange={(e) => onPessoaChange({ ...pessoa, nome_conjuge: e.target.value })}
+                      disabled={loading}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <Label>Site</Label>
+                  <Input
+                    value={pessoa?.site || ""}
+                    onChange={(e) => onPessoaChange({ ...pessoa, site: e.target.value })}
+                    disabled={loading}
+                    placeholder="https://"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Informações Complementares */}
+          <div className="border-t pt-4">
+            <div className="flex items-center gap-2 mb-4">
+              <Globe className="w-5 h-5" />
+              <h3 className="font-medium">Informações Complementares</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Nacionalidade</Label>
+                <Input
+                  value={pessoa?.nacionalidade || "Brasileira"}
+                  onChange={(e) => onPessoaChange({ ...pessoa, nacionalidade: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
+              <div>
+                <Label>Situação</Label>
+                <Select
+                  value={pessoa?.situacao || ""}
+                  onValueChange={(value) => onPessoaChange({ ...pessoa, situacao: value })}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ATIVO">Ativo</SelectItem>
+                    <SelectItem value="INATIVO">Inativo</SelectItem>
+                    <SelectItem value="BLOQUEADO">Bloqueado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2">
+                <Label>Observações</Label>
+                <textarea
+                  className="w-full min-h-[100px] p-2 rounded-md border"
+                  value={pessoa?.observacoes || ""}
+                  onChange={(e) => onPessoaChange({ ...pessoa, observacoes: e.target.value })}
+                  disabled={loading}
+                />
+              </div>
             </div>
           </div>
         </div>
