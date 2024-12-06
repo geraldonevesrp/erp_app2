@@ -149,7 +149,7 @@ export function PessoaDadosGerais({
         defaultExpanded={true}
       >
         <div className="p-6 space-y-6">
-          {/* Header com Foto e Tipo */}
+          {/* Header com Foto e Campos */}
           <div className="flex flex-col sm:flex-row gap-6">
             {/* Coluna da Foto */}
             <div className="flex-shrink-0 mx-auto sm:mx-0 space-y-2 px-8">
@@ -219,26 +219,23 @@ export function PessoaDadosGerais({
 
             {/* Coluna dos Campos Principais */}
             <div className="flex-grow space-y-4">
-              {/* Tipo de Pessoa (F/J) como tag única */}
-              <div className="flex justify-end mb-4">
+              {/* Linha 1: Tipo de Pessoa e Gênero alinhados à direita */}
+              <div className="flex justify-end items-center gap-6 mb-4">
                 <div className="flex items-center gap-2">
-                  <Label>Tipo de Pessoa</Label>
+                  <Label className="font-medium">Tipo de Pessoa:</Label>
                   <div className="px-3 py-1 rounded-full text-sm font-medium bg-primary text-white">
                     {pessoa?.tipo === "F" ? "Física" : "Jurídica"}
                   </div>
                 </div>
-              </div>
 
-              {/* Grid de campos */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
+                <div className="flex items-center gap-2">
                   <Label>{pessoa?.tipo === "J" ? "Porte da Empresa" : "Gênero"}</Label>
                   <Select
                     value={pessoa?.genero_porte || ""}
                     onValueChange={(value) => onPessoaChange({ ...pessoa, genero_porte: value })}
                     disabled={loading}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-[180px]">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -250,106 +247,22 @@ export function PessoaDadosGerais({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
 
+              {/* Linha 2: Dados Principais em Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
-                  <RequiredLabel value={pessoa?.pessoas_tipos}>
-                    <Label>Tipos de Cadastro</Label>
-                  </RequiredLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        className={cn(
-                          "w-full min-h-[2.5rem] h-auto justify-start font-normal",
-                          !pessoa?.pessoas_tipos?.length && "text-muted-foreground"
-                        )}
-                      >
-                        <div className="flex flex-wrap gap-1 pr-6">
-                          {pessoa?.pessoas_tipos?.length ? (
-                            pessoa.pessoas_tipos.map((tipoId) => {
-                              const tipo = pessoasTipos.find(t => t.id === tipoId)
-                              return tipo && (
-                                <Badge 
-                                  key={tipo.id} 
-                                  variant="secondary"
-                                  className="flex items-center gap-1 max-w-[150px] truncate"
-                                >
-                                  <span className="truncate">{tipo.tipo}</span>
-                                  <div
-                                    role="button"
-                                    tabIndex={0}
-                                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                    onMouseDown={(e) => {
-                                      e.preventDefault()
-                                      e.stopPropagation()
-                                    }}
-                                    onClick={(e) => {
-                                      e.preventDefault()
-                                      e.stopPropagation()
-                                      const newTipos = pessoa.pessoas_tipos?.filter(id => id !== tipo.id) || []
-                                      onPessoaChange({ ...pessoa, pessoas_tipos: newTipos })
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault()
-                                        const newTipos = pessoa.pessoas_tipos?.filter(id => id !== tipo.id) || []
-                                        onPessoaChange({ ...pessoa, pessoas_tipos: newTipos })
-                                      }
-                                    }}
-                                  >
-                                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                                  </div>
-                                </Badge>
-                              )
-                            })
-                          ) : (
-                            <span>Selecione...</span>
-                          )}
-                        </div>
-                        <ChevronDown className="h-4 w-4 opacity-50 ml-auto" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <ScrollArea className="h-80">
-                        <div className="grid gap-1 p-2">
-                          {pessoasTipos
-                            .filter(tipo => !pessoa?.pessoas_tipos?.includes(tipo.id))
-                            .map((tipo) => (
-                              <Button
-                                key={tipo.id}
-                                variant="ghost"
-                                role="option"
-                                className="justify-start font-normal hover:bg-accent hover:text-accent-foreground"
-                                onClick={() => {
-                                  const currentTipos = pessoa?.pessoas_tipos || []
-                                  const newTipos = [...currentTipos, tipo.id]
-                                  onPessoaChange({ ...pessoa, pessoas_tipos: newTipos })
-                                }}
-                              >
-                                <Check className="mr-2 h-3 w-3 text-muted-foreground" />
-                                {tipo.tipo}
-                              </Button>
-                            ))}
-                            {pessoasTipos
-                              .filter(tipo => !pessoa?.pessoas_tipos?.includes(tipo.id))
-                              .length === 0 && (
-                                <div className="p-4 text-sm text-center text-muted-foreground">
-                                  Nenhum tipo disponível
-                                </div>
-                            )}
-                        </div>
-                      </ScrollArea>
-                    </PopoverContent>
-                  </Popover>
-                  {validationErrors.pessoas_tipos && touchedFields.pessoas_tipos && (
-                    <span className="text-sm text-destructive">{validationErrors.pessoas_tipos}</span>
-                  )}
+                  <Label>{pessoa?.tipo === "J" ? "Nome Fantasia" : "Apelido"}</Label>
+                  <Input
+                    value={pessoa?.apelido || ""}
+                    onChange={(e) => onPessoaChange({ ...pessoa, apelido: e.target.value })}
+                    disabled={loading}
+                  />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <RequiredLabel value={pessoa?.nome_razao}>
-                    <Label>{pessoa?.tipo === "J" ? "Razão Social" : "Nome"}</Label>
+                    <Label>{pessoa?.tipo === "J" ? "Razão Social" : "Nome Completo"}</Label>
                   </RequiredLabel>
                   <Input
                     value={pessoa?.nome_razao || ""}
@@ -378,21 +291,109 @@ export function PessoaDadosGerais({
                     <span className="text-sm text-destructive">{validationErrors.cpf_cnpj}</span>
                   )}
                 </div>
+              </div>
 
-                <div>
-                  <Label>{pessoa?.tipo === "J" ? "Nome Fantasia" : "Apelido"}</Label>
-                  <Input
-                    value={pessoa?.apelido || ""}
-                    onChange={(e) => onPessoaChange({ ...pessoa, apelido: e.target.value })}
-                    disabled={loading}
-                  />
-                </div>
+              {/* Linha 3: Tipos de Cadastro */}
+              <div className="mt-4">
+                <RequiredLabel value={pessoa?.pessoas_tipos}>
+                  <Label>Tipos de Cadastro</Label>
+                </RequiredLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full min-h-[2.5rem] h-auto justify-start font-normal",
+                        !pessoa?.pessoas_tipos?.length && "text-muted-foreground"
+                      )}
+                    >
+                      <div className="flex flex-wrap gap-1 pr-6">
+                        {pessoa?.pessoas_tipos?.length ? (
+                          pessoa.pessoas_tipos.map((tipoId) => {
+                            const tipo = pessoasTipos.find(t => t.id === tipoId)
+                            return tipo && (
+                              <Badge 
+                                key={tipo.id} 
+                                variant="secondary"
+                                className="flex items-center gap-1 max-w-[150px] truncate"
+                              >
+                                <span className="truncate">{tipo.tipo}</span>
+                                <div
+                                  role="button"
+                                  tabIndex={0}
+                                  className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                  }}
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    const newTipos = pessoa.pessoas_tipos?.filter(id => id !== tipo.id) || []
+                                    onPessoaChange({ ...pessoa, pessoas_tipos: newTipos })
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault()
+                                      const newTipos = pessoa.pessoas_tipos?.filter(id => id !== tipo.id) || []
+                                      onPessoaChange({ ...pessoa, pessoas_tipos: newTipos })
+                                    }
+                                  }}
+                                >
+                                  <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                </div>
+                              </Badge>
+                            )
+                          })
+                        ) : (
+                          <span>Selecione...</span>
+                        )}
+                      </div>
+                      <ChevronDown className="h-4 w-4 opacity-50 ml-auto" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <ScrollArea className="h-80">
+                      <div className="grid gap-1 p-2">
+                        {pessoasTipos
+                          .filter(tipo => !pessoa?.pessoas_tipos?.includes(tipo.id))
+                          .map((tipo) => (
+                            <Button
+                              key={tipo.id}
+                              variant="ghost"
+                              role="option"
+                              className="justify-start font-normal hover:bg-accent hover:text-accent-foreground"
+                              onClick={() => {
+                                const currentTipos = pessoa?.pessoas_tipos || []
+                                const newTipos = [...currentTipos, tipo.id]
+                                onPessoaChange({ ...pessoa, pessoas_tipos: newTipos })
+                              }}
+                            >
+                              <Check className="mr-2 h-3 w-3 text-muted-foreground" />
+                              {tipo.tipo}
+                            </Button>
+                          ))}
+                          {pessoasTipos
+                            .filter(tipo => !pessoa?.pessoas_tipos?.includes(tipo.id))
+                            .length === 0 && (
+                              <div className="p-4 text-sm text-center text-muted-foreground">
+                                Nenhum tipo disponível
+                              </div>
+                          )}
+                      </div>
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
+                {validationErrors.pessoas_tipos && touchedFields.pessoas_tipos && (
+                  <span className="text-sm text-destructive">{validationErrors.pessoas_tipos}</span>
+                )}
               </div>
             </div>
           </div>
 
           {/* Seções em 3 colunas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             {/* Documentos */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -551,17 +552,19 @@ export function PessoaDadosGerais({
                   </SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <Label>Observações</Label>
-                <textarea
-                  className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  value={pessoa?.observacoes || ""}
-                  onChange={(e) => onPessoaChange({ ...pessoa, observacoes: e.target.value })}
-                  disabled={loading}
-                />
-              </div>
             </div>
+          </div>
+
+          {/* Observações no rodapé */}
+          <div className="mt-6 pt-6 border-t">
+            <Label>Observações</Label>
+            <textarea
+              className="w-full min-h-[100px] px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Adicione observações relevantes..."
+              value={pessoa?.observacoes || ""}
+              onChange={(e) => onPessoaChange({ ...pessoa, observacoes: e.target.value })}
+              disabled={loading}
+            />
           </div>
         </div>
       </ExpandableCard>
