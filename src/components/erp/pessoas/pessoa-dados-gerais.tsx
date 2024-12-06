@@ -11,7 +11,7 @@ import { formatCPF, formatCNPJ } from "@/lib/masks"
 import { PessoaFoto } from "./pessoa-foto"
 import { PessoaFotoUpload } from "./pessoa-foto-upload"
 import { Camera } from "lucide-react"
-import { supabase } from "@/lib/supabase"
+import { createClient } from "@/lib/supabase/client"
 
 interface PessoaDadosGeraisProps {
   pessoa: any
@@ -38,6 +38,7 @@ export function PessoaDadosGerais({
   const [mounted, setMounted] = useState(false)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
   const [pessoasTipos, setPessoasTipos] = useState<PessoaTipo[]>([])
+  const supabase = createClient()
 
   useEffect(() => {
     const fetchTipos = async () => {
