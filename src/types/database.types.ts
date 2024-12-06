@@ -2134,29 +2134,29 @@ export type Database = {
       }
       pessoas_anexos: {
         Row: {
+          arquivo: string | null
           created_at: string
           descricao: string | null
           download: string | null
           id: number
-          link: string | null
           nome: string | null
           pessoa_id: number | null
         }
         Insert: {
+          arquivo?: string | null
           created_at?: string
           descricao?: string | null
           download?: string | null
           id?: number
-          link?: string | null
           nome?: string | null
           pessoa_id?: number | null
         }
         Update: {
+          arquivo?: string | null
           created_at?: string
           descricao?: string | null
           download?: string | null
           id?: number
-          link?: string | null
           nome?: string | null
           pessoa_id?: number | null
         }

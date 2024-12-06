@@ -61,11 +61,12 @@ export interface PessoaRedeSocial {
 
 export interface PessoaAnexo {
   id?: number
-  pessoa_id: number
-  nome: string
+  pessoa_id?: number
+  nome?: string
   descricao?: string
-  link?: string
+  arquivo?: string
   download?: string
+  download_url?: string
   created_at?: string
   _isNew?: boolean
   _isDeleted?: boolean

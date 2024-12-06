@@ -4,6 +4,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useMenu } from '@/contexts/menu-context'
 
 interface PessoaEditSheetProps extends React.HTMLAttributes<HTMLDivElement> {
   open?: boolean
@@ -29,21 +30,31 @@ export function PessoaEditSheet({
   pessoa,
   ...props 
 }: PessoaEditSheetProps) {
+  const { isMenuOpen } = useMenu()
+  
   return (
     <div
-      data-state={open ? "open" : "closed"}
       className={cn(
-        "fixed top-16 bottom-0 right-0 w-[calc(100%-16rem)] z-50 flex flex-col border-l min-h-screen",
-        "transition-all duration-300 ease-in-out transform will-change-transform",
+        "fixed top-16 bottom-0 right-0 z-50 flex flex-col border-l",
+        "transition-transform duration-300 ease-in-out",
         "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
         "dark:border-slate-800",
-        "pessoa-edit-sheet",
-        open ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none",
+        open ? "translate-x-0" : "translate-x-full",
         className
       )}
+      style={{
+        width: isMenuOpen ? 'calc(100% - 16rem)' : '100%',
+        maxWidth: isMenuOpen ? 'calc(100vw - 16rem)' : '100vw'
+      }}
       {...props}
     >
-      <div className="h-14 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-6 flex-none dark:border-slate-800">
+      <div 
+        className={cn(
+          "h-14 border-b flex items-center justify-between px-6 flex-none",
+          "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+          "dark:border-slate-800"
+        )}
+      >
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-semibold">
             {pessoa ? (
@@ -97,7 +108,9 @@ export function PessoaEditSheet({
           </Button>
         </div>
       </div>
-      {children}
+      <PessoaEditSheetContent>
+        {children}
+      </PessoaEditSheetContent>
     </div>
   )
 }
@@ -114,13 +127,14 @@ export function PessoaEditSheetContent({
   return (
     <div
       className={cn(
-        "flex-1 overflow-y-auto bg-background",
-        "dark:bg-slate-900",
+        "flex-1 overflow-auto p-6",
         className
       )}
       {...props}
     >
-      {children}
+      <div className="mx-auto w-full max-w-[1600px]">
+        {children}
+      </div>
     </div>
   )
 }

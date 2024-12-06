@@ -6,6 +6,7 @@ import { useSupabase } from '@/contexts/supabase'
 import { ErpHeader } from './erp-header'
 import { ErpSidebar } from './erp-sidebar'
 import { cn } from '@/lib/utils'
+import { MenuContext } from '@/contexts/menu-context'
 
 interface MenuItem {
   name: string
@@ -46,10 +47,11 @@ export function ErpLayout({ children, menuItems }: ErpLayoutProps) {
   }
 
   return (
-    <div className={cn(
-      "flex h-screen overflow-hidden transition-[padding] duration-300",
-      isMenuOpen ? "md:pl-64" : "md:pl-0"
-    )}>
+    <MenuContext.Provider value={{ isMenuOpen, setIsMenuOpen }}>
+      <div className={cn(
+        "flex h-screen overflow-hidden transition-[padding] duration-300",
+        isMenuOpen ? "md:pl-64" : "md:pl-0"
+      )}>
       {/* Sidebar */}
       <ErpSidebar
         isOpen={isMenuOpen}
@@ -65,10 +67,13 @@ export function ErpLayout({ children, menuItems }: ErpLayoutProps) {
           setIsMenuOpen={setIsMenuOpen}
           onLogout={handleLogout}
         />
-        <main className="flex-1 overflow-auto">
-          {children}
+        <main className="flex-1 overflow-auto relative">
+          <div className="max-w-[1600px] mx-auto w-full h-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>
+    </MenuContext.Provider>
   )
 }

@@ -86,7 +86,7 @@ function PessoasPageContent() {
   };
 
   return (
-    <div className="h-full">
+    <div className="h-full w-full">
       <PessoasDataTable 
         columns={columns} 
         data={pessoas || []} 

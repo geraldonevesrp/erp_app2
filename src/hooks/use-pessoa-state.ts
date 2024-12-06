@@ -90,7 +90,7 @@ export function usePessoaState() {
       const anexosState = useEntityArrayState(
         updatedPessoa.pessoas_anexos || [],
         originalPessoa.pessoas_anexos || [],
-        ['nome', 'descricao', 'link', 'download']
+        ['nome', 'descricao', 'arquivo', 'download']
       )
 
       setHasChanges(

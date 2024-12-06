@@ -48,8 +48,9 @@ export function usePessoaOperations() {
             id,
             nome,
             descricao,
-            link,
+            arquivo,
             download,
+            download_url,
             pessoa_id,
             created_at
           )
@@ -121,7 +122,8 @@ export function usePessoaOperations() {
     deletedContatos: PessoaContato[],
     newContatos: PessoaContato[],
     deletedRedesSociais: any[] = [],
-    novasRedesSociais: any[] = []
+    novasRedesSociais: any[] = [],
+    deletedAnexos: any[] = []
   ) => {
     try {
       // Salvar dados da pessoa
@@ -245,11 +247,34 @@ export function usePessoaOperations() {
       }
 
       // Deletar anexos marcados para deleção
-      const anexosToDelete = (pessoa.pessoas_anexos || [])
+      const anexosToDelete = [...deletedAnexos, ...(pessoa.pessoas_anexos || [])]
         .filter(a => a._isDeleted && a.id)
         .map(a => a.id)
 
       if (anexosToDelete.length > 0) {
+        // Primeiro remover os arquivos do storage
+        for (const anexo of [...deletedAnexos, ...(pessoa.pessoas_anexos || [])].filter(a => a._isDeleted && a.id)) {
+          if (anexo.download) {
+            try {
+              const fileUrl = new URL(anexo.download)
+              const filePath = decodeURIComponent(fileUrl.pathname.split('/storage/v1/object/public/Perfis/')[1])
+              if (filePath) {
+                const { error: removeError } = await supabase
+                  .storage
+                  .from('Perfis')
+                  .remove([filePath])
+                
+                if (removeError) {
+                  console.error('Erro ao remover arquivo:', removeError)
+                }
+              }
+            } catch (error) {
+              console.error('Erro ao processar URL do arquivo:', error)
+            }
+          }
+        }
+
+        // Depois remover os registros do banco
         const { error: deleteError } = await supabase
           .from("pessoas_anexos")
           .delete()
@@ -259,17 +284,17 @@ export function usePessoaOperations() {
       }
 
       // Inserir novos anexos
-      const novosAnexos = (pessoa.pessoas_anexos || [])
+      const novosAnexosToInsert = (pessoa.pessoas_anexos || [])
         .filter(a => a._isNew && !a._isDeleted)
         .map(({ _isNew, _isDeleted, _tempId, id, created_at, ...rest }) => ({
           ...rest,
           pessoa_id: pessoa.id
         }))
 
-      if (novosAnexos.length > 0) {
+      if (novosAnexosToInsert.length > 0) {
         const { error: insertError } = await supabase
           .from("pessoas_anexos")
-          .insert(novosAnexos)
+          .insert(novosAnexosToInsert)
 
         if (insertError) throw insertError
       }
@@ -285,8 +310,9 @@ export function usePessoaOperations() {
           .update({
             nome: rest.nome,
             descricao: rest.descricao,
-            link: rest.link,
-            download: rest.download
+            arquivo: rest.arquivo,
+            download: rest.download,
+            download_url: rest.download_url
           })
           .eq("id", rest.id)
 
@@ -345,6 +371,51 @@ export function usePessoaOperations() {
     }
   }
 
+  const savePessoaAnexo = async (anexo: any) => {
+    try {
+      const { id, _tempId, _isNew, _isDeleted, ...rest } = anexo
+      
+      if (!id) {
+        // Inserir novo anexo
+        const { data, error } = await supabase
+          .from("pessoas_anexos")
+          .insert({
+            nome: rest.nome,
+            descricao: rest.descricao,
+            arquivo: rest.arquivo,
+            download: rest.download,
+            download_url: rest.download_url,
+            pessoa_id: rest.pessoa_id
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+        return data
+      } else {
+        // Atualizar anexo existente
+        const { data, error } = await supabase
+          .from("pessoas_anexos")
+          .update({
+            nome: rest.nome,
+            descricao: rest.descricao,
+            arquivo: rest.arquivo,
+            download: rest.download,
+            download_url: rest.download_url
+          })
+          .eq("id", id)
+          .select()
+          .single()
+
+        if (error) throw error
+        return data
+      }
+    } catch (error: any) {
+      console.error('Erro ao salvar anexo:', error)
+      throw new Error(`Erro ao salvar anexo: ${error.message}`)
+    }
+  }
+
   const loadTiposTelefone = async () => {
     try {
       const { data, error } = await supabase
@@ -364,6 +435,7 @@ export function usePessoaOperations() {
     loadGrupos,
     loadSubGrupos,
     savePessoa,
+    savePessoaAnexo,
     loadTiposTelefone
   }
 }

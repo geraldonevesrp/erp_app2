@@ -4,6 +4,14 @@
     "type": "ERP",
     "description": "Sistema ERP com gerenciamento de pessoas, grupos e documentos"
   },
+  "documentation": {
+    "guidelines": {
+      "path": "docs/ai-guidelines.md",
+      "description": "Guia principal para navegação e estrutura do projeto",
+      "priority": "high",
+      "loadOnStart": true
+    }
+  },
   "database": {
     "type": "Supabase",
     "typesFile": {

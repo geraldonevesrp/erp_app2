@@ -110,7 +110,7 @@ export function PessoasDataTable<TData, TValue>({
   const router = useRouter()
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       {/* Barra de Ferramentas */}
       <div className="flex items-center justify-between gap-4 p-4">
         {/* Busca */}
@@ -165,9 +165,9 @@ export function PessoasDataTable<TData, TValue>({
       </div>
 
       {/* Container da Tabela com scroll */}
-      <div className="flex-1 min-h-0 px-4 pb-2">
-        <div className="rounded-md border h-full overflow-auto">
-          <Table>
+      <div className="flex-1 min-h-0">
+        <div className="rounded-md border overflow-auto h-full mx-4">
+          <Table className="w-full">
             <TableHeader className="sticky top-0 bg-background z-10">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
