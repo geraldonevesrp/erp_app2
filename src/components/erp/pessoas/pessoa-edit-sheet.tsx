@@ -127,12 +127,12 @@ export function PessoaEditSheetContent({
   return (
     <div
       className={cn(
-        "flex-1 overflow-auto p-6",
+        "flex-1 overflow-auto p-4",
         className
       )}
       {...props}
     >
-      <div className="mx-auto w-full max-w-[1600px]">
+      <div className="mx-auto w-full max-w-[1800px]">
         {children}
       </div>
     </div>
