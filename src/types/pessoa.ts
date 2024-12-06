@@ -83,8 +83,31 @@ export interface Pessoa {
   foto_url?: string
   grupos_ids?: number[]
   subgrupos_ids?: number[]
+  pessoas_tipos?: number[]
   pessoas_contatos?: PessoaContato[]
   pessoas_telefones?: PessoaTelefone[]
   pessoas_redes_sociais?: PessoaRedeSocial[]
   pessoas_anexos?: PessoaAnexo[]
+  genero?: string
+  cpf_cnpj?: string
+  rg_ie?: string
+  IM?: string
+  profissoes_id?: number
+  nascimento?: string
+  renda?: string
+  obs?: string
+  indIEDest?: number
+  ISUF?: string
+  status_id?: number
+  ramo_id?: number
+  atividades_ids?: number[]
+  natureza_juridica?: any
+  porte?: any
+  situacao_cadastral?: any
+  atividade_principal?: any
+  atividades_secundarias?: any
+  socios?: any
+  capital_social?: number
+  data_inicio_atividades?: string
+  matriz?: boolean
 }

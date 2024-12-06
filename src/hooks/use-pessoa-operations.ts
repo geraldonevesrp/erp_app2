@@ -126,6 +126,8 @@ export function usePessoaOperations() {
     deletedAnexos: any[] = []
   ) => {
     try {
+      console.log('Salvando pessoa com tipos:', pessoa.pessoas_tipos)
+      
       // Salvar dados da pessoa
       const { error: updateError } = await supabase
         .from("pessoas")
@@ -135,12 +137,40 @@ export function usePessoaOperations() {
           tipo: pessoa.tipo,
           foto_url: pessoa.foto_url,
           grupos_ids: pessoa.grupos_ids,
-          subgrupos_ids: pessoa.subgrupos_ids
+          subgrupos_ids: pessoa.subgrupos_ids,
+          pessoas_tipos: pessoa.pessoas_tipos,
+          genero: pessoa.genero,
+          cpf_cnpj: pessoa.cpf_cnpj,
+          rg_ie: pessoa.rg_ie,
+          "IM": pessoa.IM,
+          profissoes_id: pessoa.profissoes_id,
+          nascimento: pessoa.nascimento,
+          renda: pessoa.renda,
+          obs: pessoa.obs,
+          "indIEDest": pessoa.indIEDest,
+          "ISUF": pessoa.ISUF,
+          status_id: pessoa.status_id,
+          ramo_id: pessoa.ramo_id,
+          atividades_ids: pessoa.atividades_ids,
+          natureza_juridica: pessoa.natureza_juridica,
+          porte: pessoa.porte,
+          situacao_cadastral: pessoa.situacao_cadastral,
+          atividade_principal: pessoa.atividade_principal,
+          atividades_secundarias: pessoa.atividades_secundarias,
+          socios: pessoa.socios,
+          capital_social: pessoa.capital_social,
+          data_inicio_atividades: pessoa.data_inicio_atividades,
+          matriz: pessoa.matriz
         })
         .eq("id", pessoa.id)
         .eq("perfis_id", perfilId)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Erro ao atualizar pessoa:', updateError)
+        throw updateError
+      }
+
+      console.log('Pessoa atualizada com sucesso')
 
       // Deletar contatos marcados para deleção
       if (deletedContatos.length > 0) {

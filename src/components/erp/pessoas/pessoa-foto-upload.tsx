@@ -4,22 +4,25 @@ import { useState } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { useToast } from "@/components/ui/use-toast"
 import { ImageCropDialog } from "@/components/ui/image-crop-dialog"
-import { Camera } from "lucide-react"
 
 interface PessoaFotoUploadProps {
-  pessoaId: number
-  perfilId: number
-  fotoUrl: string | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
   onFotoUpdated: (novaUrl: string) => void
-  disabled?: boolean
+  pessoaId?: number
+  perfilId?: number
+  fotoUrl?: string | null
+  onLoadingChange?: (loading: boolean) => void
 }
 
 export function PessoaFotoUpload({ 
-  pessoaId, 
-  perfilId, 
-  fotoUrl, 
+  open,
+  onOpenChange,
   onFotoUpdated,
-  disabled = false
+  pessoaId,
+  perfilId,
+  fotoUrl,
+  onLoadingChange
 }: PessoaFotoUploadProps) {
   const [loading, setLoading] = useState(false)
   const [isCropDialogOpen, setIsCropDialogOpen] = useState(false)
@@ -30,37 +33,60 @@ export function PessoaFotoUpload({
 
   const handleUploadFoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !pessoaId) return
+    if (!file || !pessoaId || !perfilId) {
+      toast({
+        title: "Erro ao fazer upload",
+        description: "Informações necessárias não encontradas",
+        variant: "destructive",
+      })
+      return
+    }
 
     try {
       // Validação do tamanho do arquivo (2MB)
-      const maxSize = 2 * 1024 * 1024
-      if (file.size > maxSize) {
-        throw new Error('Arquivo muito grande. O tamanho máximo permitido é 2MB.')
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "Erro ao fazer upload",
+          description: "A foto deve ter no máximo 2MB",
+          variant: "destructive",
+        })
+        return
       }
 
-      // Criar URL temporária para a imagem
+      // Criar URL temporária para preview
       const fileUrl = URL.createObjectURL(file)
-      setSelectedFile(file)
       setSelectedFileUrl(fileUrl)
+      setSelectedFile(file)
       setIsCropDialogOpen(true)
     } catch (err: any) {
       console.error('Erro ao processar arquivo:', err)
       toast({
-        title: "Erro ao processar imagem",
+        title: "Erro ao processar arquivo",
         description: err.message,
-        variant: "destructive"
+        variant: "destructive",
       })
     }
   }
 
   const handleCropComplete = async (croppedImageUrl: string) => {
-    if (!pessoaId || !selectedFile) return
+    if (!selectedFile || !pessoaId || !perfilId) {
+      toast({
+        title: "Erro ao fazer upload",
+        description: "Informações necessárias não encontradas",
+        variant: "destructive",
+      })
+      return
+    }
 
     try {
       setLoading(true)
-      
-      // Converter base64 para blob
+      onLoadingChange?.(true)
+      toast({
+        title: "Processando imagem",
+        description: "Aguarde enquanto fazemos o upload da sua foto...",
+      })
+
+      // Converter URL do crop para Blob
       const response = await fetch(croppedImageUrl)
       const blob = await response.blob()
       
@@ -86,18 +112,15 @@ export function PessoaFotoUpload({
         .storage
         .from('Perfis')
         .upload(filePath, blob, {
-          cacheControl: '3600',
-          upsert: false
+          contentType: `image/${fileExt}`,
+          upsert: true
         })
 
       if (uploadError) {
-        if (uploadError.message.includes('duplicate')) {
-          throw new Error('Já existe uma foto com este nome. Tente novamente.')
-        }
         throw uploadError
       }
 
-      // Obtém a URL pública do arquivo
+      // Pegar URL pública do arquivo
       const { data: { publicUrl } } = supabase
         .storage
         .from('Perfis')
@@ -119,55 +142,41 @@ export function PessoaFotoUpload({
         throw updateError
       }
 
+      // Limpa o estado
+      setSelectedFile(null)
+      setSelectedFileUrl("")
+      setIsCropDialogOpen(false)
+
       // Notifica o componente pai da atualização
-      onFotoUpdated(publicUrl)
+      onFotoUpdated?.(publicUrl)
 
       toast({
-        title: "Sucesso",
-        description: "Foto atualizada com sucesso!",
-        variant: "success"
+        title: "Foto atualizada",
+        description: "A foto foi atualizada com sucesso",
       })
     } catch (err: any) {
       console.error('Erro ao fazer upload:', err)
       toast({
         title: "Erro ao fazer upload",
-        description: err.message,
-        variant: "destructive"
+        description: err.message || "Ocorreu um erro ao fazer o upload da foto",
+        variant: "destructive",
       })
     } finally {
       setLoading(false)
-      // Limpar URLs temporárias
-      if (selectedFileUrl) {
-        URL.revokeObjectURL(selectedFileUrl)
-      }
-      setSelectedFile(null)
-      setSelectedFileUrl("")
-      setIsCropDialogOpen(false)
+      onLoadingChange?.(false)
     }
   }
 
   return (
     <>
-      <div>
-        <input
-          id="foto-upload"
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleUploadFoto}
-          disabled={disabled || loading}
-        />
-        <label 
-          htmlFor="foto-upload" 
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md
-            bg-primary text-primary-foreground hover:bg-primary/90
-            transition-colors cursor-pointer
-            disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Camera className="h-4 w-4" />
-          {loading ? "Carregando..." : "Alterar foto"}
-        </label>
-      </div>
+      <input
+        id="foto-upload"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleUploadFoto}
+        disabled={loading}
+      />
 
       <ImageCropDialog
         isOpen={isCropDialogOpen}
