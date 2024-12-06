@@ -206,19 +206,19 @@ export function PessoaDadosGerais({
                   <Label>Tipo de Cadastro</Label>
                 </RequiredLabel>
                 <Select
-                  value={pessoa?.pessoas_tipos || ""}
-                  onValueChange={(value) => onPessoaChange({ ...pessoa, pessoas_tipos: value })}
+                  value={pessoa?.pessoas_tipos?.[0]?.toString() || ""}
+                  onValueChange={(value) => onPessoaChange({ ...pessoa, pessoas_tipos: [parseInt(value)] })}
                   disabled={loading}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CLIENTE">Cliente</SelectItem>
-                    <SelectItem value="FORNECEDOR">Fornecedor</SelectItem>
-                    <SelectItem value="FUNCIONARIO">Funcionário</SelectItem>
-                    <SelectItem value="VENDEDOR">Vendedor</SelectItem>
-                    <SelectItem value="TRANSPORTADOR">Transportador</SelectItem>
+                    <SelectItem value="1">Cliente</SelectItem>
+                    <SelectItem value="2">Fornecedor</SelectItem>
+                    <SelectItem value="3">Funcionário</SelectItem>
+                    <SelectItem value="4">Vendedor</SelectItem>
+                    <SelectItem value="5">Transportador</SelectItem>
                   </SelectContent>
                 </Select>
                 {validationErrors.pessoas_tipos && touchedFields.pessoas_tipos && (
