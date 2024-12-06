@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { User, FileText, Briefcase, Calendar, Globe } from "lucide-react"
 import { ExpandableCard } from "@/components/ui/expandable-card"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { formatCPF, formatCNPJ } from "@/lib/masks"
 import { PessoaFoto } from "./pessoa-foto"
 import { PessoaFotoUpload } from "./pessoa-foto-upload"
 import { Camera } from "lucide-react"
+import { supabase } from "@/lib/supabase"
 
 interface PessoaDadosGeraisProps {
   pessoa: any
@@ -19,6 +20,11 @@ interface PessoaDadosGeraisProps {
   touchedFields: { [key: string]: boolean }
   onPessoaChange: (updates: any) => void
   onFotoUpdated: (novaUrl: string) => void
+}
+
+interface PessoaTipo {
+  id: number
+  tipo: string
 }
 
 export function PessoaDadosGerais({
@@ -31,6 +37,25 @@ export function PessoaDadosGerais({
 }: PessoaDadosGeraisProps) {
   const [mounted, setMounted] = useState(false)
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false)
+  const [pessoasTipos, setPessoasTipos] = useState<PessoaTipo[]>([])
+
+  useEffect(() => {
+    const fetchTipos = async () => {
+      const { data: tipos, error } = await supabase
+        .from('pessoas_tipos')
+        .select('id, tipo')
+        .order('id')
+      
+      if (error) {
+        console.error('Erro ao carregar tipos:', error)
+        return
+      }
+
+      setPessoasTipos(tipos || [])
+    }
+
+    fetchTipos()
+  }, [])
 
   const RequiredLabel = ({ children, value }: { children: React.ReactNode, value: any }) => (
     <div className="flex items-center gap-1">
@@ -203,24 +228,33 @@ export function PessoaDadosGerais({
 
               <div>
                 <RequiredLabel value={pessoa?.pessoas_tipos}>
-                  <Label>Tipo de Cadastro</Label>
+                  <Label>Tipos de Cadastro</Label>
                 </RequiredLabel>
-                <Select
-                  value={pessoa?.pessoas_tipos?.[0]?.toString() || ""}
-                  onValueChange={(value) => onPessoaChange({ ...pessoa, pessoas_tipos: [parseInt(value)] })}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Cliente</SelectItem>
-                    <SelectItem value="2">Fornecedor</SelectItem>
-                    <SelectItem value="3">Funcionário</SelectItem>
-                    <SelectItem value="4">Vendedor</SelectItem>
-                    <SelectItem value="5">Transportador</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  {pessoasTipos.map((tipo) => (
+                    <div key={tipo.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`tipo-${tipo.id}`}
+                        checked={pessoa?.pessoas_tipos?.includes(tipo.id) || false}
+                        onChange={(e) => {
+                          const tipos = new Set(pessoa?.pessoas_tipos || [])
+                          if (e.target.checked) {
+                            tipos.add(tipo.id)
+                          } else {
+                            tipos.delete(tipo.id)
+                          }
+                          onPessoaChange({ ...pessoa, pessoas_tipos: Array.from(tipos) })
+                        }}
+                        disabled={loading}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <label htmlFor={`tipo-${tipo.id}`} className="text-sm">
+                        {tipo.tipo}
+                      </label>
+                    </div>
+                  ))}
+                </div>
                 {validationErrors.pessoas_tipos && touchedFields.pessoas_tipos && (
                   <span className="text-sm text-destructive">{validationErrors.pessoas_tipos}</span>
                 )}
