@@ -202,6 +202,31 @@ export function PessoaDadosGerais({
               </div>
 
               <div>
+                <RequiredLabel value={pessoa?.pessoas_tipos}>
+                  <Label>Tipo de Cadastro</Label>
+                </RequiredLabel>
+                <Select
+                  value={pessoa?.pessoas_tipos || ""}
+                  onValueChange={(value) => onPessoaChange({ ...pessoa, pessoas_tipos: value })}
+                  disabled={loading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CLIENTE">Cliente</SelectItem>
+                    <SelectItem value="FORNECEDOR">Fornecedor</SelectItem>
+                    <SelectItem value="FUNCIONARIO">Funcionário</SelectItem>
+                    <SelectItem value="VENDEDOR">Vendedor</SelectItem>
+                    <SelectItem value="TRANSPORTADOR">Transportador</SelectItem>
+                  </SelectContent>
+                </Select>
+                {validationErrors.pessoas_tipos && touchedFields.pessoas_tipos && (
+                  <span className="text-sm text-destructive">{validationErrors.pessoas_tipos}</span>
+                )}
+              </div>
+
+              <div>
                 <Label>{pessoa?.tipo === "J" ? "Porte da Empresa" : "Gênero"}</Label>
                 <Select
                   value={pessoa?.genero_porte || ""}
