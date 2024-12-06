@@ -153,7 +153,18 @@ export default function PessoaEdit({ isOpen, onClose, pessoaId, onSave }: Pessoa
       const deletedContatos = pessoa.pessoas_contatos?.filter(c => c._isDeleted && c.id) || []
       const newContatos = pessoa.pessoas_contatos?.filter(c => c._isNew && !c._isDeleted) || []
 
-      await savePessoa(pessoa, perfil.id, deletedContatos, newContatos)
+      // Pegar redes sociais deletadas e novas
+      const deletedRedesSociais = pessoa.pessoas_redes_sociais?.filter(r => r._isDeleted && r.id) || []
+      const novasRedesSociais = pessoa.pessoas_redes_sociais?.filter(r => r._isNew && !r._isDeleted) || []
+
+      await savePessoa(
+        pessoa,
+        perfil.id,
+        deletedContatos,
+        newContatos,
+        deletedRedesSociais,
+        novasRedesSociais
+      )
       
       toast({
         description: "Dados salvos com sucesso!"

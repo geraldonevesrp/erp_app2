@@ -119,7 +119,9 @@ export function usePessoaOperations() {
     pessoa: Pessoa,
     perfilId: number,
     deletedContatos: PessoaContato[],
-    newContatos: PessoaContato[]
+    newContatos: PessoaContato[],
+    deletedRedesSociais: any[] = [],
+    novasRedesSociais: any[] = []
   ) => {
     try {
       // Salvar dados da pessoa
@@ -196,7 +198,7 @@ export function usePessoaOperations() {
       }
 
       // Deletar redes sociais marcadas para deleção
-      const redesSociaisToDelete = (pessoa.pessoas_redes_sociais || [])
+      const redesSociaisToDelete = [...deletedRedesSociais, ...(pessoa.pessoas_redes_sociais || [])]
         .filter(r => r._isDeleted && r.id)
         .map(r => r.id)
 
@@ -210,17 +212,17 @@ export function usePessoaOperations() {
       }
 
       // Inserir novas redes sociais
-      const novasRedesSociais = (pessoa.pessoas_redes_sociais || [])
+      const novasRedesSociaisToInsert = [...novasRedesSociais, ...(pessoa.pessoas_redes_sociais || [])]
         .filter(r => r._isNew && !r._isDeleted)
-        .map(({ _isNew, _isDeleted, _tempId, id, ...rest }) => ({
+        .map(({ _isNew, _isDeleted, _tempId, id, created_at, ...rest }) => ({
           ...rest,
           pessoa_id: pessoa.id
         }))
 
-      if (novasRedesSociais.length > 0) {
+      if (novasRedesSociaisToInsert.length > 0) {
         const { error: insertError } = await supabase
           .from("pessoas_redes_sociais")
-          .insert(novasRedesSociais)
+          .insert(novasRedesSociaisToInsert)
 
         if (insertError) throw insertError
       }
@@ -230,13 +232,14 @@ export function usePessoaOperations() {
         .filter(r => !r._isNew && !r._isDeleted && r.id)
       
       for (const redeSocial of redesSociaisToUpdate) {
+        const { _isNew, _isDeleted, _tempId, created_at, ...rest } = redeSocial
         const { error: updateError } = await supabase
           .from("pessoas_redes_sociais")
           .update({
-            nome: redeSocial.nome,
-            link: redeSocial.link
+            nome: rest.nome,
+            link: rest.link
           })
-          .eq("id", redeSocial.id)
+          .eq("id", rest.id)
 
         if (updateError) throw updateError
       }
@@ -258,7 +261,7 @@ export function usePessoaOperations() {
       // Inserir novos anexos
       const novosAnexos = (pessoa.pessoas_anexos || [])
         .filter(a => a._isNew && !a._isDeleted)
-        .map(({ _isNew, _isDeleted, _tempId, id, ...rest }) => ({
+        .map(({ _isNew, _isDeleted, _tempId, id, created_at, ...rest }) => ({
           ...rest,
           pessoa_id: pessoa.id
         }))
@@ -276,15 +279,16 @@ export function usePessoaOperations() {
         .filter(a => !a._isNew && !a._isDeleted && a.id)
       
       for (const anexo of anexosToUpdate) {
+        const { _isNew, _isDeleted, _tempId, created_at, ...rest } = anexo
         const { error: updateError } = await supabase
           .from("pessoas_anexos")
           .update({
-            nome: anexo.nome,
-            descricao: anexo.descricao,
-            link: anexo.link,
-            download: anexo.download
+            nome: rest.nome,
+            descricao: rest.descricao,
+            link: rest.link,
+            download: rest.download
           })
-          .eq("id", anexo.id)
+          .eq("id", rest.id)
 
         if (updateError) throw updateError
       }

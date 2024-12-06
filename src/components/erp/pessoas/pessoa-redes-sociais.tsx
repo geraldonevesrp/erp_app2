@@ -1,31 +1,31 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { Globe, Plus, Trash2, ExternalLink } from "lucide-react"
 import { ExpandableCard } from "@/components/ui/expandable-card"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
-import { useEntityArrayState } from "@/hooks/use-entity-array-state"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { PessoaRedeSocial } from "@/types/pessoa"
+import { useTempId } from "@/hooks/use-temp-id"
+import { Database } from "@/types/database.types"
+
+type RedeSocial = Database['public']['Tables']['pessoas_redes_sociais']['Row'] & {
+  _isNew?: boolean
+  _isDeleted?: boolean
+  _tempId?: number
+}
 
 interface PessoaRedesSociaisProps {
   pessoa: {
     id: number
-    pessoas_redes_sociais?: PessoaRedeSocial[]
+    pessoas_redes_sociais?: RedeSocial[]
   }
   loading?: boolean
   onPessoaChange: (pessoa: any) => void
 }
 
 // Função para validar rede social
-const validateRedeSocial = (redeSocial: PessoaRedeSocial) => {
+function validateRedeSocial(redeSocial: RedeSocial): string[] {
   const errors: string[] = []
   
   if (!redeSocial.nome?.trim()) {
@@ -45,143 +45,159 @@ const validateRedeSocial = (redeSocial: PessoaRedeSocial) => {
   return errors
 }
 
-export function PessoaRedesSociais({ pessoa, loading, onPessoaChange }: PessoaRedesSociaisProps) {
-  const [redesSociais, setRedesSociais] = useState<PessoaRedeSocial[]>([])
-  const [uniqueId, setUniqueId] = useState(0)
-  const [editingRedeSocial, setEditingRedeSocial] = useState<number | null>(null)
+export function PessoaRedesSociais({ pessoa, loading: parentLoading, onPessoaChange }: PessoaRedesSociaisProps) {
+  const [redesSociais, setRedesSociais] = useState<RedeSocial[]>([])
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
   const { toast } = useToast()
+  const generateTempId = useTempId()
 
-  // Integração com useEntityArrayState
-  const originalRedesSociais = pessoa?.pessoas_redes_sociais || []
-  const { hasChanges, compareArrays } = useEntityArrayState<PessoaRedeSocial>(
-    redesSociais,
-    originalRedesSociais,
-    ['nome', 'link']
-  )
+  const isLoading = loading || parentLoading
 
-  useEffect(() => {
-    if (pessoa?.pessoas_redes_sociais) {
-      const redesSociaisAtivas = pessoa.pessoas_redes_sociais
+  // Carrega redes sociais
+  const loadRedesSociais = async () => {
+    if (!pessoa?.id) return
+    
+    try {
+      setLoading(true)
+      const redesSociaisAtivas = (pessoa.pessoas_redes_sociais || [])
         .filter(r => !r._isDeleted)
         .map(r => ({
           ...r,
-          _isNew: false, // Reseta o estado de novo
-          _isDeleted: false, // Reseta o estado de deletado
-          _tempId: undefined // Remove IDs temporários após salvar
+          _isNew: r._isNew || false,
+          _isDeleted: false,
+          _tempId: r._tempId
         }))
         .sort((a, b) => {
+          if (a.id && !b.id) return -1
+          if (!a.id && b.id) return 1
           if (a.id && b.id) return a.id - b.id
-          if (a.id) return -1
-          if (b.id) return 1
-          return (a._tempId || 0) - (b._tempId || 0)
+          return 0
         })
       
-      setUniqueId(0) // Reseta o contador de IDs temporários
-      setRedesSociais(redesSociaisAtivas)
-    } else {
-      setRedesSociais([])
+      // Manter os valores originais dos campos
+      const novasRedesSociais = redesSociaisAtivas.map(redeSocial => {
+        const redeSocialAtual = redesSociais.find(r => 
+          (r.id && r.id === redeSocial.id) || 
+          (r._tempId && r._tempId === redeSocial._tempId)
+        )
+        
+        if (redeSocialAtual) {
+          return {
+            ...redeSocial,
+            nome: redeSocialAtual.nome,
+            link: redeSocialAtual.link
+          }
+        }
+        return redeSocial
+      })
+      
+      setRedesSociais(novasRedesSociais)
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar redes sociais",
+        description: error.message
+      })
+    } finally {
+      setLoading(false)
     }
-  }, [pessoa?.pessoas_redes_sociais])
+  }
+
+  // Carrega dados iniciais e quando a pessoa mudar
+  useEffect(() => {
+    loadRedesSociais()
+  }, [pessoa?.id, pessoa?.pessoas_redes_sociais])
 
   const handleAddRedeSocial = () => {
-    const tempId = uniqueId
-    const newRedeSocial: PessoaRedeSocial = {
+    const _tempId = generateTempId()
+    
+    const novaRedeSocial: RedeSocial = {
+      id: undefined,
       nome: '',
       link: '',
       pessoa_id: pessoa.id,
+      created_at: new Date().toISOString(),
       _isNew: true,
-      _isDeleted: false,
-      _tempId: tempId
+      _tempId
     }
-
-    setUniqueId(prev => prev + 1)
-    const updatedRedesSociais = [...redesSociais, newRedeSocial]
-    setRedesSociais(updatedRedesSociais)
     
-    // Atualiza pessoa com a nova rede social
-    onPessoaChange({
+    setRedesSociais(prev => [...prev, novaRedeSocial])
+    
+    const pessoaAtualizada = {
       ...pessoa,
       pessoas_redes_sociais: [
-        ...originalRedesSociais,
-        newRedeSocial
+        ...(pessoa.pessoas_redes_sociais || []).filter(r => !r._isDeleted),
+        novaRedeSocial
       ]
-    })
+    }
     
-    setEditingRedeSocial(updatedRedesSociais.length - 1)
+    onPessoaChange(pessoaAtualizada)
+    setEditingIndex(redesSociais.length)
   }
 
   const handleRemoveRedeSocial = (index: number) => {
-    const updatedRedesSociais = [...redesSociais]
-    const redeSocial = updatedRedesSociais[index]
-
-    if (redeSocial.id) {
-      redeSocial._isDeleted = true
-      setRedesSociais(updatedRedesSociais)
-      
-      // Atualiza pessoa com a rede social marcada como deletada
-      onPessoaChange({
-        ...pessoa,
-        pessoas_redes_sociais: [
-          ...originalRedesSociais.filter(r => r.id !== redeSocial.id),
-          redeSocial
-        ]
-      })
-      
-      toast({
-        description: `Rede social ${redeSocial.nome} removida com sucesso`
-      })
-    } else {
-      updatedRedesSociais.splice(index, 1)
-      setRedesSociais(updatedRedesSociais)
-      
-      // Remove a rede social temporária
-      onPessoaChange({
-        ...pessoa,
-        pessoas_redes_sociais: originalRedesSociais.filter(r => r._tempId !== redeSocial._tempId)
-      })
-    }
-    setEditingRedeSocial(null)
-  }
-
-  const handleRedeSocialChange = (index: number, field: keyof PessoaRedeSocial, value: any) => {
-    const updatedRedesSociais = [...redesSociais]
-    const redeSocial = { ...updatedRedesSociais[index] }
+    const redeSocialRemovida = redesSociais[index]
+    const novasRedesSociais = redesSociais.filter((_, i) => i !== index)
+    setRedesSociais(novasRedesSociais)
     
-    redeSocial[field] = value
-    updatedRedesSociais[index] = redeSocial
-    setRedesSociais(updatedRedesSociais)
-    
-    // Atualiza pessoa com a rede social modificada
-    const redesSociaisAtualizadas = originalRedesSociais.map(r => {
-      if ((r.id && r.id === redeSocial.id) || (r._tempId && r._tempId === redeSocial._tempId)) {
-        return redeSocial
+    const redesSociaisAtualizadas = (pessoa.pessoas_redes_sociais || []).map(r => {
+      if ((r.id && r.id === redeSocialRemovida.id) || 
+          (r._tempId && r._tempId === redeSocialRemovida._tempId)) {
+        return { ...r, _isDeleted: true }
       }
       return r
     })
-
-    if (!redesSociaisAtualizadas.includes(redeSocial)) {
-      redesSociaisAtualizadas.push(redeSocial)
-    }
-
+    
     onPessoaChange({
       ...pessoa,
       pessoas_redes_sociais: redesSociaisAtualizadas
     })
   }
 
-  const handleBlur = (index: number) => {
-    if (editingRedeSocial === index) {
-      const redeSocial = redesSociais[index]
-      const errors = validateRedeSocial(redeSocial)
-      
-      if (errors.length > 0) {
-        toast({
-          variant: "destructive",
-          title: "Erro na rede social",
-          description: errors.join(", ")
-        })
+  const handleRedeSocialChange = (index: number, field: keyof RedeSocial, value: any) => {
+    const redeSocialAtual = redesSociais[index]
+    
+    const redeSocialAtualizada = { 
+      ...redeSocialAtual,
+      [field]: value
+    }
+    
+    const novasRedesSociais = [...redesSociais]
+    novasRedesSociais[index] = redeSocialAtualizada
+    setRedesSociais(novasRedesSociais)
+    
+    const redesSociaisAtualizadas = (pessoa.pessoas_redes_sociais || []).map(r => {
+      if ((r.id && r.id === redeSocialAtual.id) || 
+          (r._tempId && r._tempId === redeSocialAtual._tempId)) {
+        return redeSocialAtualizada
       }
-      setEditingRedeSocial(null)
+      return r
+    })
+    
+    onPessoaChange({
+      ...pessoa,
+      pessoas_redes_sociais: redesSociaisAtualizadas
+    })
+  }
+
+  const handleBlur = (index: number, field: keyof RedeSocial) => {
+    if (editingIndex === index) {
+      // Só valida se estiver saindo do campo link
+      if (field === 'link') {
+        const redeSocial = redesSociais[index]
+        const errors = validateRedeSocial(redeSocial)
+        
+        if (errors.length > 0) {
+          toast({
+            variant: "destructive",
+            title: "Erro na rede social",
+            description: errors.join(", ")
+          })
+          return
+        }
+        setEditingIndex(null)
+      }
     }
   }
 
@@ -194,73 +210,81 @@ export function PessoaRedesSociais({ pessoa, loading, onPessoaChange }: PessoaRe
         </div>
       }
       defaultExpanded={false}
+      className="mb-4"
     >
       <div className="space-y-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[250px]">Nome</TableHead>
-              <TableHead>Link</TableHead>
-              <TableHead className="w-[100px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <div className="rounded-md border">
+          {/* Cabeçalho */}
+          <div className="grid grid-cols-[2fr,3fr,80px] gap-4 p-4 border-b bg-muted/50">
+            <div className="font-medium text-muted-foreground">Nome</div>
+            <div className="font-medium text-muted-foreground">Link</div>
+            <div></div>
+          </div>
+          
+          {/* Linhas de Redes Sociais */}
+          <div className="divide-y">
             {redesSociais.map((redeSocial, index) => {
-              // Garante uma chave única mesmo para itens sem ID
-              const key = redeSocial.id ? `id-${redeSocial.id}` : `temp-${redeSocial._tempId}`
+              const rowKey = redeSocial.id ? `rede-social-${redeSocial.id}` : `temp-${redeSocial._tempId}`
+              const isEditing = editingIndex === index
+              const hasErrors = validateRedeSocial(redeSocial).length > 0
+              
               return (
-                <TableRow key={key}>
-                  <TableCell>
+                <div 
+                  key={rowKey} 
+                  className={`grid grid-cols-[2fr,3fr,80px] gap-4 p-4 items-center hover:bg-muted/50 ${hasErrors ? 'bg-destructive/10' : ''}`}
+                >
+                  <div>
                     <Input
                       value={redeSocial.nome || ''}
                       onChange={(e) => handleRedeSocialChange(index, 'nome', e.target.value)}
-                      onFocus={() => setEditingRedeSocial(index)}
-                      onBlur={() => handleBlur(index)}
-                      disabled={loading}
+                      onFocus={() => setEditingIndex(index)}
+                      onBlur={() => handleBlur(index, 'nome')}
+                      placeholder="Nome da rede social"
+                      disabled={isLoading}
+                      className={!redeSocial.nome ? 'border-destructive' : ''}
                     />
-                  </TableCell>
-                  <TableCell>
+                  </div>
+                  <div>
                     <Input
                       value={redeSocial.link || ''}
                       onChange={(e) => handleRedeSocialChange(index, 'link', e.target.value)}
-                      onFocus={() => setEditingRedeSocial(index)}
-                      onBlur={() => handleBlur(index)}
-                      disabled={loading}
+                      onFocus={() => setEditingIndex(index)}
+                      onBlur={() => handleBlur(index, 'link')}
+                      placeholder="https://..."
+                      disabled={isLoading}
+                      className={!redeSocial.link ? 'border-destructive' : ''}
                     />
-                  </TableCell>
-                  <TableCell className="w-[100px]">
-                    <div className="flex gap-2">
-                      {redeSocial.link && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => window.open(redeSocial.link, '_blank')}
-                          title="Visitar link"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      )}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    {redeSocial.link && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveRedeSocial(index)}
-                        disabled={loading}
+                        onClick={() => window.open(redeSocial.link, '_blank')}
+                        disabled={isLoading}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <ExternalLink className="h-4 w-4" />
                       </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveRedeSocial(index)}
+                      disabled={isLoading}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               )
             })}
-          </TableBody>
-        </Table>
+          </div>
+        </div>
 
         <Button
           variant="outline"
-          size="sm"
           onClick={handleAddRedeSocial}
-          disabled={loading}
+          disabled={isLoading}
           className="w-full"
         >
           <Plus className="mr-2 h-4 w-4" />
