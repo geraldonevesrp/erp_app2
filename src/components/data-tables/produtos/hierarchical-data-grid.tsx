@@ -56,6 +56,27 @@ export function HierarchicalDataGrid({ onAddClick }: HierarchicalDataGridProps) 
     return data.filter(produto => produto.prod_tipos_id !== 3)
   }, [data])
 
+  const fetchProdutos = async () => {
+    setLoading(true)
+    try {
+      const { data: produtos, error } = await supabase
+        .from('v_produtos')
+        .select('*')
+        .order('cod_sequencial', { ascending: true })
+
+      if (error) throw error
+      setData(produtos || [])
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  React.useEffect(() => {
+    fetchProdutos()
+  }, [])
+
   const columns: ColumnDef<ProdutoRow>[] = [
     {
       id: "expander",
@@ -99,46 +120,58 @@ export function HierarchicalDataGrid({ onAddClick }: HierarchicalDataGridProps) 
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           {row.original.cod_sequencial}
-          {row.original.sub_codigo_sequencial > 1 && 
-            <Badge variant="outline">{row.original.sub_codigo_sequencial}</Badge>
-          }
+          {row.original.sub_codigo_sequencial > 1 && (
+            <Badge variant="secondary" className="text-xs">
+              {row.original.sub_codigo_sequencial}
+            </Badge>
+          )}
         </div>
       ),
     },
     {
       accessorKey: "nome",
       header: "Nome",
-    },
-    {
-      accessorKey: "prod_tipo",
-      header: "Tipo",
-      cell: ({ row }) => (
-        <Badge variant={row.original.prod_tipos_id === 2 ? "secondary" : "default"}>
-          {row.original.prod_tipo}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: "prod_categoria",
-      header: "Categoria",
+      cell: ({ row }) => {
+        const isSubItem = row.original.prod_tipos_id === 3
+        return (
+          <div className={`flex items-center gap-2 ${isSubItem ? 'pl-4' : ''}`}>
+            <span>{row.original.nome}</span>
+            {row.original.prod_tipos_id === 2 && (
+              <Badge variant="outline" className="text-xs">Grade</Badge>
+            )}
+          </div>
+        )
+      }
     },
     {
       accessorKey: "prod_marca",
       header: "Marca",
+      cell: ({ row }) => row.original.prod_marca || '-'
+    },
+    {
+      accessorKey: "prod_categoria",
+      header: "Categoria",
+      cell: ({ row }) => row.original.prod_categoria || '-'
+    },
+    {
+      accessorKey: "prod_subcategoria",
+      header: "Subcategoria",
+      cell: ({ row }) => row.original.prod_subcategoria || '-'
     },
     {
       accessorKey: "unid_venda_nome",
       header: "Unid. Venda",
+      cell: ({ row }) => row.original.unid_venda_nome || '-'
     },
     {
       accessorKey: "ativo",
-      header: "Ativo",
+      header: "Status",
       cell: ({ row }) => (
-        <Badge variant={row.original.ativo ? "success" : "destructive"}>
-          {row.original.ativo ? "Sim" : "Não"}
+        <Badge variant={row.original.ativo ? "success" : "secondary"}>
+          {row.original.ativo ? "Ativo" : "Inativo"}
         </Badge>
-      ),
-    },
+      )
+    }
   ]
 
   const table = useReactTable({
@@ -152,60 +185,28 @@ export function HierarchicalDataGrid({ onAddClick }: HierarchicalDataGridProps) 
     onExpandedChange: setExpanded,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
-    getSubRows: (row) => {
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand: row => row.original.prod_tipos_id === 2,
+    getSubRows: row => {
       if (row.prod_tipos_id === 2) {
-        const subItems = data.filter(item => 
+        return data.filter(item => 
           item.prod_tipos_id === 3 && 
           item.grade_de === row.id
         )
-        return subItems.length > 0 ? subItems : undefined
       }
-      return undefined
+      return []
     },
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
   })
-
-  React.useEffect(() => {
-    const loadData = async () => {
-      setLoading(true)
-      try {
-        const { data: produtos, error } = await supabase
-          .from('v_produtos')
-          .select('*')
-          .order('cod_sequencial', { ascending: true })
-          .order('sub_codigo_sequencial', { ascending: true })
-
-        if (error) throw error
-        
-        // Debug dos dados carregados
-        console.log('Produtos carregados:', produtos)
-        if (produtos) {
-          const grades = produtos.filter(p => p.prod_tipos_id === 2)
-          console.log('Produtos tipo Grade:', grades)
-          const itensGrade = produtos.filter(p => p.prod_tipos_id === 3)
-          console.log('Itens de Grade:', itensGrade)
-        }
-
-        setData(produtos || [])
-      } catch (error) {
-        console.error('Erro ao carregar produtos:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    loadData()
-  }, [])
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex flex-1 items-center space-x-2">
-          <div className="relative flex-1 max-w-sm">
+          <div className="relative w-72">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Pesquisar produtos..."
@@ -217,20 +218,21 @@ export function HierarchicalDataGrid({ onAddClick }: HierarchicalDataGridProps) 
               <Button
                 variant="ghost"
                 onClick={() => setGlobalFilter("")}
-                className="absolute right-0 top-0 h-full px-2"
+                className="absolute right-0 top-0 h-full px-2 py-0 hover:bg-transparent"
               >
                 <X className="h-4 w-4" />
               </Button>
             )}
           </div>
           <FilterSheet table={table} />
+        </div>
+        <div className="flex items-center space-x-2">
           <DataTableViewOptions table={table} />
           <DataTableExport table={table} />
+          <Button onClick={onAddClick} className="whitespace-nowrap">
+            <Plus className="mr-2 h-4 w-4" /> Novo Produto
+          </Button>
         </div>
-        <Button onClick={onAddClick}>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Produto
-        </Button>
       </div>
 
       <div className="rounded-md border">
@@ -238,36 +240,53 @@ export function HierarchicalDataGrid({ onAddClick }: HierarchicalDataGridProps) 
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  return (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  )
+                })}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const isSubItem = row.original.prod_tipos_id === 3
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={`
+                      ${isSubItem ? 'bg-muted/50 hover:bg-muted/80' : 'hover:bg-muted/50'}
+                      transition-colors
+                    `}
+                    onClick={(e) => {
+                      if (!e.defaultPrevented) {
+                        const event = new CustomEvent('editProduto', {
+                          detail: { produtoId: row.original.id }
+                        })
+                        window.dispatchEvent(event)
+                      }
+                    }}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell

@@ -60,25 +60,27 @@ function ProdutosPageContent() {
   }
 
   return (
-    <div className="h-full">
-      <HierarchicalDataGrid 
-        onAddClick={() => setIsAddDialogOpen(true)} 
-      />
-      
-      <AddProdutoDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSuccess={handleProdutoAdded}
-      />
-
-      {editingProdutoId && (
-        <ProdutoEdit
-          open={isProdutoEditSheetOpen}
-          onOpenChange={setIsProdutoEditSheetOpen}
-          produtoId={editingProdutoId}
-          onSave={handleProdutoSaved}
+    <div className="container mx-auto py-4 mt-4">
+      <div className="mt-4">
+        <HierarchicalDataGrid 
+          onAddClick={() => setIsAddDialogOpen(true)} 
         />
-      )}
+        
+        <AddProdutoDialog
+          open={isAddDialogOpen}
+          onOpenChange={setIsAddDialogOpen}
+          onSuccess={handleProdutoAdded}
+        />
+        
+        {editingProdutoId && (
+          <ProdutoEdit
+            open={isProdutoEditSheetOpen}
+            onOpenChange={setIsProdutoEditSheetOpen}
+            produtoId={editingProdutoId}
+            onSave={handleProdutoSaved}
+          />
+        )}
+      </div>
     </div>
   )
 }
