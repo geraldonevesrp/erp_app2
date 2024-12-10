@@ -42,9 +42,19 @@ interface Produto {
   grade_de: number
 }
 
+interface ProdutoFilters {
+  tipo: string | null
+  genero: string | null
+  marca: string | null
+  categoria: string | null
+  subcategoria: string | null
+}
+
 interface ProdutosContextType {
   produtos: Produto[]
   loading: boolean
+  filters: ProdutoFilters
+  setFilters: (filters: ProdutoFilters) => void
   loadProdutos: () => Promise<void>
   updateProduto: (id: number) => Promise<void>
 }
@@ -53,35 +63,61 @@ const ProdutosContext = createContext<ProdutosContextType | undefined>(undefined
 
 export function ProdutosProvider({ children }: { children: React.ReactNode }) {
   const [produtos, setProdutos] = useState<Produto[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [filters, setFilters] = useState<ProdutoFilters>({
+    tipo: null,
+    genero: null,
+    marca: null,
+    categoria: null,
+    subcategoria: null
+  })
   const supabase = createClientComponentClient()
   const { perfil } = usePerfil()
   const { toast } = useToast()
 
   const loadProdutos = async () => {
     try {
-      // Se não tiver perfil, não carrega os produtos
+      setLoading(true)
+
       if (!perfil?.id) {
-        console.log('Aguardando perfil...')
-        return
+        throw new Error('Perfil não encontrado')
       }
 
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('produtos')
+      let query = supabase
+        .from('v_produtos')
         .select('*')
         .eq('perfis_id', perfil.id)
-        .order('nome')
+        .neq('prod_tipos_id', 3) // Excluir itens de grade
 
-      if (error) throw error
+      // Aplicar filtros
+      if (filters.tipo) {
+        query = query.eq('prod_tipos_id', filters.tipo)
+      }
+      if (filters.genero) {
+        query = query.eq('prod_generos_id', filters.genero)
+      }
+      if (filters.marca) {
+        query = query.eq('prod_marcas_id', filters.marca)
+      }
+      if (filters.categoria) {
+        query = query.eq('prod_categorias_id', filters.categoria)
+      }
+      if (filters.subcategoria) {
+        query = query.eq('prod_subcategorias_id', filters.subcategoria)
+      }
+
+      const { data, error } = await query
+
+      if (error) {
+        throw error
+      }
 
       setProdutos(data || [])
     } catch (error: any) {
-      console.error('Erro ao carregar produtos:', error.message)
       toast({
-        title: 'Erro ao carregar produtos',
-        description: error.message,
-        variant: 'destructive'
+        variant: "destructive",
+        title: "Erro ao carregar produtos",
+        description: error.message
       })
     } finally {
       setLoading(false)
@@ -121,6 +157,8 @@ export function ProdutosProvider({ children }: { children: React.ReactNode }) {
   const value = {
     produtos,
     loading,
+    filters,
+    setFilters,
     loadProdutos,
     updateProduto
   }
