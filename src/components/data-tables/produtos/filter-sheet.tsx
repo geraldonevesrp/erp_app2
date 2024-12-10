@@ -172,7 +172,7 @@ export function FilterSheet<TData>({
           </SheetHeader>
 
           <ScrollArea className="h-[calc(100vh-200px)] pr-4">
-            <div className="space-y-5 py-4">
+            <div className="space-y-5 py-4 mx-4">
               {/* Tipo de Produto */}
               <div className="space-y-2">
                 <Label>Tipo de Produto</Label>
