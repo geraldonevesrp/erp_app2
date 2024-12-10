@@ -284,9 +284,21 @@ export function HierarchicalDataGrid({ onAddClick }: HierarchicalDataGridProps) 
           <DataTableExport data={data} />
 
           {/* Novo Produto */}
-          <Button onClick={onAddClick} className="whitespace-nowrap">
-            <Plus className="mr-2 h-4 w-4" /> Novo Produto
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={onAddClick}
+                  className="flex items-center justify-center rounded-full h-10 w-10 p-0"
+                >
+                  <Plus className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Novo Produto</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
