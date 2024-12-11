@@ -134,6 +134,11 @@ export function FilterSheet<TData>({
     table.getColumn('prod_subcategoria')?.getFilterValue(),
   ].filter(Boolean).length
 
+  const handleTipoChange = (value: string) => {
+    console.log('Tipo selecionado:', value); // Log do tipo selecionado
+    table.getColumn('prod_tipo')?.setFilterValue(value);
+  }
+
   return (
     <>
       <TooltipProvider>
@@ -178,7 +183,7 @@ export function FilterSheet<TData>({
                 <Label>Tipo de Produto</Label>
                 <Select
                   value={table.getColumn('prod_tipo')?.getFilterValue() || ''}
-                  onValueChange={(value) => table.getColumn('prod_tipo')?.setFilterValue(value)}
+                  onValueChange={handleTipoChange}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um tipo" />

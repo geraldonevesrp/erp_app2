@@ -28,7 +28,7 @@ import { DataTableViewOptions } from "../base/data-table-view-options"
 import { DataTableExport } from "../base/data-table-export"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, X, Plus, ChevronRight, ChevronDown, Filter } from "lucide-react"
+import { Search, X, Plus, ChevronRight, ChevronDown, Filter, Settings2 } from "lucide-react"
 import { FilterSheet } from "./filter-sheet"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
@@ -78,139 +78,172 @@ export function HierarchicalDataGrid({ onAddClick }: HierarchicalDataGridProps) 
     fetchProdutos()
   }, [])
 
-  const columns = React.useMemo<ColumnDef<ProdutoRow>[]>(
-    () => [
-      {
-        id: "prod_tipo",
-        accessorKey: "prod_tipo",
-        enableHiding: false,
-      },
-      {
-        id: "prod_genero",
-        accessorKey: "prod_genero",
-        enableHiding: false,
-      },
-      {
-        id: "prod_marca",
-        accessorKey: "prod_marca",
-        enableHiding: false,
-      },
-      {
-        id: "prod_categoria",
-        accessorKey: "prod_categoria",
-        enableHiding: false,
-      },
-      {
-        id: "prod_subcategoria",
-        accessorKey: "prod_subcategoria",
-        enableHiding: false,
-      },
-      {
-        accessorKey: "id",
-        header: "ID",
-        size: 60,
-      },
-      {
-        id: "expander",
-        header: () => null,
-        cell: ({ row }) => {
-          // Verifica se o produto tem itens de grade
-          const hasSubItems = data.some(item => 
-            item.prod_tipos_id === 3 && 
-            item.grade_de === row.original.id
-          )
+  const columns = React.useMemo<ColumnDef<ProdutoRow>[]>(() => [
+    {
+      id: "prod_tipo",
+      accessorKey: "prod_tipo",
+      enableHiding: false,
+    },
+    {
+      id: "prod_genero",
+      accessorKey: "prod_genero",
+      enableHiding: false,
+    },
+    {
+      id: "prod_marca",
+      accessorKey: "prod_marca",
+      enableHiding: false,
+    },
+    {
+      id: "prod_categoria",
+      accessorKey: "prod_categoria",
+      enableHiding: false,
+    },
+    {
+      id: "prod_subcategoria",
+      accessorKey: "prod_subcategoria",
+      enableHiding: false,
+    },
+    {
+      accessorKey: "id",
+      header: "ID",
+      size: 60,
+    },
+    {
+      id: "expander",
+      header: () => null,
+      cell: ({ row }) => {
+        // Verifica se o produto tem itens de grade
+        const hasSubItems = data.some(item => 
+          item.prod_tipos_id === 3 && 
+          item.grade_de === row.original.id
+        )
 
-          if (row.original.prod_tipos_id === 2 && hasSubItems) {
-            return (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      onClick={() => row.toggleExpanded()}
-                      className="p-0 h-6 w-6"
-                    >
-                      {row.getIsExpanded() ? 
-                        <ChevronDown className="h-4 w-4" /> : 
-                        <ChevronRight className="h-4 w-4" />
-                      }
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{row.getIsExpanded() ? "Fechar" : "Abrir"} itens da grade</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )
-          }
-          return null
-        },
-      },
-      {
-        accessorKey: "cod_sequencial",
-        header: "Código",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            {row.original.cod_sequencial}
-            {row.original.sub_codigo_sequencial > 1 && (
-              <Badge variant="secondary" className="text-xs">
-                {row.original.sub_codigo_sequencial}
-              </Badge>
-            )}
-          </div>
-        ),
-      },
-      {
-        accessorKey: "nome",
-        header: "Nome",
-        cell: ({ row }) => {
-          const isSubItem = row.original.prod_tipos_id === 3
-
+        if (row.original.prod_tipos_id === 2 && hasSubItems) {
           return (
-            <div className={`flex items-center gap-2 ${isSubItem ? 'pl-4' : ''}`}>
-              <span>{row.original.nome}</span>
-              {row.original.prod_tipos_id === 2 && (
-                <Badge variant="outline" className="text-xs">Grade</Badge>
-              )}
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    onClick={() => row.toggleExpanded()}
+                    className="p-0 h-6 w-6"
+                  >
+                    {row.getIsExpanded() ? 
+                      <ChevronDown className="h-4 w-4" /> : 
+                      <ChevronRight className="h-4 w-4" />
+                    }
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{row.getIsExpanded() ? "Fechar" : "Abrir"} itens da grade</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )
         }
+        return null
       },
-      {
-        id: "marca_display",
-        accessorKey: "prod_marca",
-        header: "Marca",
-        cell: ({ row }) => row.original.prod_marca || '-'
-      },
-      {
-        id: "categoria_display",
-        accessorKey: "prod_categoria",
-        header: "Categoria",
-        cell: ({ row }) => row.original.prod_categoria || '-'
-      },
-      {
-        id: "subcategoria_display",
-        accessorKey: "prod_subcategoria",
-        header: "Subcategoria",
-        cell: ({ row }) => row.original.prod_subcategoria || '-'
-      },
-      {
-        accessorKey: "unid_venda_nome",
-        header: "Unid. Venda",
-        cell: ({ row }) => row.original.unid_venda_nome || '-'
-      },
-      {
-        accessorKey: "ativo",
-        header: "Status",
-        cell: ({ row }) => (
-          <Badge variant={row.original.ativo ? "success" : "secondary"}>
-            {row.original.ativo ? "Ativo" : "Inativo"}
-          </Badge>
+    },
+    {
+      accessorKey: "cod_sequencial",
+      header: "Código",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          {row.original.cod_sequencial}
+          {row.original.sub_codigo_sequencial > 1 && (
+            <Badge variant="secondary" className="text-xs">
+              {row.original.sub_codigo_sequencial}
+            </Badge>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "nome",
+      header: "Nome",
+      cell: ({ row }) => {
+        const isSubItem = row.original.prod_tipos_id === 3
+
+        return (
+          <div className={`flex items-center gap-2 ${isSubItem ? 'pl-4' : ''}`}>
+            <span>{row.original.nome}</span>
+            {row.original.prod_tipos_id === 2 && (
+              <Badge variant="outline" className="text-xs">Grade</Badge>
+            )}
+          </div>
         )
       }
-    ],
-    []
-  )
+    },
+    {
+      id: "marca_display",
+      accessorKey: "prod_marca",
+      header: "Marca",
+      cell: ({ row }) => row.original.prod_marca || '-'
+    },
+    {
+      id: "categoria_display",
+      accessorKey: "prod_categoria",
+      header: "Categoria",
+      cell: ({ row }) => row.original.prod_categoria || '-'
+    },
+    {
+      id: "subcategoria_display",
+      accessorKey: "prod_subcategoria",
+      header: "Subcategoria",
+      cell: ({ row }) => row.original.prod_subcategoria || '-'
+    },
+    {
+      accessorKey: "unid_venda_nome",
+      header: "Unid. Venda",
+      cell: ({ row }) => row.original.unid_venda_nome || '-'
+    },
+    {
+      accessorKey: "ativo",
+      header: "Status",
+      cell: ({ row }) => (
+        <Badge variant={row.original.ativo ? "success" : "secondary"}>
+          {row.original.ativo ? "Ativo" : "Inativo"}
+        </Badge>
+      )
+    },
+    {
+      id: "actions",
+      header: "Ações",
+      cell: ({ row }) => {
+        const produto = row.original
+
+        return (
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const event = new CustomEvent('editProduto', {
+                        detail: { produtoId: produto.id }
+                      })
+                      window.dispatchEvent(event)
+                    }}
+                  >
+                    <Settings2 className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Editar Produto</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        )
+      },
+      enableHiding: false,
+    },
+  ],
+  []
+)
 
   const table = useReactTable({
     data: mainProducts,
