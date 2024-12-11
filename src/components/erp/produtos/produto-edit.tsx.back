@@ -93,33 +93,8 @@ export function ProdutoEdit({ produtoId, isOpen, onClose, onSave }: ProdutoEditP
         throw new Error(`Erro ao carregar dados: ${viewError.message}`)
       }
 
-      // Carrega as imagens do produto
-      const { data: imagensData, error: imagensError } = await supabase
-        .from("prod_imagens")
-        .select(`
-          id,
-          url,
-          ordem,
-          produtos_id,
-          nome,
-          size
-        `)
-        .eq("produtos_id", produtoId)
-        .order('ordem', { ascending: true });
-
-      if (imagensError) {
-        console.error("Erro ao carregar imagens:", imagensError);
-        throw new Error(`Erro ao carregar imagens: ${imagensError.message}`);
-      }
-
-      // Combina os dados do produto com as imagens
-      const produtoCompleto = {
-        ...viewData,
-        imagens: imagensData || []
-      };
-
-      setProduto(produtoCompleto)
-      setOriginalProduto(produtoCompleto)
+      setProduto(viewData)
+      setOriginalProduto(viewData)
     } catch (error) {
       console.error("Erro ao carregar dados:", error)
       setError(error.message)
@@ -364,17 +339,6 @@ export function ProdutoEdit({ produtoId, isOpen, onClose, onSave }: ProdutoEditP
       )
     },
     {
-      id: 'precos',
-      title: "Preços",
-      icon: <DollarSign className="h-4 w-4" />,
-      content: (
-        <ProdutoEditPrices
-          produto={produto}
-          setProduto={setProduto}
-        />
-      )
-    },
-    {
       id: 'imagens',
       title: "Imagens",
       icon: <Image className="h-4 w-4" />,
@@ -383,6 +347,17 @@ export function ProdutoEdit({ produtoId, isOpen, onClose, onSave }: ProdutoEditP
           produto={produto}
           setProduto={setProduto}
           supabase={supabase}
+        />
+      )
+    },
+    {
+      id: 'precos',
+      title: "Preços",
+      icon: <DollarSign className="h-4 w-4" />,
+      content: (
+        <ProdutoEditPrices
+          produto={produto}
+          setProduto={setProduto}
         />
       )
     }
