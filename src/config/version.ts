@@ -1,7 +1,7 @@
 export const appVersion = {
     major: 1,    // Mudanças grandes/breaking changes
     minor: 1,    // Novas funcionalidades
-    patch: 60,    // Correções de bugs e pequenas melhorias
+    patch: 61,    // Correções de bugs e pequenas melhorias
     build: 1,    // Número do build (incrementado automaticamente)
 };
 

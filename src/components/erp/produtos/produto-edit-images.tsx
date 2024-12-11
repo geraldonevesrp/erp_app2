@@ -214,7 +214,7 @@ export function ProdutoEditImages({
         throw imagensError;
       }
 
-      setProduto(prev => ({ ...prev, imagens: imagensData }))
+      produto.imagens = imagensData
 
       toast({
         title: "Sucesso",
@@ -230,14 +230,17 @@ export function ProdutoEditImages({
       })
     } finally {
       setUploading(false)
+      // Resetar o valor do input para permitir o upload do mesmo arquivo novamente
+      event.target.value = ''
     }
   }
 
   const handleRemoveImage = async (imagem: any) => {
     try {
-      const filePath = imagem.url.split('/files/')[1]
+      const filePath = `${perfil.id}/produtos_imagens/${produto.id}/${imagem.url.split('/').pop()}`
+      
       const { error: storageError } = await supabase.storage
-        .from('files')
+        .from('Perfis')
         .remove([filePath])
 
       if (storageError) {
@@ -253,10 +256,8 @@ export function ProdutoEditImages({
         throw dbError
       }
 
-      setProduto(prev => ({
-        ...prev,
-        imagens: prev.imagens.filter((img: any) => img.id !== imagem.id)
-      }))
+      const updatedImagens = produto.imagens.filter((img: any) => img.id !== imagem.id)
+      produto.imagens = updatedImagens
 
       toast({
         title: "Sucesso",
@@ -332,9 +333,19 @@ export function ProdutoEditImages({
             size="sm"
             disabled={uploading}
             onClick={() => document.getElementById('image-upload')?.click()}
+            className="relative"
           >
-            {uploading ? 'Enviando...' : 'Upload'}
-            <Upload className="ml-2 h-4 w-4" />
+            {uploading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full mr-2"></div>
+                Enviando...
+              </>
+            ) : (
+              <>
+                Adicionar Imagem
+                <Upload className="ml-2 h-4 w-4" />
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -361,12 +372,12 @@ export function ProdutoEditImages({
         </div>
       </DndContext>
 
-      {produto?.imagens?.length === 0 && (
+      {(!produto?.imagens || produto.imagens.length === 0) && (
         <div className="text-center py-8 border-2 border-dashed rounded-lg">
           <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground/50" />
           <h3 className="mt-2 text-sm font-semibold text-muted-foreground">Nenhuma imagem</h3>
           <p className="mt-1 text-sm text-muted-foreground/70">
-            Arraste uma imagem ou clique em upload para adicionar
+            Clique em "Adicionar Imagem" para começar
           </p>
         </div>
       )}
