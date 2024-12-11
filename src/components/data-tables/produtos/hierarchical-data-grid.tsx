@@ -222,6 +222,7 @@ export function HierarchicalDataGrid({ onAddClick }: HierarchicalDataGridProps) 
                     variant="ghost"
                     size="icon"
                     onClick={() => {
+                      console.log('Botão de edição clicado para o produto ID:', produto.id);
                       const event = new CustomEvent('editProduto', {
                         detail: { produtoId: produto.id }
                       })

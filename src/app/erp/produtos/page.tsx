@@ -44,6 +44,7 @@ function ProdutosPageContent() {
   useEffect(() => {
     // Listener para o evento de edição
     const handleEditProduto = (event: CustomEvent<{ produtoId: number }>) => {
+      console.log('Editando produto com ID:', event.detail.produtoId);
       setEditingProdutoId(event.detail.produtoId)
       setIsProdutoEditSheetOpen(true)
     }
@@ -96,8 +97,8 @@ function ProdutosPageContent() {
 
       {editingProdutoId && (
         <ProdutoEdit
-          open={isProdutoEditSheetOpen}
-          onOpenChange={setIsProdutoEditSheetOpen}
+          isOpen={isProdutoEditSheetOpen}
+          onClose={() => setIsProdutoEditSheetOpen(false)}
           produtoId={editingProdutoId}
           onSave={handleProdutoSaved}
         />

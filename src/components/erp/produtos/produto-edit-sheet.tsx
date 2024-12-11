@@ -27,11 +27,13 @@ export function ProdutoEditSheet({
   produto,
   ...props 
 }: ProdutoEditSheetProps) {
+  console.log('Renderizando ProdutoEditSheet, open:', open);
   return (
+    console.log('ProdutoEditSheet está sendo renderizado, open:', open),
     <div
       data-state={open ? "open" : "closed"}
       className={cn(
-        "fixed top-16 bottom-0 right-0 w-[calc(100%-16rem)] bg-slate-50/95 z-50 flex flex-col border-l",
+        "fixed top-16 bottom-0 right-0 w-[calc(100%-16rem)] bg-slate-50/95 z-50 flex flex-col border-l overflow-hidden",
         "transition-all duration-300 ease-in-out transform will-change-transform",
         "produto-edit-sheet",
         open ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none",
@@ -92,7 +94,9 @@ export function ProdutoEditSheet({
           </Button>
         </div>
       </div>
-      {children}
+      <div className="flex-1 overflow-y-auto">
+        {children}
+      </div>
     </div>
   )
 }
