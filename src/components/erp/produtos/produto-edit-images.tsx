@@ -72,7 +72,7 @@ function SortableItem({ id, imagem, onImageDelete }: SortableItemProps) {
         style={style}
         {...attributes}
         {...listeners}
-        className="relative group bg-white rounded-lg border shadow-sm overflow-hidden aspect-square max-w-[195px]"
+        className="relative group bg-white rounded-lg border shadow-sm overflow-hidden aspect-square max-w-[195px] p-2"
       >
         {/* Container da imagem */}
         <div className="relative h-[85%]">
