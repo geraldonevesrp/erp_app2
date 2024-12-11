@@ -28,7 +28,7 @@ import { DataTableViewOptions } from "../base/data-table-view-options"
 import { DataTableExport } from "../base/data-table-export"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, X, Plus, ChevronRight, ChevronDown, Filter, Settings2 } from "lucide-react"
+import { Search, X, Plus, ChevronRight, ChevronDown, Filter, Settings2, Pencil } from "lucide-react"
 import { FilterSheet } from "./filter-sheet"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
@@ -228,7 +228,7 @@ export function HierarchicalDataGrid({ onAddClick }: HierarchicalDataGridProps) 
                       window.dispatchEvent(event)
                     }}
                   >
-                    <Settings2 className="h-4 w-4" />
+                    <Pencil className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
