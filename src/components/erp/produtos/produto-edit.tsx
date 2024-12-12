@@ -6,6 +6,7 @@ import { ProdutoEditStock } from "./produto-edit-stock"
 import { ProdutoEditVariations } from "./produto-edit-variations"
 import { ProdutoEditImages } from "./produto-edit-images"
 import { ProdutoEditPrices } from "./produto-edit-prices"
+import { ProdutoEditTabPrecos } from "./produto-edit-tab_precos"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -160,12 +161,12 @@ export function ProdutoEdit({ produtoId, isOpen, onClose, onSave }: ProdutoEditP
         { data: unidadesData },
         { data: produtosData }
       ] = await Promise.all([
-        supabase.from("tipos_produto").select(),
-        supabase.from("generos_produto").select(),
-        supabase.from("categorias").select(),
-        supabase.from("subcategorias").select(),
-        supabase.from("marcas").select(),
-        supabase.from("unidades_medida").select(),
+        supabase.from("prod_tipos").select(),
+        supabase.from("prod_genero").select(),
+        supabase.from("prod_categorias").select(),
+        supabase.from("prod_subcategorias").select(),
+        supabase.from("prod_marcas").select(),
+        supabase.from("prod_unid_medidas").select(),
         supabase.from("produtos").select("id, nome")
       ])
 
@@ -365,10 +366,10 @@ export function ProdutoEdit({ produtoId, isOpen, onClose, onSave }: ProdutoEditP
     },
     {
       id: 'precos',
-      title: "Preços",
+      title: "Custos e Precificações",
       icon: <DollarSign className="h-4 w-4" />,
       content: (
-        <ProdutoEditPrices
+        <ProdutoEditTabPrecos
           produto={produto}
           setProduto={setProduto}
         />
