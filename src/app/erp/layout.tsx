@@ -50,6 +50,10 @@ const menuItems = [
       {
         name: 'Movimentações',
         href: '/erp/estoque'
+      },
+      {
+        name: 'Tabelas de Preços',
+        href: '/erp/tabelas-precos'
       }
     ]
   },

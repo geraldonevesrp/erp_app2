@@ -1,311 +1,221 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
+import { useSupabase } from "@/contexts/supabase"
 import { toast } from "sonner"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { DataGrid } from "@/components/ui/data-grid"
-import { TabelaPrecosSheet } from "./tabela-precos-sheet"
 import { NumericFormat } from "react-number-format"
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+} from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
-interface TabelaPreco {
-  id: number
-  nome: string
-  padrao: boolean
-}
-
-interface Item {
-  id: number
-  tabelas_precos_id: number
-  produtos_id: number
-  produto: {
-    id: number
-    nome: string
-    codigo: string
-  }
-  custo: number
-  custo_total: number
-  margem_lucro: number
-  margem_lucro_p: number
-  preco: number
-  frete: number
-  frete_p: number
-  ipi: number
-  ipi_p: number
-  icms_st: number
-  icms_st_p: number
-  icms: number
-  icms_p: number
-  fcp_st: number
-  fcp_st_p: number
-  seguro: number
-  seguro_p: number
-  despesas: number
-  despesas_p: number
-}
-
-interface TabelaPrecosEditarProps {
-  tabelaId: number | null
+interface TabelaPrecosEditar {
   open: boolean
-  onOpenChange: (open: boolean) => void
-  onSave: () => void
+  setOpen: (open: boolean) => void
+  tabelaId?: number
 }
 
-export function TabelaPrecosEditar({
-  tabelaId,
-  open,
-  onOpenChange,
-  onSave,
-}: TabelaPrecosEditarProps) {
-  const supabase = createClientComponentClient()
+export function TabelaPrecosEditar({ open, setOpen, tabelaId }: TabelaPrecosEditar) {
+  const { supabase } = useSupabase()
   const [loading, setLoading] = useState(false)
-  const [tabela, setTabela] = useState<TabelaPreco | null>(null)
-  const [itens, setItens] = useState<Item[]>([])
+  const [itens, setItens] = useState<any[]>([])
   const [page, setPage] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
-  const [hasChanges, setHasChanges] = useState(false)
-  const itemsPerPage = 10
-
-  const loadTabela = useCallback(async () => {
-    if (!tabelaId) return
-
-    try {
-      const { data, error } = await supabase
-        .from("tabelas_precos")
-        .select("*")
-        .eq("id", tabelaId)
-        .single()
-
-      if (error) {
-        throw new Error("Erro ao carregar tabela: " + error.message)
-      }
-
-      setTabela(data)
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message)
-      } else {
-        toast.error("Erro ao carregar tabela")
-      }
-    }
-  }, [tabelaId, supabase])
+  const itemsPerPage = 20
 
   const loadItens = useCallback(async () => {
     if (!tabelaId) return
+    
     setLoading(true)
-
     try {
-      // Primeiro, pegar o total de itens para paginação
-      const { count, error: countError } = await supabase
+      const { count } = await supabase
         .from("tabelas_precos_itens")
         .select("*", { count: "exact", head: true })
         .eq("tabelas_precos_id", tabelaId)
 
-      if (countError) {
-        throw new Error("Erro ao contar itens: " + countError.message)
-      }
-      
       setTotalItems(count || 0)
 
-      // Depois, pegar os itens da página atual
       const { data, error } = await supabase
         .from("tabelas_precos_itens")
-        .select("*, produto:produtos(id, nome, codigo)")
+        .select(`
+          id,
+          tabelas_precos_id,
+          custo,
+          margem_lucro,
+          margem_lucro_p,
+          preco,
+          frete,
+          frete_p,
+          ipi,
+          ipi_p,
+          icms_st,
+          icms_st_p,
+          tabela:tabelas_precos(nome)
+        `)
         .eq("tabelas_precos_id", tabelaId)
         .range((page - 1) * itemsPerPage, page * itemsPerPage - 1)
-        .order("produto(nome)")
+        .order('id', { ascending: true })
 
-      if (error) {
-        throw new Error("Erro ao carregar itens: " + error.message)
-      }
-
+      if (error) throw error
       setItens(data || [])
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message)
-      } else {
-        toast.error("Erro ao carregar itens")
-      }
+      console.error('Erro ao carregar itens:', error)
+      toast.error("Erro ao carregar itens")
     } finally {
       setLoading(false)
     }
-  }, [tabelaId, page, supabase])
+  }, [tabelaId, page, itemsPerPage, supabase])
 
-  useEffect(() => {
-    if (open) {
-      loadTabela()
-      loadItens()
-    }
-  }, [open, loadTabela, loadItens])
-
-  const handleSave = async () => {
-    if (!tabela) return
-
-    try {
-      const { error } = await supabase
-        .from("tabelas_precos")
-        .update({
-          nome: tabela.nome,
-          padrao: tabela.padrao,
-        })
-        .eq("id", tabela.id)
-
-      if (error) {
-        throw new Error("Erro ao salvar tabela: " + error.message)
-      }
-
-      toast.success("Tabela salva com sucesso")
-      setHasChanges(false)
-      onSave()
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message)
-      } else {
-        toast.error("Erro ao salvar tabela")
-      }
-    }
-  }
-
-  const handleUpdateItem = async (id: number, updates: Partial<Item>) => {
+  const handleUpdateItem = useCallback(async (id: number, field: string, value: number) => {
     try {
       const { error } = await supabase
         .from("tabelas_precos_itens")
-        .update(updates)
+        .update({ [field]: value })
         .eq("id", id)
 
-      if (error) {
-        throw new Error("Erro ao atualizar item: " + error.message)
-      }
+      if (error) throw error
 
-      toast.success("Item atualizado com sucesso")
-      loadItens()
+      setItens(prevItens =>
+        prevItens.map(item =>
+          item.id === id ? { ...item, [field]: value } : item
+        )
+      )
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message)
-      } else {
-        toast.error("Erro ao atualizar item")
-      }
+      console.error('Erro ao atualizar:', error)
+      toast.error("Erro ao atualizar item")
     }
-  }
+  }, [supabase])
 
-  const columns = [
-    {
-      header: "Código",
-      accessorKey: "produto.codigo",
-      size: 120,
-    },
-    {
-      header: "Produto",
-      accessorKey: "produto.nome",
-      size: 300,
-    },
-    {
-      header: "Custo",
-      accessorKey: "custo",
-      size: 120,
-      cell: ({ row }: { row: any }) => (
-        <NumericFormat
-          value={row.original.custo}
-          displayType="input"
-          thousandSeparator="."
-          decimalSeparator=","
-          decimalScale={2}
-          fixedDecimalScale
-          prefix="R$ "
-          onValueChange={(values) => {
-            handleUpdateItem(row.original.id, {
-              custo: values.floatValue || 0,
-            })
-          }}
-        />
-      ),
-    },
-    {
-      header: "Margem (%)",
-      accessorKey: "margem_lucro_p",
-      size: 120,
-      cell: ({ row }: { row: any }) => (
-        <NumericFormat
-          value={row.original.margem_lucro_p}
-          displayType="input"
-          thousandSeparator="."
-          decimalSeparator=","
-          decimalScale={2}
-          fixedDecimalScale
-          suffix=" %"
-          onValueChange={(values) => {
-            handleUpdateItem(row.original.id, {
-              margem_lucro_p: values.floatValue || 0,
-            })
-          }}
-        />
-      ),
-    },
-    {
-      header: "Preço",
-      accessorKey: "preco",
-      size: 120,
-      cell: ({ row }: { row: any }) => (
-        <NumericFormat
-          value={row.original.preco}
-          displayType="input"
-          thousandSeparator="."
-          decimalSeparator=","
-          decimalScale={2}
-          fixedDecimalScale
-          prefix="R$ "
-          readOnly
-        />
-      ),
-    },
-  ]
+  useEffect(() => {
+    if (open && tabelaId) {
+      loadItens()
+    }
+  }, [open, tabelaId, loadItens])
+
+  const renderNumericCell = (value: number, id: number, field: string, isPercentage = false) => (
+    <NumericFormat
+      value={value}
+      onValueChange={({ floatValue }) => handleUpdateItem(id, field, floatValue || 0)}
+      displayType="input"
+      thousandSeparator="."
+      decimalSeparator=","
+      decimalScale={2}
+      fixedDecimalScale
+      prefix={isPercentage ? undefined : "R$ "}
+      suffix={isPercentage ? " %" : undefined}
+      className="w-full text-right bg-transparent border-none focus:ring-1 focus:ring-primary"
+    />
+  )
 
   return (
-    <TabelaPrecosSheet
-      open={open}
-      onOpenChange={onOpenChange}
-      title={tabela?.nome || ""}
-      hasChanges={hasChanges}
-      onSave={handleSave}
-    >
-      <div className="space-y-4 p-4">
-        <div className="flex items-center gap-4">
-          <Input
-            placeholder="Nome da tabela"
-            value={tabela?.nome || ""}
-            onChange={(e) => {
-              setTabela((prev) =>
-                prev ? { ...prev, nome: e.target.value } : null
-              )
-              setHasChanges(true)
-            }}
-          />
-          <Button
-            variant="outline"
-            onClick={() => {
-              setTabela((prev) =>
-                prev ? { ...prev, padrao: !prev.padrao } : null
-              )
-              setHasChanges(true)
-            }}
-          >
-            {tabela?.padrao ? "Tabela Padrão" : "Definir como Padrão"}
-          </Button>
-        </div>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent 
+        side="right" 
+        className="w-full p-0 sm:max-w-none"
+        style={{
+          width: '100%',
+          maxWidth: 'calc(100vw - 16rem)'
+        }}
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-4 border-b">
+            <SheetTitle className="text-lg font-semibold">Editar Tabela</SheetTitle>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancelar
+              </Button>
+              <Button>
+                Salvar
+              </Button>
+            </div>
+          </div>
 
-        <DataGrid
-          columns={columns}
-          data={itens}
-          loading={loading}
-          pagination={{
-            page,
-            pageSize: itemsPerPage,
-            totalItems,
-            onPageChange: setPage,
-          }}
-        />
-      </div>
-    </TabelaPrecosSheet>
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[180px]">Nome Tabela</TableHead>
+                    <TableHead className="text-right w-[100px]">Custo</TableHead>
+                    <TableHead className="text-right w-[100px]">Margem Lucro</TableHead>
+                    <TableHead className="text-right w-[100px]">Margem Lucro %</TableHead>
+                    <TableHead className="text-right w-[80px]">Frete</TableHead>
+                    <TableHead className="text-right w-[80px]">Frete %</TableHead>
+                    <TableHead className="text-right w-[80px]">IPI</TableHead>
+                    <TableHead className="text-right w-[80px]">IPI %</TableHead>
+                    <TableHead className="text-right w-[80px]">ICMS ST</TableHead>
+                    <TableHead className="text-right w-[80px]">ICMS ST %</TableHead>
+                    <TableHead className="text-right w-[100px]">Preço</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {itens.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.tabela?.nome}</TableCell>
+                      <TableCell>{renderNumericCell(item.custo, item.id, 'custo')}</TableCell>
+                      <TableCell>{renderNumericCell(item.margem_lucro, item.id, 'margem_lucro')}</TableCell>
+                      <TableCell>{renderNumericCell(item.margem_lucro_p, item.id, 'margem_lucro_p', true)}</TableCell>
+                      <TableCell>{renderNumericCell(item.frete, item.id, 'frete')}</TableCell>
+                      <TableCell>{renderNumericCell(item.frete_p, item.id, 'frete_p', true)}</TableCell>
+                      <TableCell>{renderNumericCell(item.ipi, item.id, 'ipi')}</TableCell>
+                      <TableCell>{renderNumericCell(item.ipi_p, item.id, 'ipi_p', true)}</TableCell>
+                      <TableCell>{renderNumericCell(item.icms_st, item.id, 'icms_st')}</TableCell>
+                      <TableCell>{renderNumericCell(item.icms_st_p, item.id, 'icms_st_p', true)}</TableCell>
+                      <TableCell className="text-right">
+                        <NumericFormat
+                          value={item.preco}
+                          displayType="text"
+                          thousandSeparator="."
+                          decimalSeparator=","
+                          decimalScale={2}
+                          fixedDecimalScale
+                          prefix="R$ "
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="border-t p-2 bg-white">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">
+                  Mostrando {((page - 1) * itemsPerPage) + 1} até {Math.min(page * itemsPerPage, totalItems)} de {totalItems} itens
+                </span>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={page * itemsPerPage >= totalItems}
+                  >
+                    Próxima
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }
