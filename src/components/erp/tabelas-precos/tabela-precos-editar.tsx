@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useMemo } from "react"
 import { useSupabase } from "@/contexts/supabase"
 import { toast } from "sonner"
 import { NumericFormat } from "react-number-format"
@@ -19,6 +19,7 @@ import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
+import { Search } from "lucide-react"
 
 interface TabelaPrecosEditar {
   open: boolean
@@ -114,7 +115,27 @@ export function TabelaPrecosEditar({
   const [tabelaNome, setTabelaNome] = useState("")
   const [nomeOriginal, setNomeOriginal] = useState("")
   const [salvandoNome, setSalvandoNome] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("");
 
+  // Filtra os itens baseado na busca
+  const filteredItems = useMemo(() => {
+    if (!searchQuery.trim()) return itens;
+    
+    const query = searchQuery.toLowerCase().trim();
+    return itens.filter((item) => {
+      const produto = item.produto;
+      if (!produto) return false;
+      
+      return (
+        String(produto.nome || '').toLowerCase().includes(query) ||
+        String(produto.cod_sequencial || '').toLowerCase().includes(query) ||
+        String(produto.sub_codigo_sequencial || '').toLowerCase().includes(query) ||
+        String(produto.cod_barras || '').toLowerCase().includes(query)
+      );
+    });
+  }, [itens, searchQuery]);
+
+  // Função para atualizar o nome da tabela
   const handleSaveNome = async () => {
     if (tabelaNome === nomeOriginal) {
       return
@@ -331,88 +352,62 @@ export function TabelaPrecosEditar({
         </div>
       </div>
       <div className="flex-1 overflow-auto p-6">
+        <div className="mb-4 relative">
+          <Input
+            type="text"
+            placeholder="Buscar por nome, código ou código de barras..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+          <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+        </div>
+        
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="min-w-[300px]">Produto</TableHead>
-              <TableHead className="text-right w-[100px] group">
-                Custo
-                <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
-              </TableHead>
-              <TableHead className="text-right w-[100px] group">
-                Margem Lucro
-                <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
-              </TableHead>
-              <TableHead className="text-right w-[100px] group">
-                Margem Lucro %
-                <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
-              </TableHead>
-              <TableHead className="text-right w-[80px] group">
-                Frete
-                <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
-              </TableHead>
-              <TableHead className="text-right w-[80px] group">
-                Frete %
-                <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
-              </TableHead>
-              <TableHead className="text-right w-[80px] group">
-                IPI
-                <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
-              </TableHead>
-              <TableHead className="text-right w-[80px] group">
-                IPI %
-                <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
-              </TableHead>
-              <TableHead className="text-right w-[80px] group">
-                ICMS ST
-                <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
-              </TableHead>
-              <TableHead className="text-right w-[80px] group">
-                ICMS ST %
-                <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
-              </TableHead>
-              <TableHead className="text-right w-[100px]">Preço</TableHead>
+              <TableHead className="text-right">Custo</TableHead>
+              <TableHead className="text-right">Margem</TableHead>
+              <TableHead className="text-right">Preço</TableHead>
+              <TableHead className="text-right">Frete</TableHead>
+              <TableHead className="text-right">IPI</TableHead>
+              <TableHead className="text-right">ICMS ST</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {itens.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium">{item.produto?.nome}</span>
-                    <div className="text-sm text-muted-foreground">
-                      <div>Cód: {item.produto?.cod_sequencial}</div>
-                      {item.produto?.sub_codigo_sequencial && (
-                        <div>Sub-cód: {item.produto?.sub_codigo_sequencial}</div>
-                      )}
-                      {item.produto?.cod_barras && (
-                        <div>Cód. Barras: {item.produto?.cod_barras}</div>
-                      )}
-                    </div>
-                  </div>
-                </TableCell>
-                <TableCell>{renderNumericCell(item.custo, item.id, 'custo')}</TableCell>
-                <TableCell>{renderNumericCell(item.margem_lucro, item.id, 'margem_lucro')}</TableCell>
-                <TableCell>{renderNumericCell(item.margem_lucro_p, item.id, 'margem_lucro_p', true)}</TableCell>
-                <TableCell>{renderNumericCell(item.frete, item.id, 'frete')}</TableCell>
-                <TableCell>{renderNumericCell(item.frete_p, item.id, 'frete_p', true)}</TableCell>
-                <TableCell>{renderNumericCell(item.ipi, item.id, 'ipi')}</TableCell>
-                <TableCell>{renderNumericCell(item.ipi_p, item.id, 'ipi_p', true)}</TableCell>
-                <TableCell>{renderNumericCell(item.icms_st, item.id, 'icms_st')}</TableCell>
-                <TableCell>{renderNumericCell(item.icms_st_p, item.id, 'icms_st_p', true)}</TableCell>
-                <TableCell className="text-right">
-                  <NumericFormat
-                    value={item.preco}
-                    displayType="text"
-                    thousandSeparator="."
-                    decimalSeparator=","
-                    decimalScale={2}
-                    fixedDecimalScale
-                    prefix="R$ "
-                  />
+            {filteredItems.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  Nenhum produto encontrado para a busca realizada
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredItems.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-medium">{item.produto?.nome}</span>
+                      <div className="text-sm text-muted-foreground">
+                        <div>Cód: {item.produto?.cod_sequencial}</div>
+                        {item.produto?.sub_codigo_sequencial && (
+                          <div>Sub-cód: {item.produto?.sub_codigo_sequencial}</div>
+                        )}
+                        {item.produto?.cod_barras && (
+                          <div>Cód. Barras: {item.produto?.cod_barras}</div>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{renderNumericCell(item.custo, item.id, 'custo')}</TableCell>
+                  <TableCell>{renderNumericCell(item.margem_lucro, item.id, 'margem_lucro')}</TableCell>
+                  <TableCell>{renderNumericCell(item.margem_lucro_p, item.id, 'margem_lucro_p', true)}</TableCell>
+                  <TableCell>{renderNumericCell(item.frete, item.id, 'frete')}</TableCell>
+                  <TableCell>{renderNumericCell(item.ipi, item.id, 'ipi')}</TableCell>
+                  <TableCell>{renderNumericCell(item.icms_st, item.id, 'icms_st')}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
