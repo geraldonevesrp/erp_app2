@@ -39,8 +39,11 @@ interface TabelaPrecoItem {
   ipi_p: number
   icms_st: number
   icms_st_p: number
-  tabela?: {
+  produto?: {
     nome: string
+    cod_sequencial: string
+    sub_codigo_sequencial: string
+    cod_barras: string
   }
 }
 
@@ -168,7 +171,7 @@ export function TabelaPrecosEditar({
           ipi_p,
           icms_st,
           icms_st_p,
-          tabela:tabelas_precos(nome)
+          produto:produtos(nome, cod_sequencial, sub_codigo_sequencial, cod_barras)
         `)
         .eq("tabelas_precos_id", tabelaId)
         .range((page - 1) * 20, page * 20 - 1)
@@ -281,9 +284,9 @@ export function TabelaPrecosEditar({
         maxWidth: 'calc(100vw - 16rem)'
       }}
     >
-      <div className="h-16 border-b flex items-center px-8 flex-none bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-slate-800">
-        <div className="flex items-center gap-3 flex-1">
-          <Label className="text-sm font-medium">Nome:</Label>
+      <div className="h-14 border-b flex items-center px-6 flex-none bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-slate-800">
+        <div className="flex items-center gap-2 flex-1">
+          <Label>Nome:</Label>
           <Input
             value={tabelaNome}
             onChange={(e) => setTabelaNome(e.target.value)}
@@ -292,10 +295,10 @@ export function TabelaPrecosEditar({
             disabled={salvandoNome}
           />
         </div>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
               onClick={handleCancelarNome}
               disabled={salvandoNome || tabelaNome === nomeOriginal}
               size="sm"
@@ -331,7 +334,7 @@ export function TabelaPrecosEditar({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[180px]">Nome Tabela</TableHead>
+              <TableHead className="min-w-[300px]">Produto</TableHead>
               <TableHead className="text-right w-[100px] group">
                 Custo
                 <span className="text-xs text-muted-foreground ml-1 opacity-0 group-hover:opacity-100">(editável)</span>
@@ -374,7 +377,20 @@ export function TabelaPrecosEditar({
           <TableBody>
             {itens.map((item) => (
               <TableRow key={item.id}>
-                <TableCell>{item.tabela?.nome}</TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-medium">{item.produto?.nome}</span>
+                    <div className="text-sm text-muted-foreground">
+                      <div>Cód: {item.produto?.cod_sequencial}</div>
+                      {item.produto?.sub_codigo_sequencial && (
+                        <div>Sub-cód: {item.produto?.sub_codigo_sequencial}</div>
+                      )}
+                      {item.produto?.cod_barras && (
+                        <div>Cód. Barras: {item.produto?.cod_barras}</div>
+                      )}
+                    </div>
+                  </div>
+                </TableCell>
                 <TableCell>{renderNumericCell(item.custo, item.id, 'custo')}</TableCell>
                 <TableCell>{renderNumericCell(item.margem_lucro, item.id, 'margem_lucro')}</TableCell>
                 <TableCell>{renderNumericCell(item.margem_lucro_p, item.id, 'margem_lucro_p', true)}</TableCell>
