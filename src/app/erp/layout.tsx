@@ -48,6 +48,10 @@ const menuItems = [
         href: '/erp/produtos/categorias'
       },
       {
+        name: 'Depósitos',
+        href: '/erp/depositos'
+      },
+      {
         name: 'Movimentações',
         href: '/erp/estoque'
       },
