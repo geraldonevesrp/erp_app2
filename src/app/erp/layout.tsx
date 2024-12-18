@@ -31,8 +31,8 @@ const menuItems = [
       },
       {
         name: 'Empresas',
-        href: '/erp/cadastros/empresas',
-        disabled: true
+        href: '/erp/empresas',
+        disabled: false
       }
     ]
   },
