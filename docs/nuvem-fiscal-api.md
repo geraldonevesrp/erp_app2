@@ -189,3 +189,175 @@ const handlePJSubmit = async () => {
 2. Adicione tipos para tudo
 3. Documente novas funcionalidades
 4. Mantenha o tratamento de erros consistente
+
+## Certificados Digitais
+
+### Estrutura de Dados
+
+```typescript
+// Dados para upload de certificado
+interface CertificadoDigital {
+  nome: string;
+  arquivo: string; // base64 do arquivo .pfx
+  senha: string;
+}
+
+// Resposta da API com informações do certificado
+interface CertificadoInfo {
+  status: string;
+  empresa: {
+    cpf_cnpj: string;
+    razao_social: string;
+  };
+  certificado: {
+    serial_number: string;
+    issuer_name: {
+      country: string;
+      organization: string;
+      organizational_unit: string;
+      common_name: string;
+    };
+    subject_name: {
+      country: string;
+      organization: string;
+      state: string;
+      locality: string;
+      organizational_units: string[];
+      common_name: string;
+    };
+    validity: {
+      not_before: string;
+      not_after: string;
+    };
+  };
+}
+```
+
+### Endpoints
+
+#### Consultar Certificado
+
+```typescript
+GET /api/nuvemfiscal/empresa/{empresaId}/certificado
+
+// Resposta de sucesso
+{
+  status: "active",
+  empresa: {
+    cpf_cnpj: "06118552000185",
+    razao_social: "ISOTEC TECNOLOGIA E INFORMATICA LTDA"
+  },
+  certificado: {
+    serial_number: "12345678",
+    issuer_name: {
+      country: "BR",
+      organization: "ICP-Brasil",
+      organizational_unit: "Secretaria da Receita Federal do Brasil - RFB",
+      common_name: "AC SAFEWEB RFB v5"
+    },
+    subject_name: {
+      country: "BR",
+      organization: "ICP-Brasil",
+      state: "SP",
+      locality: "RIBEIRAO PRETO",
+      organizational_units: [
+        "Secretaria da Receita Federal do Brasil - RFB",
+        "RFB e-CNPJ A1",
+        "31014048000182",
+        "videoconferencia"
+      ],
+      common_name: "ISOTEC TECNOLOGIA E INFORMATICA LTDA:06118552000185"
+    },
+    validity: {
+      not_before: "2024-02-26T00:00:00Z",
+      not_after: "2025-02-25T23:59:59Z"
+    }
+  }
+}
+
+// Resposta quando não há certificado
+null
+
+// Resposta de erro
+{
+  error: "Mensagem de erro"
+}
+```
+
+#### Upload de Certificado
+
+```typescript
+POST /api/nuvemfiscal/empresa/{empresaId}/certificado
+Content-Type: application/json
+
+{
+  "nome": "certificado.pfx",
+  "arquivo": "base64_do_arquivo_pfx",
+  "senha": "senha_do_certificado"
+}
+
+// Resposta de sucesso
+{
+  // Mesma estrutura do GET
+}
+
+// Resposta de erro
+{
+  error: "Mensagem de erro"
+}
+```
+
+#### Remover Certificado
+
+```typescript
+DELETE /api/nuvemfiscal/empresa/{empresaId}/certificado
+
+// Resposta de sucesso
+{
+  success: true
+}
+
+// Resposta de erro
+{
+  error: "Mensagem de erro"
+}
+```
+
+### Tratamento de Erros
+
+- **404 Not Found**: Retornado quando não há certificado cadastrado para a empresa
+- **400 Bad Request**: Erro nos dados enviados (senha incorreta, arquivo inválido, etc)
+- **401 Unauthorized**: Erro de autenticação
+- **500 Internal Server Error**: Erro interno do servidor
+
+### Exemplo de Uso
+
+```typescript
+// Consultar certificado
+const response = await fetch(`/api/nuvemfiscal/empresa/${empresaId}/certificado`);
+const data = await response.json();
+if (data === null) {
+  // Não há certificado
+} else if (data.error) {
+  // Tratar erro
+} else {
+  // Usar dados do certificado
+}
+
+// Upload de certificado
+const response = await fetch(`/api/nuvemfiscal/empresa/${empresaId}/certificado`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    nome: arquivo.name,
+    arquivo: base64,
+    senha: senha
+  })
+});
+
+// Remover certificado
+const response = await fetch(`/api/nuvemfiscal/empresa/${empresaId}/certificado`, {
+  method: 'DELETE'
+});

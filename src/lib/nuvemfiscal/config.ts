@@ -1,68 +1,110 @@
+import axios from 'axios';
+
 // Configurações da API Nuvem Fiscal
 export const NUVEM_FISCAL_CONFIG = {
   BASE_URL: "https://api.nuvemfiscal.com.br",
   AUTH_URL: "https://auth.nuvemfiscal.com.br/oauth/token",
-  CLIENT_ID: "xag3DXNYCN13qiNr6KRW",
-  CLIENT_SECRET: "b4zPtz5HS8NgWrgWakHSv5SVwdC9xhZ04ZheF08f",
+  CLIENT_ID: process.env.NEXT_PUBLIC_NUVEM_FISCAL_CLIENT_ID || "xag3DXNYCN13qiNr6KRW",
+  CLIENT_SECRET: process.env.NUVEM_FISCAL_CLIENT_SECRET || "b4zPtz5HS8NgWrgWakHSv5SVwdC9xhZ04ZheF08f",
   SCOPE: "cep cnpj nfse nfe empresa conta mdfe cte"
-} as const
+};
 
-// Tipos de resposta da API
-export interface NuvemFiscalError {
-  error: {
-    code: string
-    message: string
-  }
-}
+let accessToken: string | null = null;
+let tokenExpiration: Date | null = null;
 
-// Função para obter token de acesso
 export async function getNuvemFiscalToken() {
   try {
-    const params = new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: NUVEM_FISCAL_CONFIG.CLIENT_ID,
-      client_secret: NUVEM_FISCAL_CONFIG.CLIENT_SECRET,
-      scope: NUVEM_FISCAL_CONFIG.SCOPE
-    })
-
-    const response = await fetch(NUVEM_FISCAL_CONFIG.AUTH_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: params.toString()
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`Erro ao obter token: ${response.status} - ${errorText}`)
+    // Se já temos um token válido, retorna ele
+    if (accessToken && tokenExpiration && tokenExpiration > new Date()) {
+      console.log('Usando token em cache');
+      return accessToken;
     }
 
-    const data = await response.json()
-    return data.access_token
-  } catch (error) {
-    console.error("Erro ao obter token de acesso:", error)
-    throw error
+    console.log('Obtendo novo token da Nuvem Fiscal...');
+    
+    const formData = new URLSearchParams();
+    formData.append('grant_type', 'client_credentials');
+    formData.append('client_id', NUVEM_FISCAL_CONFIG.CLIENT_ID);
+    formData.append('client_secret', NUVEM_FISCAL_CONFIG.CLIENT_SECRET);
+    formData.append('scope', NUVEM_FISCAL_CONFIG.SCOPE);
+
+    const response = await axios.post(NUVEM_FISCAL_CONFIG.AUTH_URL, formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+
+    accessToken = response.data.access_token;
+    // Token expira em 1 hora
+    tokenExpiration = new Date(Date.now() + (response.data.expires_in * 1000));
+    
+    console.log('Token obtido com sucesso, expira em:', tokenExpiration);
+    return accessToken;
+  } catch (error: any) {
+    console.error('Erro ao obter token:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    throw error;
   }
 }
 
-// Função para fazer requisições autenticadas
 export async function nuvemFiscalFetch(endpoint: string, options: RequestInit = {}) {
-  const token = await getNuvemFiscalToken()
-  
-  const response = await fetch(`${NUVEM_FISCAL_CONFIG.BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  })
+  try {
+    const token = await getNuvemFiscalToken();
+    const url = `${NUVEM_FISCAL_CONFIG.BASE_URL}${endpoint}`;
+    
+    console.log(`Fazendo requisição para ${url}`);
+    console.log('Método:', options.method || 'GET');
+    
+    const response = await axios({
+      url,
+      method: options.method || 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      data: options.body ? JSON.parse(options.body as string) : undefined
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new Error(`Erro na API da Nuvem Fiscal: ${response.status} - ${JSON.stringify(errorData)}`)
+    console.log(`Resposta ${response.status}:`, response.data);
+    return response.data;
+  } catch (error: any) {
+    // Se o erro for de autenticação, tenta renovar o token e tentar novamente
+    if (error.response?.status === 401) {
+      console.log('Token expirado, renovando...');
+      accessToken = null;
+      tokenExpiration = null;
+      const token = await getNuvemFiscalToken();
+      
+      const response = await axios({
+        url: `${NUVEM_FISCAL_CONFIG.BASE_URL}${endpoint}`,
+        method: options.method || 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...options.headers
+        },
+        data: options.body ? JSON.parse(options.body as string) : undefined
+      });
+
+      return response.data;
+    }
+
+    console.error('Erro na requisição:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    
+    throw {
+      status: error.response?.status,
+      message: error.response?.data?.message || error.message,
+      response: error.response
+    };
   }
-
-  return response.json()
 }
