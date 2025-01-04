@@ -26,14 +26,17 @@ const menuItems = [
         href: '/erp/pessoas'
       },
       {
-        name: 'Grupos de Pessoas',
-        href: '/erp/pessoas/grupos'
+        name: 'Produtos',
+        href: '/erp/produtos'
       },
       {
         name: 'Empresas',
-        href: '/erp/empresas',
-        disabled: false
-      }
+        href: '/erp/empresas'
+      },
+      {
+        name: 'Depósitos',
+        href: '/erp/depositos'
+      },
     ]
   },
   {
@@ -45,20 +48,40 @@ const menuItems = [
       },
       {
         name: 'Categorias',
-        href: '/erp/produtos/categorias'
-      },
-      {
-        name: 'Depósitos',
-        href: '/erp/depositos'
+        href: '/erp/categorias'
       },
       {
         name: 'Movimentações',
-        href: '/erp/estoque'
+        href: '/erp/movimentacoes',
+        disabled: true
       },
+      {
+        name: 'Inventário',
+        href: '/erp/inventario',
+        disabled: true
+      }
+    ]
+  },
+  {
+    title: 'Fiscal',
+    items: [
+      {
+        name: 'Emissão de NFe',
+        href: '/erp/nfe_edit'
+      },
+      {
+        name: 'Notas Fiscais',
+        href: '/erp/nfe_list'
+      },
+    ]
+  },
+  {
+    title: 'Comercial',
+    items: [
       {
         name: 'Tabelas de Preços',
         href: '/erp/tabelas-precos'
-      }
+      },
     ]
   },
   {
@@ -143,7 +166,7 @@ const menuItems = [
   }
 ]
 
-export default function ERPLayout({
+export default function Layout({
   children,
 }: {
   children: React.ReactNode
