@@ -26,8 +26,8 @@ const menuItems = [
         href: '/erp/pessoas'
       },
       {
-        name: 'Produtos',
-        href: '/erp/produtos'
+        name: 'Pessoas Grupos',
+        href: '/erp/pessoas/grupos'
       },
       {
         name: 'Empresas',
@@ -47,8 +47,8 @@ const menuItems = [
         href: '/erp/produtos'
       },
       {
-        name: 'Categorias',
-        href: '/erp/categorias'
+        name: 'Produtos Categorias',
+        href: '/erp/produtos/categorias'
       },
       {
         name: 'Movimentações',
