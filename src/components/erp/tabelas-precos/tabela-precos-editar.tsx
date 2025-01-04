@@ -60,74 +60,66 @@ interface EditableNumericCellProps {
   className?: string
 }
 
-const EditableNumericCell = ({ value, id, field, isPercentage, onUpdate, isUpdating, className }: EditableNumericCellProps) => {
-  const [localValue, setLocalValue] = useState(value)
-
-  useEffect(() => {
-    setLocalValue(value)
-  }, [value])
-
+const EditableNumericCell = ({
+  value,
+  id,
+  field,
+  isPercentage,
+  onUpdate,
+  isUpdating,
+  className,
+}: EditableNumericCellProps) => {
   return (
-    <div className="relative group">
-      <NumericFormat
-        value={localValue}
-        onValueChange={({ floatValue }) => setLocalValue(floatValue || 0)}
-        onBlur={() => {
-          if (localValue !== value) {
-            onUpdate(id, field, localValue)
-          }
-        }}
-        displayType="input"
-        thousandSeparator="."
-        decimalSeparator=","
-        decimalScale={2}
-        fixedDecimalScale
-        prefix={isPercentage ? undefined : "R$ "}
-        suffix={isPercentage ? " %" : undefined}
-        placeholder="0,00"
-        className={clsx(
-          "w-full text-right",
-          "border border-input rounded-md px-2 py-1",
-          "focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary",
-          "hover:border-primary transition-colors",
-          isUpdating && "opacity-50 cursor-not-allowed",
-          "bg-background",
-          className
-        )}
-        disabled={isUpdating}
-      />
-      {isUpdating && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-          <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-        </div>
+    <NumericFormat
+      value={value}
+      displayType="input"
+      thousandSeparator="."
+      decimalSeparator=","
+      decimalScale={2}
+      fixedDecimalScale
+      suffix={isPercentage ? " %" : ""}
+      prefix={!isPercentage ? "R$ " : ""}
+      placeholder="0,00"
+      className={clsx(
+        "w-full text-right",
+        "border border-input dark:border-slate-700 rounded-md px-2 py-1",
+        "bg-white dark:bg-slate-900",
+        "hover:bg-gray-50 dark:hover:bg-slate-800",
+        "focus:outline-none focus:ring-2 focus:ring-primary",
+        isUpdating && "opacity-50 cursor-not-allowed",
+        className
       )}
-    </div>
+      disabled={isUpdating}
+      onValueChange={(values) => {
+        if (!isUpdating) {
+          onUpdate(id, field, values.floatValue || 0)
+        }
+      }}
+    />
   )
 }
 
 const ReadOnlyNumericCell = ({ value, isPercentage }: { value: number, isPercentage?: boolean }) => {
   return (
-    <div className="relative group">
-      <NumericFormat
-        value={value}
-        displayType="input"
-        thousandSeparator="."
-        decimalSeparator=","  
-        decimalScale={2}
-        fixedDecimalScale  
-        prefix={isPercentage ? undefined : "R$ "}
-        suffix={isPercentage ? " %" : undefined}
-        placeholder="0,00"
-        className={clsx(
-          "w-full text-right",
-          "border border-input rounded-md px-2 py-1",
-          "bg-gray-100 dark:bg-gray-600",  
-          "cursor-not-allowed"
-        )}
-        disabled
-        readOnly
-      />
-    </div>
+    <NumericFormat
+      value={value}
+      displayType="input"
+      thousandSeparator="."
+      decimalSeparator=","
+      decimalScale={2}
+      fixedDecimalScale
+      suffix={isPercentage ? " %" : ""}
+      prefix={!isPercentage ? "R$ " : ""}
+      placeholder="0,00"
+      className={clsx(
+        "w-full text-right",
+        "border-2 border-green-500 dark:border-green-600 rounded-md px-2 py-1",
+        "bg-gray-100 dark:bg-slate-800",
+        "cursor-not-allowed"
+      )}
+      disabled
+      readOnly
+    />
   )
 }
 
@@ -337,7 +329,7 @@ export function TabelaPrecosEditar({
       className={cn(
         "fixed top-16 bottom-0 right-0 z-50 flex flex-col border-l",
         "transition-transform duration-300 ease-in-out",
-        "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "bg-background dark:bg-gray-800",
         "dark:border-slate-800",
         open ? "translate-x-0" : "translate-x-full"
       )}
@@ -346,13 +338,13 @@ export function TabelaPrecosEditar({
         maxWidth: 'calc(100vw - 16rem)'
       }}
     >
-      <div className="h-14 border-b flex items-center px-6 flex-none bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:border-slate-800">
+      <div className="h-14 border-b flex items-center px-6 flex-none bg-background dark:bg-gray-800">
         <div className="flex items-center gap-2 flex-1">
-          <Label>Nome:</Label>
+          <Label className="text-foreground dark:text-white">Nome:</Label>
           <Input
             value={tabelaNome}
             onChange={(e) => setTabelaNome(e.target.value)}
-            className="w-[300px]"
+            className="w-[300px] bg-white dark:bg-slate-900 dark:text-white"
             placeholder="Nome da tabela"
             disabled={salvandoNome}
           />
@@ -392,155 +384,139 @@ export function TabelaPrecosEditar({
           </Button>
         </div>
       </div>
-      <div className="flex-1 overflow-auto p-6">
-        <div className="mb-4 relative">
+      <div className="flex-1 overflow-hidden p-6">
+        <div className="mb-4 sticky top-0 bg-background dark:bg-gray-800 z-10">
+          <Label htmlFor="search" className="text-foreground dark:text-white">Buscar Produto</Label>
           <Input
-            type="text"
-            placeholder="Buscar por nome, código ou código de barras..."
+            id="search"
+            placeholder="Digite o nome ou código do produto"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="bg-white dark:bg-slate-900 dark:text-white"
           />
-          <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
         </div>
-        
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="min-w-[300px]">Produto</TableHead>
-              <TableHead className="text-right min-w-[120px]">Custo</TableHead>
-              <TableHead className="text-right min-w-[120px]">Custo Total</TableHead>
-              <TableHead className="text-right min-w-[120px]">Margem Lucro</TableHead>
-              <TableHead className="text-right min-w-[120px]">Margem Lucro %</TableHead>
-              <TableHead className="text-right min-w-[120px]">Frete</TableHead>
-              <TableHead className="text-right min-w-[120px]">Frete %</TableHead>
-              <TableHead className="text-right min-w-[120px]">IPI</TableHead>
-              <TableHead className="text-right min-w-[120px]">IPI %</TableHead>
-              <TableHead className="text-right min-w-[120px]">ICMS ST</TableHead>
-              <TableHead className="text-right min-w-[120px]">ICMS ST %</TableHead>
-              <TableHead className="text-right min-w-[120px]">Preço</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredItems.length === 0 ? (
+        <div className="overflow-y-auto h-[calc(100vh-280px)]">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
-                  Nenhum produto encontrado para a busca realizada
-                </TableCell>
+                <TableHead className="text-center min-w-[300px]">Produto</TableHead>
+                <TableHead className="text-center min-w-[120px]">Custo</TableHead>
+                <TableHead className="text-center min-w-[120px]">Custo Total</TableHead>
+                <TableHead className="text-center min-w-[120px]">Margem Lucro</TableHead>
+                <TableHead className="text-center min-w-[120px]">Margem Lucro %</TableHead>
+                <TableHead className="text-center min-w-[120px]">Frete</TableHead>
+                <TableHead className="text-center min-w-[120px]">Frete %</TableHead>
+                <TableHead className="text-center min-w-[120px]">IPI</TableHead>
+                <TableHead className="text-center min-w-[120px]">IPI %</TableHead>
+                <TableHead className="text-center min-w-[120px]">ICMS ST</TableHead>
+                <TableHead className="text-center min-w-[120px]">ICMS ST %</TableHead>
+                <TableHead className="text-center min-w-[120px]">Preço</TableHead>
               </TableRow>
-            ) : (
-              filteredItems.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div className="flex flex-col gap-1">
-                      <span className="font-medium">{item.produto?.nome}</span>
-                      <div className="text-sm text-muted-foreground">
-                        <div>Cód: {item.produto?.cod_sequencial}</div>
-                        {item.produto?.sub_codigo_sequencial && (
-                          <div>Sub-cód: {item.produto?.sub_codigo_sequencial}</div>
-                        )}
-                        {item.produto?.cod_barras && (
-                          <div>Cód. Barras: {item.produto?.cod_barras}</div>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderNumericCell(item.custo, item.id, 'custo')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="relative group">
-                      <NumericFormat
-                        value={item.custo}
-                        displayType="input"
-                        thousandSeparator="."
-                        decimalSeparator=","  
-                        decimalScale={2}
-                        fixedDecimalScale  
-                        prefix="R$ "
-                        placeholder="0,00"
-                        className={clsx(
-                          "w-full text-right",
-                          "border border-input rounded-md px-2 py-1",
-                          "bg-gray-100 dark:bg-gray-600",  
-                          "cursor-not-allowed"
-                        )}
-                        disabled
-                        readOnly
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderNumericCell(item.margem_lucro, item.id, 'margem_lucro')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderNumericCell(item.margem_lucro_p, item.id, 'margem_lucro_p', true)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderNumericCell(item.frete, item.id, 'frete')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderNumericCell(item.frete_p, item.id, 'frete_p', true)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderNumericCell(item.ipi, item.id, 'ipi')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderNumericCell(item.ipi_p, item.id, 'ipi_p', true)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderNumericCell(item.icms_st, item.id, 'icms_st')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {renderNumericCell(item.icms_st_p, item.id, 'icms_st_p', true)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="relative group">
-                      <NumericFormat
-                        value={item.preco}
-                        displayType="input"
-                        thousandSeparator="."
-                        decimalSeparator=","  
-                        decimalScale={2}
-                        fixedDecimalScale  
-                        prefix="R$ "
-                        placeholder="0,00"
-                        className={clsx(
-                          "w-full text-right",
-                          "border-2 border-green-500 rounded-md px-2 py-1",
-                          "bg-gray-100 dark:bg-gray-600",  
-                          "cursor-not-allowed"
-                        )}
-                        disabled
-                        readOnly
-                      />
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {filteredItems.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
+                    Nenhum produto encontrado para a busca realizada
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : (
+                filteredItems.map((item) => (
+                  <TableRow key={item.id}>  
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium">{item.produto?.nome}</span>
+                        <div className="text-sm text-muted-foreground">
+                          <div>Cód: {item.produto?.cod_sequencial}</div>
+                          {item.produto?.sub_codigo_sequencial && (
+                            <div>Sub-cód: {item.produto?.sub_codigo_sequencial}</div>
+                          )}
+                          {item.produto?.cod_barras && (
+                            <div>Cód. Barras: {item.produto?.cod_barras}</div>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderNumericCell(item.custo, item.id, 'custo')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <ReadOnlyNumericCell value={item.custo} />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderNumericCell(item.margem_lucro, item.id, 'margem_lucro')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderNumericCell(item.margem_lucro_p, item.id, 'margem_lucro_p', true)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderNumericCell(item.frete, item.id, 'frete')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderNumericCell(item.frete_p, item.id, 'frete_p', true)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderNumericCell(item.ipi, item.id, 'ipi')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderNumericCell(item.ipi_p, item.id, 'ipi_p', true)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderNumericCell(item.icms_st, item.id, 'icms_st')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {renderNumericCell(item.icms_st_p, item.id, 'icms_st_p', true)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="relative group">
+                        <NumericFormat
+                          value={item.preco}
+                          displayType="input"
+                          thousandSeparator="."
+                          decimalSeparator=","  
+                          decimalScale={2}
+                          fixedDecimalScale  
+                          prefix="R$ "
+                          placeholder="0,00"
+                          className={clsx(
+                            "w-full text-right",
+                            "border-2 border-green-500 dark:border-green-600 rounded-md px-2 py-1",
+                            "bg-gray-100 dark:bg-slate-800",
+                            "cursor-not-allowed"
+                          )}
+                          disabled
+                          readOnly
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
-      <div className="border-t p-4 bg-white">
-        <div className="flex items-center justify-between px-2">
-          <span className="text-sm text-muted-foreground">
-            Mostrando {((page - 1) * 20) + 1} até {Math.min(page * 20, totalItems)} de {totalItems} itens
+      <div className="border-t p-4 bg-background dark:bg-gray-800">
+        <div className="flex items-center justify-between px-2 text-sm text-muted-foreground dark:text-gray-400">
+          <span>
+            Mostrando {(page - 1) * 20 + 1} até {Math.min(page * 20, totalItems)} de {totalItems} itens
           </span>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => setPage(page - 1)}
               disabled={page === 1}
+              className="dark:border-gray-600 dark:hover:bg-gray-700"
             >
               Anterior
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPage(p => p + 1)}
+              onClick={() => setPage(page + 1)}
               disabled={page * 20 >= totalItems}
+              className="dark:border-gray-600 dark:hover:bg-gray-700"
             >
               Próxima
             </Button>

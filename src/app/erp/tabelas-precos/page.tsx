@@ -169,7 +169,7 @@ export default function TabelasPrecos() {
         tabelaId={selectedTabelaId}
         open={editarOpen}
         onOpenChange={setEditarOpen}
-        onSave={loadTabelas}
+        loadTabelas={loadTabelas} // Passando a função loadTabelas
       />
     </div>
   )
