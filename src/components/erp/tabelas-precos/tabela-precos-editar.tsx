@@ -35,6 +35,7 @@ interface TabelaPrecoItem {
   id: number
   tabelas_precos_id: number
   custo: number
+  custo_total: number
   margem_lucro: number
   margem_lucro_p: number
   preco: number
@@ -71,9 +72,16 @@ const EditableNumericCell = ({
   isUpdating,
   className,
 }: EditableNumericCellProps) => {
+  const [tempValue, setTempValue] = useState(value);
+
+  // Atualiza o valor temporário quando o valor da prop mudar
+  useEffect(() => {
+    setTempValue(value);
+  }, [value]);
+
   return (
     <NumericFormat
-      value={value}
+      value={tempValue}
       displayType="input"
       thousandSeparator="."
       decimalSeparator=","
@@ -92,9 +100,12 @@ const EditableNumericCell = ({
         className
       )}
       disabled={isUpdating}
-      onValueChange={(values) => {
-        if (!isUpdating) {
-          onUpdate(id, field, values.floatValue || 0)
+      onValueChange={({ floatValue }) => {
+        setTempValue(floatValue || 0);
+      }}
+      onBlur={() => {
+        if (!isUpdating && tempValue !== value) {
+          onUpdate(id, field, tempValue);
         }
       }}
     />
@@ -219,6 +230,7 @@ export function TabelaPrecosEditar({
           id,
           tabelas_precos_id,
           custo,
+          custo_total,
           margem_lucro,
           margem_lucro_p,
           preco,
@@ -249,34 +261,21 @@ export function TabelaPrecosEditar({
     setUpdatingFields(prev => ({ ...prev, [`${id}-${field}`]: true }))
     
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("tabelas_precos_itens")
         .update({ [field]: value })
         .eq("id", id)
-        .select()
-        .single()
 
       if (error) throw error
 
-      // Atualiza o item com todos os valores calculados pelo trigger
-      if (data) {
-        setItens(prevItens =>
-          prevItens.map(item =>
-            item.id === id ? { ...item, ...data } : item
-          )
-        )
-        toast.success("Item atualizado com sucesso")
-      }
+      // Recarrega os dados para garantir sincronização com o banco
+      await loadItens()
+      toast.success("Item atualizado com sucesso")
     } catch (error) {
       console.error('Erro ao atualizar:', error)
       toast.error("Erro ao atualizar item")
-      
-      // Em caso de erro, reverte o valor no estado local
-      setItens(prevItens =>
-        prevItens.map(item =>
-          item.id === id ? { ...item } : item
-        )
-      )
+      // Recarrega os dados em caso de erro também
+      loadItens()
     } finally {
       // Remove o estado de atualização
       setUpdatingFields(prev => {
@@ -285,7 +284,7 @@ export function TabelaPrecosEditar({
         return newState
       })
     }
-  }, [supabase])
+  }, [supabase, loadItens])
 
   const renderNumericCell = (value: number, id: number, field: string, isPercentage = false) => {
     const isUpdating = updatingFields[`${id}-${field}`]
@@ -444,7 +443,7 @@ export function TabelaPrecosEditar({
                       {renderNumericCell(item.custo, item.id, "custo")}
                     </TableCell>
                     <TableCell className="text-right">
-                      <ReadOnlyNumericCell value={item.custo} />
+                      <ReadOnlyNumericCell value={item.custo_total} />
                     </TableCell>
                     <TableCell className="text-right">
                       {renderNumericCell(item.margem_lucro, item.id, "margem_lucro")}
