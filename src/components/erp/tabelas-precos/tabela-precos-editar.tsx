@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
 import { Search } from "lucide-react"
 import { useHeader } from '@/contexts/header-context'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface TabelaPrecosEditar {
   open: boolean
@@ -113,7 +115,7 @@ const ReadOnlyNumericCell = ({ value, isPercentage }: { value: number, isPercent
       placeholder="0,00"
       className={clsx(
         "w-full text-right",
-        "border-2 border-green-500 dark:border-green-600 rounded-md px-2 py-1",
+        "border border-input dark:border-slate-700 rounded-md px-2 py-1",
         "bg-gray-100 dark:bg-slate-800",
         "cursor-not-allowed"
       )}
@@ -140,6 +142,8 @@ export function TabelaPrecosEditar({
   const [nomeOriginal, setNomeOriginal] = useState("")
   const [salvandoNome, setSalvandoNome] = useState(false)
   const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(20);
+  const [tempValues, setTempValues] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (open) {
@@ -227,7 +231,7 @@ export function TabelaPrecosEditar({
           produto:produtos(nome, cod_sequencial, sub_codigo_sequencial, cod_barras)
         `)
         .eq("tabelas_precos_id", tabelaId)
-        .range((page - 1) * 20, page * 20 - 1)
+        .range((page - 1) * pageSize, page * pageSize - 1)
         .order('id', { ascending: true })
 
       if (error) throw error
@@ -238,7 +242,7 @@ export function TabelaPrecosEditar({
     } finally {
       setLoading(false)
     }
-  }, [tabelaId, page, supabase])
+  }, [tabelaId, page, pageSize, supabase])
 
   const handleUpdateItem = useCallback(async (id: number, field: string, value: number) => {
     // Marca o campo como atualizando
@@ -283,7 +287,7 @@ export function TabelaPrecosEditar({
     }
   }, [supabase])
 
-  const renderNumericCell = (value: number, id: number, field: string, isPercentage = false, className?: string) => {
+  const renderNumericCell = (value: number, id: number, field: string, isPercentage = false) => {
     const isUpdating = updatingFields[`${id}-${field}`]
     return (
       <EditableNumericCell
@@ -293,7 +297,6 @@ export function TabelaPrecosEditar({
         isPercentage={isPercentage}
         onUpdate={handleUpdateItem}
         isUpdating={isUpdating}
-        className={className}
       />
     )
   }
@@ -438,34 +441,34 @@ export function TabelaPrecosEditar({
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      {renderNumericCell(item.custo, item.id, 'custo')}
+                      {renderNumericCell(item.custo, item.id, "custo")}
                     </TableCell>
                     <TableCell className="text-right">
                       <ReadOnlyNumericCell value={item.custo} />
                     </TableCell>
                     <TableCell className="text-right">
-                      {renderNumericCell(item.margem_lucro, item.id, 'margem_lucro')}
+                      {renderNumericCell(item.margem_lucro, item.id, "margem_lucro")}
                     </TableCell>
                     <TableCell className="text-right">
-                      {renderNumericCell(item.margem_lucro_p, item.id, 'margem_lucro_p', true)}
+                      {renderNumericCell(item.margem_lucro_p, item.id, "margem_lucro_p", true)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {renderNumericCell(item.frete, item.id, 'frete')}
+                      {renderNumericCell(item.frete, item.id, "frete")}
                     </TableCell>
                     <TableCell className="text-right">
-                      {renderNumericCell(item.frete_p, item.id, 'frete_p', true)}
+                      {renderNumericCell(item.frete_p, item.id, "frete_p", true)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {renderNumericCell(item.ipi, item.id, 'ipi')}
+                      {renderNumericCell(item.ipi, item.id, "ipi")}
                     </TableCell>
                     <TableCell className="text-right">
-                      {renderNumericCell(item.ipi_p, item.id, 'ipi_p', true)}
+                      {renderNumericCell(item.ipi_p, item.id, "ipi_p", true)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {renderNumericCell(item.icms_st, item.id, 'icms_st')}
+                      {renderNumericCell(item.icms_st, item.id, "icms_st")}
                     </TableCell>
                     <TableCell className="text-right">
-                      {renderNumericCell(item.icms_st_p, item.id, 'icms_st_p', true)}
+                      {renderNumericCell(item.icms_st_p, item.id, "icms_st_p", true)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="relative group">
@@ -473,9 +476,9 @@ export function TabelaPrecosEditar({
                           value={item.preco}
                           displayType="input"
                           thousandSeparator="."
-                          decimalSeparator=","  
+                          decimalSeparator=","
                           decimalScale={2}
-                          fixedDecimalScale  
+                          fixedDecimalScale
                           prefix="R$ "
                           placeholder="0,00"
                           className={clsx(
@@ -497,29 +500,79 @@ export function TabelaPrecosEditar({
         </div>
       </div>
       <div className="border-t p-4 bg-background dark:bg-gray-800">
-        <div className="flex items-center justify-between px-2 text-sm text-muted-foreground dark:text-gray-400">
-          <span>
-            Mostrando {(page - 1) * 20 + 1} até {Math.min(page * 20, totalItems)} de {totalItems} itens
-          </span>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-              className="dark:border-gray-600 dark:hover:bg-gray-700"
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page + 1)}
-              disabled={page * 20 >= totalItems}
-              className="dark:border-gray-600 dark:hover:bg-gray-700"
-            >
-              Próxima
-            </Button>
+        <div className="flex items-center justify-between px-2">
+          <div className="flex-1 text-sm text-muted-foreground">
+            Mostrando {(page - 1) * pageSize + 1} até {Math.min(page * pageSize, totalItems)} de {totalItems} itens
+          </div>
+          <div className="flex items-center space-x-6 lg:space-x-8">
+            <div className="flex items-center space-x-2">
+              <p className="text-sm font-medium">Registros por página</p>
+              <Select
+                value={pageSize === totalItems ? 'all' : pageSize.toString()}
+                onValueChange={(value) => {
+                  const newSize = value === 'all' ? totalItems : Number(value);
+                  setPageSize(newSize);
+                  setPage(1); // Reset to first page when changing page size
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue>
+                    {pageSize === totalItems ? 'Todos' : pageSize}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[10, 20, 30, 50, 100, 300, 500, 1000].map((size) => (
+                    <SelectItem key={size} value={size.toString()}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                  <SelectItem key="all" value="all">
+                    Todos
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => setPage(1)}
+                disabled={page === 1}
+              >
+                <span className="sr-only">Ir para primeira página</span>
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+              >
+                <span className="sr-only">Ir para página anterior</span>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                Página {page} de {Math.ceil(totalItems / pageSize)}
+              </div>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => setPage(page + 1)}
+                disabled={page * pageSize >= totalItems}
+              >
+                <span className="sr-only">Ir para próxima página</span>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-8 w-8 p-0"
+                onClick={() => setPage(Math.ceil(totalItems / pageSize))}
+                disabled={page * pageSize >= totalItems}
+              >
+                <span className="sr-only">Ir para última página</span>
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
