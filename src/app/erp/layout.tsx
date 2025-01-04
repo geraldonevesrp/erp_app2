@@ -47,6 +47,10 @@ const menuItems = [
         href: '/erp/produtos'
       },
       {
+        name: 'Tabelas de Preços',
+        href: '/erp/tabelas-precos'
+      },
+      {
         name: 'Produtos Categorias',
         href: '/erp/produtos/categorias'
       },
@@ -78,10 +82,6 @@ const menuItems = [
   {
     title: 'Comercial',
     items: [
-      {
-        name: 'Tabelas de Preços',
-        href: '/erp/tabelas-precos'
-      },
     ]
   },
   {

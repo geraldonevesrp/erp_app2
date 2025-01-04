@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { X } from "lucide-react"
 import { Search } from "lucide-react"
+import { useHeader } from '@/contexts/header-context'
 
 interface TabelaPrecosEditar {
   open: boolean
@@ -107,6 +108,7 @@ export function TabelaPrecosEditar({
   tabelaId
 }: TabelaPrecosEditar) {
   const { supabase } = useSupabase()
+  const { setTitle, setSubtitle } = useHeader()
   const [loading, setLoading] = useState(false)
   const [itens, setItens] = useState<TabelaPrecoItem[]>([])
   const [page, setPage] = useState(1)
@@ -116,6 +118,11 @@ export function TabelaPrecosEditar({
   const [nomeOriginal, setNomeOriginal] = useState("")
   const [salvandoNome, setSalvandoNome] = useState(false)
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    setTitle('Comercial - Editar Tabela de Preços')
+    setSubtitle('Edite os detalhes da tabela de preços.')
+  }, [setTitle, setSubtitle])
 
   // Filtra os itens baseado na busca
   const filteredItems = useMemo(() => {

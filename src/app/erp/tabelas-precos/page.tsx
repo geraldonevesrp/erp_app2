@@ -7,6 +7,7 @@ import { useSupabase } from "@/contexts/supabase"
 import { toast } from "sonner"
 import { Copy, Edit, Plus } from "lucide-react"
 import { TabelaPrecosEditar } from "@/components/erp/tabelas-precos/tabela-precos-editar"
+import { useHeader } from '@/contexts/header-context'
 
 interface TabelaPreco {
   id: number
@@ -16,11 +17,17 @@ interface TabelaPreco {
 
 export default function TabelasPrecos() {
   const { supabase } = useSupabase()
+  const { setTitle, setSubtitle } = useHeader()
   const [tabelas, setTabelas] = useState<TabelaPreco[]>([])
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(true)
   const [selectedTabelaId, setSelectedTabelaId] = useState<number | null>(null)
   const [editarOpen, setEditarOpen] = useState(false)
+
+  useEffect(() => {
+    setTitle('Comercial - Tabelas de Preços')
+    setSubtitle('Gerencie suas tabelas de preços.')
+  }, [setTitle, setSubtitle])
 
   const loadTabelas = useCallback(async () => {
     try {
