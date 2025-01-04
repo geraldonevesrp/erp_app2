@@ -26,6 +26,7 @@ interface TabelaPrecosEditar {
   open: boolean
   onOpenChange: (open: boolean) => void
   tabelaId?: number
+  loadTabelas: () => void
 }
 
 interface TabelaPrecoItem {
@@ -56,12 +57,12 @@ interface EditableNumericCellProps {
   isPercentage?: boolean
   onUpdate: (id: number, field: string, value: number) => Promise<void>
   isUpdating: boolean
+  className?: string
 }
 
-const EditableNumericCell = ({ value, id, field, isPercentage, onUpdate, isUpdating }: EditableNumericCellProps) => {
+const EditableNumericCell = ({ value, id, field, isPercentage, onUpdate, isUpdating, className }: EditableNumericCellProps) => {
   const [localValue, setLocalValue] = useState(value)
 
-  // Atualiza o valor local quando o valor da prop muda
   useEffect(() => {
     setLocalValue(value)
   }, [value])
@@ -83,13 +84,15 @@ const EditableNumericCell = ({ value, id, field, isPercentage, onUpdate, isUpdat
         fixedDecimalScale
         prefix={isPercentage ? undefined : "R$ "}
         suffix={isPercentage ? " %" : undefined}
-        placeholder="Clique para editar"
+        placeholder="0,00"
         className={clsx(
-          "w-full text-right bg-transparent",
-          "border border-transparent hover:border-input rounded-sm px-2",
-          "focus:ring-1 focus:ring-primary focus:border-primary transition-all",
-          "hover:bg-muted/50 cursor-text",
-          isUpdating && "opacity-50"
+          "w-full text-right",
+          "border border-input rounded-md px-2 py-1",
+          "focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary",
+          "hover:border-primary transition-colors",
+          isUpdating && "opacity-50 cursor-not-allowed",
+          "bg-background",
+          className
         )}
         disabled={isUpdating}
       />
@@ -102,10 +105,37 @@ const EditableNumericCell = ({ value, id, field, isPercentage, onUpdate, isUpdat
   )
 }
 
+const ReadOnlyNumericCell = ({ value, isPercentage }: { value: number, isPercentage?: boolean }) => {
+  return (
+    <div className="relative group">
+      <NumericFormat
+        value={value}
+        displayType="input"
+        thousandSeparator="."
+        decimalSeparator=","  
+        decimalScale={2}
+        fixedDecimalScale  
+        prefix={isPercentage ? undefined : "R$ "}
+        suffix={isPercentage ? " %" : undefined}
+        placeholder="0,00"
+        className={clsx(
+          "w-full text-right",
+          "border border-input rounded-md px-2 py-1",
+          "bg-gray-100 dark:bg-gray-600",  
+          "cursor-not-allowed"
+        )}
+        disabled
+        readOnly
+      />
+    </div>
+  )
+}
+
 export function TabelaPrecosEditar({
   open,
   onOpenChange,
-  tabelaId
+  tabelaId,
+  loadTabelas
 }: TabelaPrecosEditar) {
   const { supabase } = useSupabase()
   const { setTitle, setSubtitle } = useHeader()
@@ -120,9 +150,11 @@ export function TabelaPrecosEditar({
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    setTitle('Comercial - Editar Tabela de Preços')
-    setSubtitle('Edite os detalhes da tabela de preços.')
-  }, [setTitle, setSubtitle])
+    if (open) {
+      setTitle('Comercial - Editar Tabela de Preços')
+      setSubtitle('Edite os detalhes da tabela de preços.')
+    }
+  }, [open, setTitle, setSubtitle])
 
   // Filtra os itens baseado na busca
   const filteredItems = useMemo(() => {
@@ -159,6 +191,7 @@ export function TabelaPrecosEditar({
 
       setNomeOriginal(tabelaNome)
       toast.success("Nome da tabela atualizado com sucesso!")
+      loadTabelas();
     } catch (error) {
       console.error("Erro ao atualizar nome da tabela:", error)
       setTabelaNome(nomeOriginal)
@@ -258,7 +291,7 @@ export function TabelaPrecosEditar({
     }
   }, [supabase])
 
-  const renderNumericCell = (value: number, id: number, field: string, isPercentage = false) => {
+  const renderNumericCell = (value: number, id: number, field: string, isPercentage = false, className?: string) => {
     const isUpdating = updatingFields[`${id}-${field}`]
     return (
       <EditableNumericCell
@@ -268,6 +301,7 @@ export function TabelaPrecosEditar({
         isPercentage={isPercentage}
         onUpdate={handleUpdateItem}
         isUpdating={isUpdating}
+        className={className}
       />
     )
   }
@@ -374,18 +408,23 @@ export function TabelaPrecosEditar({
           <TableHeader>
             <TableRow>
               <TableHead className="min-w-[300px]">Produto</TableHead>
-              <TableHead className="text-right">Custo</TableHead>
-              <TableHead className="text-right">Margem</TableHead>
-              <TableHead className="text-right">Preço</TableHead>
-              <TableHead className="text-right">Frete</TableHead>
-              <TableHead className="text-right">IPI</TableHead>
-              <TableHead className="text-right">ICMS ST</TableHead>
+              <TableHead className="text-right min-w-[120px]">Custo</TableHead>
+              <TableHead className="text-right min-w-[120px]">Custo Total</TableHead>
+              <TableHead className="text-right min-w-[120px]">Margem Lucro</TableHead>
+              <TableHead className="text-right min-w-[120px]">Margem Lucro %</TableHead>
+              <TableHead className="text-right min-w-[120px]">Frete</TableHead>
+              <TableHead className="text-right min-w-[120px]">Frete %</TableHead>
+              <TableHead className="text-right min-w-[120px]">IPI</TableHead>
+              <TableHead className="text-right min-w-[120px]">IPI %</TableHead>
+              <TableHead className="text-right min-w-[120px]">ICMS ST</TableHead>
+              <TableHead className="text-right min-w-[120px]">ICMS ST %</TableHead>
+              <TableHead className="text-right min-w-[120px]">Preço</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                   Nenhum produto encontrado para a busca realizada
                 </TableCell>
               </TableRow>
@@ -406,12 +445,77 @@ export function TabelaPrecosEditar({
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{renderNumericCell(item.custo, item.id, 'custo')}</TableCell>
-                  <TableCell>{renderNumericCell(item.margem_lucro, item.id, 'margem_lucro')}</TableCell>
-                  <TableCell>{renderNumericCell(item.margem_lucro_p, item.id, 'margem_lucro_p', true)}</TableCell>
-                  <TableCell>{renderNumericCell(item.frete, item.id, 'frete')}</TableCell>
-                  <TableCell>{renderNumericCell(item.ipi, item.id, 'ipi')}</TableCell>
-                  <TableCell>{renderNumericCell(item.icms_st, item.id, 'icms_st')}</TableCell>
+                  <TableCell className="text-right">
+                    {renderNumericCell(item.custo, item.id, 'custo')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="relative group">
+                      <NumericFormat
+                        value={item.custo}
+                        displayType="input"
+                        thousandSeparator="."
+                        decimalSeparator=","  
+                        decimalScale={2}
+                        fixedDecimalScale  
+                        prefix="R$ "
+                        placeholder="0,00"
+                        className={clsx(
+                          "w-full text-right",
+                          "border border-input rounded-md px-2 py-1",
+                          "bg-gray-100 dark:bg-gray-600",  
+                          "cursor-not-allowed"
+                        )}
+                        disabled
+                        readOnly
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {renderNumericCell(item.margem_lucro, item.id, 'margem_lucro')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {renderNumericCell(item.margem_lucro_p, item.id, 'margem_lucro_p', true)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {renderNumericCell(item.frete, item.id, 'frete')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {renderNumericCell(item.frete_p, item.id, 'frete_p', true)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {renderNumericCell(item.ipi, item.id, 'ipi')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {renderNumericCell(item.ipi_p, item.id, 'ipi_p', true)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {renderNumericCell(item.icms_st, item.id, 'icms_st')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {renderNumericCell(item.icms_st_p, item.id, 'icms_st_p', true)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="relative group">
+                      <NumericFormat
+                        value={item.preco}
+                        displayType="input"
+                        thousandSeparator="."
+                        decimalSeparator=","  
+                        decimalScale={2}
+                        fixedDecimalScale  
+                        prefix="R$ "
+                        placeholder="0,00"
+                        className={clsx(
+                          "w-full text-right",
+                          "border-2 border-green-500 rounded-md px-2 py-1",
+                          "bg-gray-100 dark:bg-gray-600",  
+                          "cursor-not-allowed"
+                        )}
+                        disabled
+                        readOnly
+                      />
+                    </div>
+                  </TableCell>
                 </TableRow>
               ))
             )}
