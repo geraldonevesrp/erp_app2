@@ -39,100 +39,136 @@ const PERFIL_ROTAS = {
    - Verificação de acesso via `perfis_users`
    - Redirecionamento automático baseado no tipo de perfil
 
+### Páginas Públicas
+```typescript
+const PUBLIC_PAGES = [
+  '/auth/sem-acesso',
+  '/auth/usuario-nao-autorizado',
+  '/auth/login',
+  '/auth/logout'
+]
+```
+
 ### Fluxo de Autenticação
 
-1. **Verificação de Subdomínio**
-   ```typescript
-   // Extrai subdomínio
-   const subdomain = hostname.split('.')[0]
-   
-   // Busca perfil
-   const { data: perfil } = await supabase
-     .from('perfis')
-     .select('*')
-     .eq('dominio', subdomain)
-     .single()
-   ```
-
-2. **Verificação de Autorização**
-   ```typescript
-   // Verifica proprietário
-   const isOwner = perfil.user_id === user.id
-   
-   if (!isOwner) {
-     // Verifica acesso via perfis_users
-     const { data: userPerfil } = await supabase
-       .from('perfis_users')
-       .select('*')
-       .eq('perfil_id', perfil.id)
-       .eq('user_id', user.id)
-       .single()
-   }
-   ```
-
-## Estrutura de Dados
-
-### Interface Perfil
+1. **Login**
 ```typescript
-interface Perfil {
-  id: string
-  user_id: string
-  tipo: TipoPerfil
-  dominio: string
-  nome?: string
-  created_at: string
-  updated_at: string
+// 1. Tenta fazer login com email/senha
+const { error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+})
+
+// 2. Atualiza o perfil no contexto
+await refreshPerfil()
+
+// 3. Aguarda carregamento do perfil
+await new Promise(resolve => setTimeout(resolve, 500))
+
+// 4. Verifica sessão e perfil
+const { data: { session } } = await supabase.auth.getSession()
+const { data: perfilAtual } = await supabase
+  .from('perfis')
+  .select('*')
+  .eq('dominio', subdomain)
+  .single()
+
+// 5. Redireciona baseado no tipo do perfil
+switch (perfilAtual.tipo) {
+  case PERFIL_TIPOS.REVENDA:
+    router.push('/revendas')
+    break
+  case PERFIL_TIPOS.ERP:
+    router.push('/erp')
+    break
+  case PERFIL_TIPOS.MASTER:
+    router.push('/master')
+    break
+  default:
+    router.push('/auth/sem-acesso')
 }
 ```
 
-### Interface PerfilUser
+2. **Logout**
 ```typescript
-interface PerfilUser {
-  id: string
-  perfil_id: string
-  user_id: string
-  created_at: string
-  updated_at: string
+// 1. Executa logout no Supabase
+await supabase.auth.signOut()
+
+// 2. Redireciona para login
+window.location.href = '/auth/login'
+```
+
+## Middleware de Proteção
+
+O middleware protege todas as rotas e implementa a lógica de redirecionamento:
+
+1. **Verificação de Página Pública**
+```typescript
+if (PUBLIC_PAGES.includes(pathname)) {
+  return res // Permite acesso direto
 }
 ```
 
-## Rotas do Sistema
-
-### Rotas de Autenticação
-- `/auth/login` - Login (sem sessão, requer subdomínio)
-- `/auth/sem-acesso` - Erro de acesso ao subdomínio
-- `/auth/usuario-nao-autorizado` - Sem autorização para o perfil
-
-### Rotas Protegidas
-Todas as rotas abaixo requerem:
-- Autenticação válida
-- Perfil carregado na sessão
-- Tipo de perfil correspondente
-
+2. **Verificação de Subdomínio**
 ```typescript
-// Exemplo de verificação no middleware
-const isRevendaAccessing = path.startsWith('/revendas') && 
-                          perfil.tipo === PERFIL_TIPOS.REVENDA
-const isErpAccessing = path.startsWith('/erp') && 
-                      perfil.tipo === PERFIL_TIPOS.ERP
+const hostname = req.headers.get('host') || ''
+const subdomain = hostname.split('.')[0]
+
+// Busca perfil pelo subdomínio
+const { data: perfil } = await supabase
+  .from('perfis')
+  .select('*')
+  .eq('dominio', subdomain)
+  .single()
 ```
 
-## Contexto de Perfil
-
-O sistema utiliza um contexto React para gerenciar o estado do perfil:
-
+3. **Verificação de Sessão**
 ```typescript
-interface PerfilContextType {
-  perfil: Perfil | null
-  isLoading: boolean
-  error: Error | null
-  refreshPerfil: () => Promise<void>
+const { data: { session } } = await supabase.auth.getSession()
+
+if (!session) {
+  return NextResponse.redirect(new URL('/auth/login', req.url))
 }
 ```
 
-### Uso do Contexto
+4. **Verificação de Autorização**
 ```typescript
-const { perfil, isLoading, error, refreshPerfil } = usePerfil()
+const isOwner = perfil.user_id === session.user.id
+
+if (!isOwner) {
+  // Verifica acesso via perfis_users
+  const { data: userPerfil } = await supabase
+    .from('perfis_users')
+    .select('*')
+    .eq('perfil_id', perfil.id)
+    .eq('user_id', session.user.id)
+    .single()
+
+  if (!userPerfil) {
+    return NextResponse.redirect(new URL('/auth/usuario-nao-autorizado', req.url))
+  }
+}
+```
+
+5. **Verificação de Área**
+```typescript
+const isRevendaAccessing = pathname.startsWith('/revendas') && perfil.tipo === PERFIL_TIPOS.REVENDA
+const isErpAccessing = pathname.startsWith('/erp') && perfil.tipo === PERFIL_TIPOS.ERP
+const isMasterAccessing = pathname.startsWith('/master') && perfil.tipo === PERFIL_TIPOS.MASTER
+
+if (!isRevendaAccessing && !isErpAccessing && !isMasterAccessing) {
+  // Redireciona para a área correta do perfil
+  switch (perfil.tipo) {
+    case PERFIL_TIPOS.REVENDA:
+      return NextResponse.redirect(new URL('/revendas', req.url))
+    case PERFIL_TIPOS.ERP:
+      return NextResponse.redirect(new URL('/erp', req.url))
+    case PERFIL_TIPOS.MASTER:
+      return NextResponse.redirect(new URL('/master', req.url))
+    default:
+      return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+  }
+}
 ```
 
 ## Desenvolvimento Local
@@ -143,6 +179,12 @@ const { perfil, isLoading, error, refreshPerfil } = usePerfil()
   - `erp.localhost:3000`
   - `revendas.localhost:3000`
   - `master.localhost:3000`
+
+### Testes de Login
+1. Acesse o subdomínio correto (ex: `atualsoft.localhost:3000`)
+2. Use `/auth/login` para fazer login
+3. Use `/auth/logout` para fazer logout
+4. Será redirecionado automaticamente para a área correta baseado no tipo do perfil
 
 ## Considerações de Segurança
 
@@ -156,7 +198,12 @@ const { perfil, isLoading, error, refreshPerfil } = usePerfil()
    - Sistema de autorização via `perfis_users`
    - Redirecionamentos seguros para páginas de erro
 
-3. **Sessão**
+3. **Tratamento de Erros**
+   - Mensagens de erro amigáveis para usuários
+   - Logs de erro apenas em desenvolvimento
+   - Redirecionamentos seguros em caso de erro
+
+4. **Sessão**
    - Perfil mantido em contexto seguro
    - Verificações de tipo de perfil em todas as rotas
    - Refresh automático do perfil após login

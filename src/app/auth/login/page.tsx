@@ -45,11 +45,46 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      await refreshPerfil()
-      router.push('/erp/dashboard')
+      // Aguarda o refresh do perfil
+      const result = await refreshPerfil()
+      
+      // Aguarda um momento para ter certeza que o perfil foi carregado
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Verifica novamente o perfil após o refresh
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Sessão não encontrada após login')
+      }
+
+      // Busca o perfil atual
+      const { data: perfilAtual } = await supabase
+        .from('perfis')
+        .select('*')
+        .eq('dominio', window.location.hostname.split('.')[0])
+        .single()
+
+      if (!perfilAtual) {
+        throw new Error('Perfil não encontrado')
+      }
+
+      // Redireciona baseado no tipo do perfil
+      if (perfilAtual.tipo === 2) { // Revenda
+        router.push('/revendas')
+      } else if (perfilAtual.tipo === 3) { // ERP
+        router.push('/erp')
+      } else if (perfilAtual.tipo === 4) { // Master
+        router.push('/master')
+      } else {
+        router.push('/auth/sem-acesso')
+      }
     } catch (error: any) {
-      console.error('Erro no login:', error)
-      setError('Email ou senha inválidos')
+      // Tratamento silencioso do erro, apenas mostra mensagem amigável para o usuário
+      if (error.message === 'Invalid login credentials') {
+        setError('Email ou senha incorretos. Por favor, verifique suas credenciais.')
+      } else {
+        setError('Ocorreu um erro ao tentar fazer login. Por favor, tente novamente.')
+      }
     } finally {
       setIsLoading(false)
     }

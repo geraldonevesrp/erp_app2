@@ -1,5 +1,15 @@
 # Configuração do Domínio erp1.com.br
 
+## Visão Geral
+
+O sistema utiliza uma arquitetura multi-tenant baseada em subdomínios, onde cada perfil tem seu próprio subdomínio e conjunto de permissões. Existem três tipos principais de áreas:
+
+- **Área ERP** (`erp.erp1.com.br`)
+- **Área de Revendas** (`revendas.erp1.com.br`)
+- **Área Master** (`master.erp1.com.br`)
+
+Além disso, cada cliente/revenda tem seu próprio subdomínio personalizado (ex: `atualsoft.erp1.com.br`).
+
 ## Configuração DNS
 
 ### 1. Registros A
@@ -32,13 +42,28 @@ CNAME   master      erp1.com.br.        Auto
    - `erp.erp1.com.br`
    - `revendas.erp1.com.br`
    - `master.erp1.com.br`
+   - `*.erp1.com.br` (para subdomínios personalizados)
 
 ## URLs do Sistema
 
+### URLs Principais
 - Site Principal: `https://erp1.com.br` ou `https://www.erp1.com.br`
 - Área ERP: `https://erp.erp1.com.br`
 - Área de Revendas: `https://revendas.erp1.com.br`
 - Área Master: `https://master.erp1.com.br`
+
+### URLs de Autenticação
+- Login: `/auth/login`
+- Logout: `/auth/logout`
+- Erro de Acesso: `/auth/sem-acesso`
+- Usuário Não Autorizado: `/auth/usuario-nao-autorizado`
+
+### Redirecionamentos
+- Domínio principal redireciona para `/auth/sem-acesso`
+- Após login, redireciona para a área correta baseado no tipo do perfil:
+  - Tipo 2 (Revenda) → `/revendas`
+  - Tipo 3 (ERP) → `/erp`
+  - Tipo 4 (Master) → `/master`
 
 ## Verificação SSL
 
@@ -61,6 +86,31 @@ nslookup master.erp1.com.br
 
 2. Ou use sites como https://www.whatsmydns.net/ para verificar a propagação global
 
+## Desenvolvimento Local
+
+### Configuração do Host
+Adicione ao arquivo hosts (`C:\Windows\System32\drivers\etc\hosts`):
+```
+127.0.0.1    localhost
+127.0.0.1    erp.localhost
+127.0.0.1    revendas.localhost
+127.0.0.1    master.localhost
+127.0.0.1    atualsoft.localhost  # Para testes com perfil específico
+```
+
+### URLs de Desenvolvimento
+- `http://erp.localhost:3000`
+- `http://revendas.localhost:3000`
+- `http://master.localhost:3000`
+- `http://atualsoft.localhost:3000`
+
+### Fluxo de Teste
+1. Configure o arquivo hosts
+2. Inicie o servidor: `npm run dev`
+3. Acesse o subdomínio desejado
+4. Use `/auth/login` para fazer login
+5. Use `/auth/logout` para fazer logout
+
 ## Troubleshooting
 
 ### DNS não Propagado
@@ -73,10 +123,21 @@ nslookup master.erp1.com.br
 - Aguarde alguns minutos para emissão do certificado
 - Verifique se não há conflitos de CNAME
 
-### Subdomínios não Funcionando
-- Verifique se o registro wildcard (*) está configurado
-- Confirme se os CNAMEs estão apontando corretamente
-- Verifique as configurações de domínio no Vercel
+### Problemas de Login
+1. **Redirecionamento Incorreto**
+   - Verifique o tipo do perfil no banco de dados
+   - Confirme se o subdomínio está correto
+   - Limpe os cookies e cache do navegador
+
+2. **Erro de Acesso**
+   - Verifique se o usuário tem permissão no perfil
+   - Confirme se o perfil existe para o subdomínio
+   - Verifique os logs para mais detalhes
+
+3. **Usuário Não Autorizado**
+   - Verifique a tabela `perfis_users`
+   - Confirme o `user_id` e `perfil_id`
+   - Tente fazer logout e login novamente
 
 ## Manutenção
 
@@ -104,123 +165,3 @@ nslookup master.erp1.com.br
    - Ative alertas de segurança no Vercel
    - Monitore tentativas de acesso suspeitas
    - Mantenha registros de alterações
-
-## Configuração de Subdomínios
-
-### Visão Geral
-
-O sistema requer uma configuração específica de DNS para suportar a arquitetura multi-tenant baseada em subdomínios. Cada perfil terá seu próprio subdomínio no formato `{cliente}.erp1.com.br`.
-
-### Configuração DNS
-
-#### Domínio Principal
-1. Configure o domínio principal `erp1.com.br` apontando para a Vercel:
-   ```
-   erp1.com.br.    300    IN    A    76.76.21.21
-   ```
-
-2. Configure o registro CNAME `www`:
-   ```
-   www.erp1.com.br.    300    IN    CNAME    cname.vercel-dns.com.
-   ```
-
-#### Wildcard Subdomínio
-Configure um registro wildcard para permitir subdomínios dinâmicos:
-```
-*.erp1.com.br.    300    IN    CNAME    cname.vercel-dns.com.
-```
-
-### Configuração Vercel
-
-#### Domínios no Projeto
-1. Acesse as configurações do projeto na Vercel
-2. Vá para a seção "Domains"
-3. Adicione os domínios:
-   - `erp1.com.br`
-   - `www.erp1.com.br`
-   - `*.erp1.com.br`
-
-#### Variáveis de Ambiente
-```env
-NEXT_PUBLIC_SITE_URL=https://erp1.com.br
-NEXT_PUBLIC_VERCEL_URL=${NEXT_PUBLIC_SITE_URL}
-```
-
-### Desenvolvimento Local
-
-#### Configuração do Host
-Adicione ao arquivo hosts (`C:\Windows\System32\drivers\etc\hosts`):
-```
-127.0.0.1    localhost
-127.0.0.1    erp.localhost
-127.0.0.1    revendas.localhost
-127.0.0.1    master.localhost
-```
-
-#### Configuração Next.js
-Em `next.config.js`:
-```javascript
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on'
-          }
-        ]
-      }
-    ]
-  }
-}
-
-module.exports = nextConfig
-```
-
-### Testes de Subdomínio
-
-#### Desenvolvimento
-- `http://erp.localhost:3000`
-- `http://revendas.localhost:3000`
-- `http://master.localhost:3000`
-
-#### Produção
-- `https://erp.erp1.com.br`
-- `https://revendas.erp1.com.br`
-- `https://master.erp1.com.br`
-
-### Verificação de Configuração
-
-#### DNS
-Use o comando `dig` ou `nslookup`:
-```bash
-dig erp1.com.br
-dig *.erp1.com.br
-```
-
-#### SSL/TLS
-Verifique se os certificados estão válidos:
-```bash
-curl -vI https://erp1.com.br
-curl -vI https://teste.erp1.com.br
-```
-
-### Considerações de Segurança
-
-1. **SSL/TLS**
-   - Certificados automáticos via Vercel
-   - Forçar HTTPS em produção
-   - Incluir HSTS headers
-
-2. **DNS**
-   - TTL adequado para atualizações (300s)
-   - Proteção contra subdomain takeover
-   - Monitoramento de DNS
-
-3. **Headers**
-   - X-DNS-Prefetch-Control
-   - Strict-Transport-Security
-   - X-Frame-Options

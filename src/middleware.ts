@@ -14,7 +14,8 @@ const PERFIL_TIPOS = {
 const PUBLIC_PAGES = [
   '/auth/sem-acesso',
   '/auth/usuario-nao-autorizado',
-  '/auth/login'
+  '/auth/login',
+  '/auth/logout'
 ]
 
 export async function middleware(req: NextRequest) {
@@ -45,15 +46,17 @@ export async function middleware(req: NextRequest) {
     .eq('dominio', subdomain)
     .single()
 
+  console.log('Subdomínio:', subdomain);
+  console.log('Perfil encontrado:', perfil);
+
   if (!perfil) {
-    console.log('Perfil não encontrado para o subdomínio:', subdomain)
-    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+    console.log('Perfil não encontrado para o subdomínio:', subdomain);
+    await supabase.auth.signOut(); // Faz logoff
+    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url));
   }
 
   // Para todas as outras rotas, verifica autenticação
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
     // Redireciona para login mantendo o subdomínio
@@ -99,7 +102,17 @@ export async function middleware(req: NextRequest) {
 
   if (!isRevendaAccessing && !isErpAccessing && !isMasterAccessing) {
     console.log('Usuário tentando acessar área não permitida:', pathname)
-    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+    // Se o usuário tentar acessar uma área não permitida, redireciona para a área correta
+    switch (perfil.tipo) {
+      case PERFIL_TIPOS.REVENDA:
+        return NextResponse.redirect(new URL('/revendas', req.url))
+      case PERFIL_TIPOS.ERP:
+        return NextResponse.redirect(new URL('/erp', req.url))
+      case PERFIL_TIPOS.MASTER:
+        return NextResponse.redirect(new URL('/master', req.url))
+      default:
+        return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+    }
   }
 
   return res
