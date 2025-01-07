@@ -10,12 +10,15 @@ const PERFIL_TIPOS = {
   MASTER: 4,
 } as const
 
-// Páginas que não precisam verificar perfil
+// Páginas públicas que não precisam de autenticação
 const PUBLIC_PAGES = [
+  '/auth/login',
+  '/auth/logout',
   '/auth/sem-acesso',
   '/auth/usuario-nao-autorizado',
-  '/auth/login',
-  '/auth/logout'
+  '/public/inscricao-revenda',
+  '/public/inscricao-revenda/sucesso',
+  '/public/home'
 ]
 
 export async function middleware(req: NextRequest) {
@@ -31,8 +34,8 @@ export async function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') || ''
   const subdomain = hostname.split('.')[0]
   
-  // Se for domínio principal, redireciona para sem-acesso
-  if (hostname === 'localhost' || hostname === 'www' || hostname === 'erp1.com.br') {
+  // Se for domínio principal e não for uma página pública, redireciona para sem-acesso
+  if ((hostname === 'localhost:3000' || hostname === 'www' || hostname === 'erp1.com.br') && !PUBLIC_PAGES.includes(pathname)) {
     const url = new URL('/auth/sem-acesso', req.url)
     return NextResponse.redirect(url)
   }
@@ -120,6 +123,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|imagens).*)',
   ],
 }
