@@ -24,46 +24,63 @@ const PUBLIC_PAGES = [
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const pathname = req.nextUrl.pathname
+  const supabase = createMiddlewareClient({ req, res })
 
   // Se for uma página pública, permite acesso direto
   if (PUBLIC_PAGES.includes(pathname)) {
     return res
   }
 
-  // Pega o hostname e identifica o subdomínio
-  const hostname = req.headers.get('host') || ''
-  const subdomain = hostname.split('.')[0]
-  
-  // Se for domínio principal e não for uma página pública, redireciona para sem-acesso
-  if ((hostname === 'localhost:3000' || hostname === 'www' || hostname === 'erp1.com.br') && !PUBLIC_PAGES.includes(pathname)) {
-    const url = new URL('/auth/sem-acesso', req.url)
+  // Verifica a sessão primeiro
+  const { data: { session } } = await supabase.auth.getSession()
+
+  // Se não estiver autenticado, redireciona para login
+  if (!session) {
+    const url = new URL('/auth/login', req.url)
+    url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
 
-  const supabase = createMiddlewareClient({ req, res })
+  // Pega o hostname e identifica o ambiente
+  const hostname = req.headers.get('host') || ''
+  const isDevelopment = hostname.includes('localhost') || hostname.includes('127.0.0.1')
+  
+  let perfil;
 
-  // Busca o perfil pelo subdomínio
-  const { data: perfil } = await supabase
-    .from('perfis')
-    .select('*')
-    .eq('dominio', subdomain)
-    .single()
-
-  console.log('Subdomínio:', subdomain);
-  console.log('Perfil encontrado:', perfil);
-
-  if (!perfil) {
-    console.log('Perfil não encontrado para o subdomínio:', subdomain);
-    await supabase.auth.signOut(); // Faz logoff
-    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url));
+  if (isDevelopment) {
+    // Em desenvolvimento, busca o perfil pelo user_id
+    const { data: perfilData } = await supabase
+      .from('perfis')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .single()
+    
+    perfil = perfilData
+  } else {
+    // Em produção, busca pelo subdomínio
+    const subdomain = hostname.split('.')[0]
+    const { data: perfilData } = await supabase
+      .from('perfis')
+      .select('*')
+      .eq('dominio', subdomain)
+      .single()
+    
+    perfil = perfilData
   }
 
-  // Para todas as outras rotas, verifica autenticação
-  const { data: { session } } = await supabase.auth.getSession();
+  if (!perfil) {
+    console.log('Perfil não encontrado')
+    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+  }
 
-  if (!session) {
-    // Redireciona para login mantendo o subdomínio
-    return NextResponse.redirect(new URL('/auth/login', req.url))
+  // Verifica se é uma página de revenda e se o status está aguardando ativação
+  if (pathname.startsWith('/revendas') && perfil?.revenda_status === 1 && pathname !== '/revendas/ativar_revenda') {
+    return NextResponse.redirect(new URL('/revendas/ativar_revenda', req.url))
+  }
+
+  // Se a rota for /revendas/ativar_revenda e o status não for 1, redireciona para /revendas
+  if (pathname === '/revendas/ativar_revenda' && perfil?.revenda_status !== 1) {
+    return NextResponse.redirect(new URL('/revendas', req.url))
   }
 
   // Verifica se o usuário é o proprietário do perfil ou tem acesso via perfis_users
@@ -72,8 +89,8 @@ export async function middleware(req: NextRequest) {
   if (!isOwner) {
     // Verifica se tem acesso via perfis_users
     const { data: userPerfil } = await supabase
-      .select('*')
       .from('perfis_users')
+      .select('*')
       .eq('perfil_id', perfil.id)
       .eq('user_id', session.user.id)
       .single()
@@ -94,27 +111,7 @@ export async function middleware(req: NextRequest) {
       case PERFIL_TIPOS.MASTER:
         return NextResponse.redirect(new URL('/master', req.url))
       default:
-        return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
-    }
-  }
-
-  // Verifica se o usuário está acessando a área correta
-  const isRevendaAccessing = pathname.startsWith('/revendas') && perfil.tipo === PERFIL_TIPOS.REVENDA
-  const isErpAccessing = pathname.startsWith('/erp') && perfil.tipo === PERFIL_TIPOS.ERP
-  const isMasterAccessing = pathname.startsWith('/master') && perfil.tipo === PERFIL_TIPOS.MASTER
-
-  if (!isRevendaAccessing && !isErpAccessing && !isMasterAccessing) {
-    console.log('Usuário tentando acessar área não permitida:', pathname)
-    // Se o usuário tentar acessar uma área não permitida, redireciona para a área correta
-    switch (perfil.tipo) {
-      case PERFIL_TIPOS.REVENDA:
-        return NextResponse.redirect(new URL('/revendas', req.url))
-      case PERFIL_TIPOS.ERP:
-        return NextResponse.redirect(new URL('/erp', req.url))
-      case PERFIL_TIPOS.MASTER:
-        return NextResponse.redirect(new URL('/master', req.url))
-      default:
-        return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+        return NextResponse.redirect(new URL('/pessoa', req.url))
     }
   }
 

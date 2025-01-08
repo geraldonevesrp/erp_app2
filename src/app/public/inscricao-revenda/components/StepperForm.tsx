@@ -29,6 +29,58 @@ interface FormData {
   cpf_cnpj: string
 }
 
+// Componente StepIndicator para mostrar o progresso
+const StepIndicator = ({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) => {
+  return (
+    <div className="flex items-center justify-center space-x-4 mb-8">
+      {Array.from({ length: totalSteps }).map((_, index) => {
+        const stepNumber = index + 1;
+        const isActive = stepNumber === currentStep;
+        const isCompleted = stepNumber < currentStep;
+
+        return (
+          <div key={index} className="flex items-center">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${
+                isActive
+                  ? 'border-indigo-600 bg-indigo-600 text-white'
+                  : isCompleted
+                  ? 'border-indigo-600 bg-indigo-600 text-white'
+                  : 'border-gray-300 text-gray-500'
+              }`}
+            >
+              {isCompleted ? (
+                <svg
+                  className="w-4 h-4 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              ) : (
+                stepNumber
+              )}
+            </div>
+            {index < totalSteps - 1 && (
+              <div
+                className={`w-12 h-0.5 mx-2 ${
+                  stepNumber < currentStep ? 'bg-indigo-600' : 'bg-gray-300'
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export default function StepperForm() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -247,7 +299,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
 
       if (!data || data.error) {
         console.error("Erro da API:", data)
-        throw new Error(data.error || "Erro ao buscar dados do CNPJ")
+        throw new Error('Erro ao consultar CNPJ. Tente novamente.')
       }
 
       // Log para debug
@@ -261,10 +313,11 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       // Atualiza os dados do formulário com os dados da empresa
       const novosDados = {
         ...formData,
-        nome_empresa: data.razao_social || '',
-        apelido: data.nome_fantasia || '',
-        nome_completo: data.socios?.[0]?.nome || '',
-        cep: data.endereco?.cep || '',
+        nome_empresa: data.razao_social || data.nome_fantasia,
+        nome_completo: data.razao_social,
+        apelido: data.nome_fantasia || data.razao_social,
+        cpf_cnpj: cnpjLimpo, // Garante que o cpf_cnpj está preenchido
+        cep: data.endereco?.cep?.replace(/\D/g, '') || '',
         logradouro: `${data.endereco?.tipo_logradouro || ''} ${data.endereco?.logradouro || ''}`.trim(),
         numero: data.endereco?.numero || '',
         complemento: data.endereco?.complemento || '',
@@ -276,6 +329,11 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       console.log('Novos dados do formulário:', novosDados)
       
       setFormData(novosDados)
+
+      // Busca dados complementares do CEP
+      if (data.endereco?.cep) {
+        await buscarCEP(data.endereco.cep)
+      }
 
       // Avança para o próximo passo
       setCurrentStep(prev => prev + 1)
@@ -295,17 +353,6 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
 
       setIsLoading(true)
       
-      // Primeiro limpa todos os campos de endereço
-      setFormData(prev => ({
-        ...prev,
-        logradouro: '',
-        numero: '',
-        complemento: '',
-        bairro: '',
-        municipio: '',
-        uf: ''
-      }))
-
       const response = await fetch(`/api/cep/${cepLimpo}`)
       const data = await response.json()
 
@@ -313,17 +360,17 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         throw new Error(data.error)
       }
 
-      // Depois preenche apenas com os dados que vieram da API
+      // Atualiza apenas campos vazios com dados do ViaCEP
       setFormData(prev => ({
         ...prev,
-        logradouro: data.logradouro || '',
-        bairro: data.bairro || '',
-        municipio: data.localidade || '',
-        uf: data.uf || ''
+        logradouro: prev.logradouro || data.logradouro || '',
+        bairro: prev.bairro || data.bairro || '',
+        municipio: prev.municipio || data.localidade || '',
+        uf: prev.uf || data.uf || ''
       }))
     } catch (error: any) {
       console.error('Erro ao buscar CEP:', error)
-      setError(error.message || 'Erro ao buscar CEP')
+      // Não mostra erro para o usuário, já que os dados do CNPJ foram mantidos
     } finally {
       setIsLoading(false)
     }
@@ -364,8 +411,17 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         throw new Error(data.error || 'Erro ao finalizar cadastro')
       }
 
-      // Redirecionar para página de sucesso ou login
-      window.location.href = '/public/login'
+      // Redirecionar para o subdomínio da revenda
+      const protocol = window.location.protocol
+      const hostname = window.location.hostname
+      
+      // Em desenvolvimento (localhost), não usa subdomínio
+      const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1'
+      const redirectUrl = isDevelopment
+        ? `${protocol}//${hostname}:${window.location.port}/revendas/ativar_revenda`
+        : `${protocol}//${data.dominio}.${hostname.split('.').slice(1).join('.')}/revendas/ativar_revenda`
+
+      window.location.href = redirectUrl
     } catch (error: any) {
       console.error('Erro ao finalizar cadastro:', error)
       setError(error.message || 'Erro ao finalizar cadastro')
@@ -447,6 +503,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
 
             <div className="pt-4">
               <button
+                type="button"
                 onClick={handleNext}
                 disabled={isLoading || !formData.email || !formData.dominio}
                 className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
@@ -494,7 +551,11 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                 value={formData.cnpj}
                 onChange={(e) => {
                   const value = e.target.value;
-                  setFormData(prev => ({ ...prev, cnpj: value }));
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    cnpj: value,
+                    cpf_cnpj: value.replace(/\D/g, '') // Adiciona ao cpf_cnpj também
+                  }));
                 }}
                 className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2"
                 required
@@ -934,32 +995,125 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      
+      // No passo 2, ENTER só executa a busca do CNPJ
+      if (currentStep === 2) {
+        if (formData.cpf_cnpj) {
+          handleBuscarCNPJ()
+        }
+        return
+      }
+      
+      // Nos outros passos, avança normalmente
+      if (currentStep < 4 && currentStep !== 2) {
+        handleNext()
+      }
+    }
+  }
+
+  const handleBuscarCNPJ = async () => {
+    if (!formData.cpf_cnpj) {
+      setError('Por favor, informe o CNPJ')
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      const cnpj = formData.cpf_cnpj.replace(/\D/g, '')
+      const response = await fetch(`https://publica.cnpj.ws/cnpj/${cnpj}`)
+      
+      if (!response.ok) {
+        throw new Error('CNPJ não encontrado')
+      }
+
+      const data = await response.json()
+
+      // Atualiza o formulário com os dados da empresa
+      setFormData(prev => ({
+        ...prev,
+        nome_completo: data.razao_social,
+        apelido: data.estabelecimento.nome_fantasia || data.razao_social,
+        cep: data.estabelecimento.cep,
+        logradouro: `${data.estabelecimento.tipo_logradouro || ''} ${data.estabelecimento.logradouro || ''}`.trim(),
+        numero: data.estabelecimento.numero,
+        complemento: data.estabelecimento.complemento || '',
+        bairro: data.estabelecimento.bairro,
+        municipio: data.estabelecimento.cidade.nome,
+        uf: data.estabelecimento.estado.sigla,
+        telefone: data.estabelecimento.ddd1 + data.estabelecimento.telefone1,
+      }))
+
+      // Busca dados complementares do CEP
+      await handleBuscarCEP(data.estabelecimento.cep)
+
+      setError('')
+    } catch (error: any) {
+      console.error('Erro ao buscar CNPJ:', error)
+      setError(error.message || 'Erro ao buscar dados do CNPJ')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleBuscarCEP = async (cep: string) => {
+    try {
+      const cepLimpo = cep.replace(/\D/g, '')
+      const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+      
+      if (!response.ok) {
+        throw new Error('CEP não encontrado')
+      }
+
+      const data = await response.json()
+
+      if (data.erro) {
+        throw new Error('CEP não encontrado')
+      }
+
+      // Atualiza o formulário com os dados complementares do CEP
+      setFormData(prev => ({
+        ...prev,
+        ibge: data.ibge,
+        gia: data.gia,
+        ddd: data.ddd,
+        siafi: data.siafi
+      }))
+    } catch (error: any) {
+      console.error('Erro ao buscar CEP:', error)
+      // Não exibimos erro para o usuário pois são apenas dados complementares
+    }
+  }
+
   return (
-    <>
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-4">
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-          <div className="sm:mx-auto sm:w-full sm:max-w-md">
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Cadastro de Revenda
-            </h2>
-          </div>
-
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-              <div className="space-y-6 min-h-[400px]">
-                {renderStep()}
-              </div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600/10 via-white to-indigo-600/10 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-xl p-8">
+        <StepIndicator currentStep={currentStep} totalSteps={5} />
+        
+        {/* Título do passo atual */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {currentStep === 1 && "Dados de Acesso"}
+            {currentStep === 2 && "Informações da Empresa"}
+            {currentStep === 3 && "Dados Complementares"}
+            {currentStep === 4 && "Endereço"}
+            {currentStep === 5 && "Senha e Termos de Uso"}
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            {currentStep === 1 && "Configure seu acesso ao sistema"}
+            {currentStep === 2 && "Preencha os dados da sua empresa"}
+            {currentStep === 3 && "Complete seu cadastro"}
+            {currentStep === 4 && "Preencha seu endereço"}
+            {currentStep === 5 && "Configure sua senha e aceite os termos de uso"}
+          </p>
         </div>
-      </form>
 
-      <TermosModal
-        isOpen={modalConfig.isOpen}
-        onClose={handleCloseModal}
-        title={modalConfig.title}
-        content={modalConfig.content}
-      />
-    </>
+        <form onSubmit={handleSubmit} className="space-y-6" onKeyDown={handleKeyDown}>
+          {renderStep()}
+        </form>
+      </div>
+    </div>
   )
 }
