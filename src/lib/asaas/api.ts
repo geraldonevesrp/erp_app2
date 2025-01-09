@@ -81,15 +81,7 @@ export class AsaasClient {
 
   async createPayment(payment: AsaasPayment) {
     try {
-      const paymentData = {
-        ...payment,
-        split: payment.split ? payment.split : [{
-          walletId: this.config.walletId,
-          value: payment.value
-        }]
-      }
-
-      console.log('Frontend - Iniciando criação do pagamento:', paymentData)
+      console.log('Frontend - Iniciando criação do pagamento:', payment)
 
       const response = await fetch('/api/asaas', {
         method: 'POST',
@@ -98,7 +90,7 @@ export class AsaasClient {
         },
         body: JSON.stringify({
           endpoint: '/payments',
-          data: paymentData
+          data: payment
         })
       })
 
