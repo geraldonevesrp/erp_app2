@@ -20,15 +20,17 @@ import { AsaasClient } from '@/lib/asaas/api'
 import type { AsaasCustomer } from '@/lib/asaas/api'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { CircleDollarSign, Loader2, QrCode } from 'lucide-react'
+import { CircleDollarSign, Loader2, QrCode, ExternalLink, Check } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { usePerfil } from '@/contexts/perfil'
+import { useToast } from '@/components/ui/use-toast'
 
 export default function AtivarRevenda() {
   // Clientes e hooks
   const supabase = createClientComponentClient()
   const asaasClient = new AsaasClient()
   const { perfil, isLoading: isLoadingPerfil } = usePerfil()
+  const toast = useToast()
   
   // Estados locais
   const [loading, setLoading] = useState(false)
@@ -184,10 +186,19 @@ export default function AtivarRevenda() {
         throw new Error('Erro ao gerar cobrança no Asaas')
       }
 
-      // Salva cobrança localmente
+      console.log('Resposta Asaas:', paymentResponse)
+
+      // Busca os dados do PIX
+      const pixResponse = await asaasClient.getPixQRCode(paymentResponse.id)
+      console.log('Resposta PIX:', pixResponse)
+
+      // Salva cobrança localmente com dados do PIX
       const cobrancaData = {
         cobrancas_tipos_id: 1,
-        asaas: paymentResponse,
+        asaas: {
+          ...paymentResponse,
+          qrCode: pixResponse
+        },
         sacado_perfil_id: perfil.id,
         cedente_perfil_id: '2c55d107-7c8a-4d96-8dcb-3a4958db665b',
         valor: paymentData.value,
@@ -206,6 +217,7 @@ export default function AtivarRevenda() {
         throw new Error(`Erro ao salvar cobrança: ${cobrancaError.message}`)
       }
 
+      console.log('Cobrança inserida:', cobrancaInserida)
       setCobranca(cobrancaInserida)
     } catch (error: any) {
       setError(error.message)
@@ -242,44 +254,80 @@ export default function AtivarRevenda() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : cobranca ? (
-          <div className="space-y-6">
-            <Alert>
-              <CircleDollarSign className="h-4 w-4" />
-              <AlertTitle>Pagamento Pendente</AlertTitle>
-              <AlertDescription>
-                Valor: {formatCurrency(cobranca.valor)}
-                <br />
-                Vencimento: {new Date(cobranca.vencimento).toLocaleDateString()}
-              </AlertDescription>
-            </Alert>
+          <>
+            {console.log('Dados da cobrança na renderização:', cobranca)}
+            <div className="space-y-6">
+              <Alert>
+                <CircleDollarSign className="h-4 w-4" />
+                <AlertTitle>Pagamento Pendente</AlertTitle>
+                <AlertDescription>
+                  Valor: {formatCurrency(cobranca.valor)}
+                  <br />
+                  Vencimento: {new Date(cobranca.vencimento).toLocaleDateString()}
+                </AlertDescription>
+              </Alert>
 
-            {cobranca.asaas?.pixQrCodeImage && (
               <div className="space-y-4">
-                <div className="flex justify-center">
-                  <img 
-                    src={cobranca.asaas.pixQrCodeImage} 
-                    alt="QR Code PIX"
-                    className="w-48 h-48"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm text-center text-muted-foreground">
-                    Use o QR Code acima para pagar via PIX
-                  </p>
-                  {cobranca.asaas?.pixCode && (
+                {/* QR Code PIX */}
+                {cobranca?.asaas?.qrCode?.encodedImage && (
+                  <div className="flex flex-col items-center space-y-4">
+                    <img 
+                      src={`data:image/png;base64,${cobranca.asaas.qrCode.encodedImage}`}
+                      alt="QR Code PIX"
+                      className="w-48 h-48 border p-2 rounded-lg"
+                    />
+                    <p className="text-sm text-center text-muted-foreground">
+                      Use o QR Code acima para pagar via PIX
+                    </p>
+                  </div>
+                )}
+
+                {/* Botões de Ação */}
+                <div className="flex flex-col space-y-2">
+                  {cobranca?.asaas?.qrCode?.payload && (
                     <Button 
                       variant="outline" 
                       className="w-full"
-                      onClick={() => navigator.clipboard.writeText(cobranca.asaas.pixCode)}
+                      onClick={() => {
+                        navigator.clipboard.writeText(cobranca.asaas.qrCode.payload)
+                        toast({
+                          title: "Código PIX copiado!",
+                          description: "Cole o código no seu aplicativo de banco",
+                          icon: <Check className="h-4 w-4" />,
+                        })
+                      }}
                     >
                       <QrCode className="w-4 h-4 mr-2" />
                       Copiar Código PIX
                     </Button>
                   )}
+
+                  {cobranca.asaas?.invoiceUrl && (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => window.open(cobranca.asaas.invoiceUrl, '_blank')}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Abrir Fatura no Navegador
+                    </Button>
+                  )}
+                </div>
+
+                {/* Instruções */}
+                <div className="rounded-lg bg-muted p-4 text-sm space-y-2">
+                  <p className="font-medium">Como pagar:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                    <li>Abra o app do seu banco</li>
+                    <li>Escolha pagar via PIX</li>
+                    <li>Escaneie o QR Code ou cole o código PIX</li>
+                    <li>Confirme as informações e valor</li>
+                    <li>Conclua o pagamento</li>
+                  </ol>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          </>
         ) : null}
       </Card>
     </div>

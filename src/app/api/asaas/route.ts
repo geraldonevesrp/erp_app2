@@ -6,10 +6,11 @@ const config = getAsaasConfig()
 export async function POST(req: Request) {
   try {
     console.log('=== INÍCIO DO PROCESSAMENTO DA API ROUTE ===')
-    const { endpoint, data } = await req.json()
+    const { endpoint, data, method = 'POST' } = await req.json()
 
     console.log('Endpoint solicitado:', endpoint)
-    console.log('Dados recebidos:', data)
+    console.log('Método:', method)
+    console.log('Dados recebidos:', JSON.stringify(data, null, 2))
     console.log('Configuração:', {
       baseUrl: config.baseUrl,
       apiKey: config.apiKey ? 'Presente' : 'Ausente'
@@ -21,17 +22,22 @@ export async function POST(req: Request) {
     const headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'access-token': config.apiKey 
+      'access_token': config.apiKey
     }
-    console.log('Headers:', { ...headers, 'access-token': '****' })
+    console.log('Headers:', { ...headers, 'access_token': '****' })
 
+    console.log('Iniciando chamada para Asaas...')
     const response = await fetch(url, {
-      method: 'POST',
+      method,
       headers,
-      body: JSON.stringify(data)
+      ...(method === 'POST' && { body: JSON.stringify(data) })
     })
 
-    console.log('Status da resposta do Asaas:', response.status, response.statusText)
+    console.log('Status da resposta do Asaas:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    })
 
     const responseText = await response.text() 
     console.log('Resposta bruta do Asaas:', responseText)
@@ -39,7 +45,7 @@ export async function POST(req: Request) {
     let responseData
     try {
       responseData = JSON.parse(responseText) 
-      console.log('Resposta do Asaas (JSON):', responseData)
+      console.log('Resposta do Asaas (JSON):', JSON.stringify(responseData, null, 2))
     } catch (e) {
       console.error('Erro ao fazer parse da resposta:', e)
       return NextResponse.json(
@@ -51,27 +57,19 @@ export async function POST(req: Request) {
     if (!response.ok) {
       console.error('Erro retornado pelo Asaas:', responseData)
       return NextResponse.json(
-        { 
-          error: responseData.errors?.[0]?.description || 'Erro na requisição ao Asaas',
-          details: responseData
-        },
+        { error: responseData },
         { status: response.status }
       )
     }
 
-    console.log('=== FIM DO PROCESSAMENTO DA API ROUTE ===')
+    console.log('=== FIM DO PROCESSAMENTO - SUCESSO ===')
     return NextResponse.json(responseData)
-  } catch (error: any) {
-    console.error('Erro na API Route:', {
-      message: error.message,
-      cause: error.cause,
-      stack: error.stack
-    })
+
+  } catch (error) {
+    console.error('=== ERRO NO PROCESSAMENTO ===')
+    console.error('Detalhes do erro:', error)
     return NextResponse.json(
-      { 
-        error: 'Erro interno do servidor',
-        details: error.message
-      },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     )
   }
@@ -104,7 +102,7 @@ export async function GET(req: Request) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': `Bearer ${config.apiKey.replace('$', '')}`
+        'access_token': config.apiKey
       }
     })
 
@@ -122,7 +120,7 @@ export async function GET(req: Request) {
         data: responseData
       })
       return NextResponse.json(
-        { error: responseData.errors?.[0]?.description || 'Erro na requisição ao Asaas' },
+        { error: responseData.errors?.[0]?.description || 'Erro na chamada do Asaas' },
         { status: response.status }
       )
     }

@@ -48,7 +48,8 @@ export class AsaasClient {
       const response = await fetch('/api/asaas', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
         body: JSON.stringify({
           endpoint: '/customers',
@@ -81,43 +82,51 @@ export class AsaasClient {
 
   async createPayment(payment: AsaasPayment) {
     try {
-      console.log('Frontend - Iniciando criação do pagamento:', payment)
+      console.log('=== INÍCIO CRIAÇÃO PAGAMENTO ASAAS ===')
+      console.log('Dados do pagamento:', payment)
+
+      const body = {
+        endpoint: '/payments',
+        data: payment
+      }
+      console.log('Corpo da requisição:', body)
 
       const response = await fetch('/api/asaas', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify({
-          endpoint: '/payments',
-          data: payment
-        })
+        body: JSON.stringify(body)
       })
 
-      console.log('Frontend - Status da resposta:', {
+      console.log('Status da resposta:', {
         status: response.status,
-        statusText: response.statusText
+        statusText: response.statusText,
+        ok: response.ok
       })
 
-      const responseData = await response.json()
+      const responseText = await response.text()
+      console.log('Resposta bruta:', responseText)
 
-      if (!response.ok) {
-        console.error('Frontend - Erro na resposta:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: responseData
-        })
-        throw new Error(responseData.error || 'Erro ao criar pagamento no Asaas')
+      let responseData
+      try {
+        responseData = JSON.parse(responseText)
+        console.log('Resposta parseada:', responseData)
+      } catch (e) {
+        console.error('Erro ao fazer parse da resposta:', e)
+        throw new Error('Erro ao processar resposta da API')
       }
 
-      console.log('Frontend - Pagamento criado com sucesso:', responseData)
+      if (!response.ok) {
+        console.error('Erro na resposta:', responseData)
+        throw new Error(responseData.error || 'Erro ao criar pagamento')
+      }
+
       return responseData
-    } catch (error: any) {
-      console.error('Frontend - Erro detalhado ao criar pagamento:', {
-        message: error.message,
-        cause: error.cause,
-        stack: error.stack
-      })
+    } catch (error) {
+      console.error('=== ERRO NA CRIAÇÃO DO PAGAMENTO ===')
+      console.error('Erro detalhado:', error)
       throw error
     }
   }
@@ -128,7 +137,8 @@ export class AsaasClient {
 
       const response = await fetch(`/api/asaas?endpoint=/payments/${paymentId}/identificationField`, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         }
       })
 
@@ -169,7 +179,8 @@ export class AsaasClient {
 
       const response = await fetch(`/api/asaas?endpoint=/payments/${paymentId}`, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         }
       })
 
@@ -193,6 +204,46 @@ export class AsaasClient {
       return data
     } catch (error: any) {
       console.error('Frontend - Erro detalhado ao consultar status do pagamento:', {
+        message: error.message,
+        cause: error.cause,
+        stack: error.stack
+      })
+      throw error
+    }
+  }
+
+  async getPixQRCode(paymentId: string) {
+    try {
+      console.log('=== INÍCIO BUSCA QR CODE PIX ===')
+      console.log('ID do pagamento:', paymentId)
+
+      const response = await fetch('/api/asaas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          endpoint: `/payments/${paymentId}/pixQrCode`,
+          method: 'GET'
+        })
+      })
+
+      console.log('Status da resposta:', response.status, response.statusText)
+
+      const responseData = await response.json()
+      console.log('Resposta completa:', responseData)
+      
+      if (!response.ok) {
+        console.error('Erro ao buscar QR Code:', responseData)
+        throw new Error(responseData.error || 'Erro ao buscar QR Code PIX')
+      }
+
+      console.log('QR Code obtido com sucesso:', responseData)
+      console.log('=== FIM BUSCA QR CODE PIX ===')
+      return responseData
+    } catch (error: any) {
+      console.error('Erro detalhado na busca do QR Code:', {
         message: error.message,
         cause: error.cause,
         stack: error.stack
