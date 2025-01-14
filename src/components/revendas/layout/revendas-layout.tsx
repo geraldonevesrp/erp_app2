@@ -6,6 +6,8 @@ import { useSupabase } from '@/contexts/supabase'
 import { RevendasHeader } from './revendas-header'
 import { RevendasSidebar } from './revendas-sidebar'
 import { cn } from '@/lib/utils'
+import { useRevendaStatus } from '@/hooks/useRevendaStatus'
+import { Loader2 } from 'lucide-react'
 
 interface MenuItem {
   name: string
@@ -27,6 +29,7 @@ export function RevendasLayout({ children, menuItems }: RevendasLayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(true)
   const { supabase } = useSupabase()
   const router = useRouter()
+  const { isLoading, isActive } = useRevendaStatus()
 
   // Inicializa o menu fechado em dispositivos móveis
   useEffect(() => {
@@ -43,6 +46,18 @@ export function RevendasLayout({ children, menuItems }: RevendasLayoutProps) {
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/auth')
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  if (!isActive) {
+    return null // O hook já cuida do redirecionamento
   }
 
   return (

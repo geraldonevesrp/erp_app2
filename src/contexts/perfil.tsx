@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Perfil, PerfilPublico, PerfilContextType, PERFIL_TIPOS } from '@/types/perfil'
+import { useRouter } from 'next/navigation'
 
 const PerfilContext = createContext<PerfilContextType>({
   perfil: null,
@@ -24,66 +25,154 @@ export function PerfilProvider({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
   const supabase = createClient()
+  const router = useRouter()
+
+  const loadPerfilPublico = async (subdomain: string) => {
+    try {
+      const dominio = subdomain === 'localhost' ? 'thebest' : subdomain
+
+      console.log('Buscando perfil público para domínio:', dominio)
+
+      const { data, error } = await supabase
+        .from('perfis')
+        .select(`
+          id,
+          nome_completo,
+          foto_url,
+          dominio,
+          tipo,
+          apelido,
+          created_at
+        `)
+        .eq('dominio', dominio)
+        .single()
+
+      if (error) {
+        console.error('Erro na query do Supabase:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        })
+        if (error.code === 'PGRST116') {
+          console.log('Nenhum perfil público encontrado para o domínio:', dominio)
+          return null
+        }
+        throw error
+      }
+
+      if (!data) {
+        console.log('Nenhum dado retornado para o domínio:', dominio)
+        return null
+      }
+
+      console.log('Perfil público encontrado:', data)
+
+      const perfilPublicoData: PerfilPublico = {
+        id: data.id,
+        nome: data.nome_completo || '',
+        foto_url: data.foto_url,
+        dominio: data.dominio,
+        tipo: data.tipo,
+        apelido: data.apelido
+      }
+
+      setPerfilPublico(perfilPublicoData)
+      return data // Retorna todos os dados, não só o PerfilPublico
+
+    } catch (error: any) {
+      console.error('Erro detalhado ao carregar perfil público:', {
+        error,
+        stack: error.stack,
+        name: error.name,
+        message: error.message
+      })
+      return null
+    }
+  }
 
   const loadPerfil = async () => {
     try {
       setIsLoading(true)
       setError(null)
 
+      // Carrega o perfil público primeiro, baseado no subdomínio
+      const hostname = window.location.hostname
+      const subdomain = hostname.split('.')[0]
+      
+      console.log('Hostname atual:', hostname)
+      console.log('Subdomínio identificado:', subdomain)
+
+      const perfilPublicoData = await loadPerfilPublico(subdomain)
+
+      // Se estiver na página de login, não precisa verificar mais nada
+      if (window.location.pathname === '/auth/login') {
+        setIsLoading(false)
+        return
+      }
+
       // 1. Verifica a sessão
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
       if (sessionError) {
         console.error('Erro na sessão:', sessionError)
-        throw new Error(`Erro na sessão: ${sessionError.message}`)
+        router.push('/auth/login')
+        return
       }
       
       if (!session) {
         console.log('Sem sessão ativa')
         setPerfil(null)
+        setPerfil_user(null)
+        router.push('/auth/login')
         return
       }
 
-      console.log('Sessão encontrada:', session.user.id)
-
-      // 2. Busca o perfil pelo subdomínio
-      const hostname = window.location.hostname
-      const subdomain = hostname.split('.')[0]
-      console.log('Buscando perfil para subdomínio:', subdomain)
-
-      const { data: perfilData, error: perfilError } = await supabase
+      // 2. Busca o perfil do usuário logado
+      const { data: userPerfil, error: userPerfilError } = await supabase
         .from('perfis')
         .select('*')
-        .eq('dominio', subdomain === 'localhost' ? 'thebest' : subdomain)
+        .eq('user_id', session.user.id)
         .single()
 
-      if (perfilError) {
-        console.error('Erro ao buscar perfil por subdomínio:', perfilError)
-        throw new Error(`Erro ao buscar perfil: ${perfilError.message}`)
+      if (userPerfilError && userPerfilError.code !== 'PGRST116') {
+        console.error('Erro ao buscar perfil do usuário:', userPerfilError)
+        router.push('/auth/login')
+        return
       }
 
-      if (!perfilData) {
-        console.error('Nenhum perfil encontrado para o subdomínio:', subdomain)
-        throw new Error('Perfil não encontrado para este subdomínio')
-      }
-
-      console.log('Perfil encontrado:', perfilData)
-      setPerfil(perfilData)
-
-      // 3. Se for um perfil de revenda, busca o perfil do usuário
-      if (perfilData.tipo === PERFIL_TIPOS.REVENDA) {
-        const { data: userData, error: userError } = await supabase
-          .from('perfis')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single()
-
-        if (userError) {
-          console.error('Erro ao buscar perfil do usuário:', userError)
-        } else if (userData) {
-          console.log('Perfil do usuário encontrado:', userData)
-          setPerfil_user(userData)
+      // Se estamos em uma área de revenda
+      if (window.location.pathname.startsWith('/revendas')) {
+        // Se não encontrou perfil de usuário e estamos na área de revenda
+        if (!userPerfil) {
+          console.log('Usuário sem perfil tentando acessar área de revenda')
+          router.push('/auth/sem-acesso')
+          return
         }
+
+        // Se encontrou perfil mas não é do tipo revenda
+        if (userPerfil.tipo !== PERFIL_TIPOS.REVENDA) {
+          console.log('Usuário não é revenda tentando acessar área de revenda')
+          router.push('/auth/sem-acesso')
+          return
+        }
+
+        setPerfil(userPerfil)
+        setPerfil_user(userPerfil)
+        return
+      }
+
+      // Para outros tipos de perfil
+      if (userPerfil) {
+        setPerfil_user(userPerfil)
+      }
+
+      // Se não estamos na área de revenda, usa o perfil do subdomínio
+      if (perfilPublicoData) {
+        setPerfil(perfilPublicoData)
+      } else {
+        console.error('Nenhum perfil encontrado para o subdomínio:', subdomain)
+        router.push('/auth/sem-acesso')
       }
 
     } catch (error: any) {
@@ -91,6 +180,9 @@ export function PerfilProvider({
       setError(new Error(error.message || 'Erro desconhecido ao carregar perfil'))
       setPerfil(null)
       setPerfil_user(null)
+      if (!window.location.pathname.includes('/auth/')) {
+        router.push('/auth/sem-acesso')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -121,9 +213,5 @@ export function PerfilProvider({
 }
 
 export function usePerfil() {
-  const context = useContext(PerfilContext)
-  if (!context) {
-    throw new Error('usePerfil must be used within a PerfilProvider')
-  }
-  return context
+  return useContext(PerfilContext)
 }

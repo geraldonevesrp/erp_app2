@@ -45,17 +45,49 @@ export async function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') || ''
   const isDevelopment = hostname.includes('localhost') || hostname.includes('127.0.0.1')
   
-  let perfil;
+  // Busca o perfil do usuário logado
+  const { data: userPerfil } = await supabase
+    .from('perfis')
+    .select('*')
+    .eq('user_id', session.user.id)
+    .single()
 
+  if (!userPerfil) {
+    console.log('Perfil do usuário não encontrado')
+    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+  }
+
+  // Verifica se a rota corresponde ao tipo de perfil
+  if (pathname.startsWith('/erp') && userPerfil.tipo !== PERFIL_TIPOS.ERP) {
+    console.log('Usuário não tem permissão para acessar área ERP')
+    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+  }
+
+  if (pathname.startsWith('/revendas') && userPerfil.tipo !== PERFIL_TIPOS.REVENDA) {
+    console.log('Usuário não tem permissão para acessar área de Revendas')
+    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+  }
+
+  if (pathname.startsWith('/master') && userPerfil.tipo !== PERFIL_TIPOS.MASTER) {
+    console.log('Usuário não tem permissão para acessar área Master')
+    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+  }
+
+  // Verifica se é uma página de revenda e se o status está aguardando ativação
+  if (pathname.startsWith('/revendas') && userPerfil?.revenda_status === 1 && pathname !== '/revendas/ativar_revenda') {
+    return NextResponse.redirect(new URL('/revendas/ativar_revenda', req.url))
+  }
+
+  // Se a rota for /revendas/ativar_revenda e o status não for 1, redireciona para /revendas
+  if (pathname === '/revendas/ativar_revenda' && userPerfil?.revenda_status !== 1) {
+    return NextResponse.redirect(new URL('/revendas', req.url))
+  }
+
+  // Busca o perfil do domínio atual (se existir)
+  let domainPerfil;
   if (isDevelopment) {
-    // Em desenvolvimento, busca o perfil pelo user_id
-    const { data: perfilData } = await supabase
-      .from('perfis')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .single()
-    
-    perfil = perfilData
+    // Em desenvolvimento, usa o mesmo perfil do usuário
+    domainPerfil = userPerfil
   } else {
     // Em produção, busca pelo subdomínio
     const subdomain = hostname.split('.')[0]
@@ -65,53 +97,26 @@ export async function middleware(req: NextRequest) {
       .eq('dominio', subdomain)
       .single()
     
-    perfil = perfilData
+    domainPerfil = perfilData
   }
 
-  if (!perfil) {
-    console.log('Perfil não encontrado')
+  if (!domainPerfil) {
+    console.log('Perfil do domínio não encontrado')
     return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
   }
 
-  // Verifica se é uma página de revenda e se o status está aguardando ativação
-  if (pathname.startsWith('/revendas') && perfil?.revenda_status === 1 && pathname !== '/revendas/ativar_revenda') {
-    return NextResponse.redirect(new URL('/revendas/ativar_revenda', req.url))
-  }
-
-  // Se a rota for /revendas/ativar_revenda e o status não for 1, redireciona para /revendas
-  if (pathname === '/revendas/ativar_revenda' && perfil?.revenda_status !== 1) {
-    return NextResponse.redirect(new URL('/revendas', req.url))
-  }
-
-  // Verifica se o usuário é o proprietário do perfil ou tem acesso via perfis_users
-  const isOwner = perfil.user_id === session.user.id
-
-  if (!isOwner) {
-    // Verifica se tem acesso via perfis_users
-    const { data: userPerfil } = await supabase
+  // Verifica se o usuário tem acesso ao perfil do domínio
+  if (userPerfil.id !== domainPerfil.id) {
+    const { data: perfilAccess } = await supabase
       .from('perfis_users')
       .select('*')
-      .eq('perfil_id', perfil.id)
+      .eq('perfil_id', domainPerfil.id)
       .eq('user_id', session.user.id)
       .single()
 
-    if (!userPerfil) {
-      console.log('Usuário não autorizado:', session.user.id, 'para perfil:', perfil.id)
+    if (!perfilAccess) {
+      console.log('Usuário não tem acesso ao perfil do domínio')
       return NextResponse.redirect(new URL('/auth/usuario-nao-autorizado', req.url))
-    }
-  }
-
-  // Verifica redirecionamento baseado no tipo de perfil
-  if (pathname === '/') {
-    switch (perfil.tipo) {
-      case PERFIL_TIPOS.REVENDA:
-        return NextResponse.redirect(new URL('/revendas', req.url))
-      case PERFIL_TIPOS.ERP:
-        return NextResponse.redirect(new URL('/erp', req.url))
-      case PERFIL_TIPOS.MASTER:
-        return NextResponse.redirect(new URL('/master', req.url))
-      default:
-        return NextResponse.redirect(new URL('/pessoa', req.url))
     }
   }
 
