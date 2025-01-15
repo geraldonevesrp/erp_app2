@@ -1,14 +1,7 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-// Tipos de perfil
-const PERFIL_TIPOS = {
-  PESSOA: 1,
-  REVENDA: 2,
-  ERP: 3,
-  MASTER: 4,
-} as const
+import { PERFIL_TIPOS } from '@/types/perfil'
 
 // Páginas públicas que não precisam de autenticação
 const PUBLIC_PAGES = [
@@ -45,86 +38,105 @@ export async function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') || ''
   const isDevelopment = hostname.includes('localhost') || hostname.includes('127.0.0.1')
   
+  console.log('=== Middleware Debug ===')
+  console.log('Hostname:', hostname)
+  console.log('Is Development:', isDevelopment)
+  console.log('Pathname:', pathname)
+  console.log('Session User:', session.user.id)
+  
   // Busca o perfil do usuário logado
-  const { data: userPerfil } = await supabase
+  const { data: userPerfis, error: userError } = await supabase
     .from('perfis')
-    .select('*')
+    .select('*, perfis_tipos(*)')
     .eq('user_id', session.user.id)
-    .single()
 
-  if (!userPerfil) {
-    console.log('Perfil do usuário não encontrado')
+  console.log('User Perfis:', userPerfis)
+  console.log('User Error:', userError)
+
+  if (!userPerfis || userPerfis.length === 0) {
+    console.log('Nenhum perfil encontrado para o usuário')
     return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+  }
+
+  let perfilTipo = null
+
+  // Em desenvolvimento, verifica se tem subdomínio
+  const subdomain = hostname.split('.')[0]
+  console.log('Subdomain:', subdomain)
+
+  if (isDevelopment && hostname.includes('.')) {
+    // Se tem subdomínio, busca o perfil correspondente
+    const { data: perfilData, error: perfilError } = await supabase
+      .from('perfis')
+      .select('*, perfis_tipos(*)')
+      .eq('dominio', subdomain)
+      .single()
+    
+    console.log('Perfil do subdomínio:', perfilData)
+    console.log('Erro ao buscar perfil:', perfilError)
+
+    if (perfilData) {
+      console.log('Usando perfil do subdomínio como principal')
+      perfilTipo = perfilData.tipo
+      console.log('Tipo do perfil:', perfilTipo)
+
+      // Verifica se o usuário tem acesso a este perfil
+      const hasDirectAccess = userPerfis.some(p => p.id === perfilData.id)
+      console.log('Has Direct Access:', hasDirectAccess)
+
+      if (!hasDirectAccess) {
+        const { data: perfilAccess, error: accessError } = await supabase
+          .from('perfis_users')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .eq('perfil_id', perfilData.id)
+          .single()
+
+        console.log('Perfil Access:', perfilAccess)
+        console.log('Access Error:', accessError)
+
+        if (!perfilAccess) {
+          console.log('Usuário não tem acesso ao perfil do subdomínio')
+          return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+        }
+      }
+    }
   }
 
   // Verifica se a rota corresponde ao tipo de perfil
-  if (pathname.startsWith('/erp') && userPerfil.tipo !== PERFIL_TIPOS.ERP) {
+  console.log('Verificando acesso à rota:', pathname)
+  console.log('Tipo do perfil:', perfilTipo)
+  console.log('Tipo ERP:', PERFIL_TIPOS.ERP)
+
+  if (pathname.startsWith('/erp') && perfilTipo !== PERFIL_TIPOS.ERP) {
     console.log('Usuário não tem permissão para acessar área ERP')
+    console.log('Tipo do perfil:', perfilTipo)
+    console.log('Tipo esperado:', PERFIL_TIPOS.ERP)
     return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
   }
 
-  if (pathname.startsWith('/revendas') && userPerfil.tipo !== PERFIL_TIPOS.REVENDA) {
+  if (pathname.startsWith('/revendas') && perfilTipo !== PERFIL_TIPOS.REVENDA) {
     console.log('Usuário não tem permissão para acessar área de Revendas')
     return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
   }
 
-  if (pathname.startsWith('/master') && userPerfil.tipo !== PERFIL_TIPOS.MASTER) {
+  if (pathname.startsWith('/master') && perfilTipo !== PERFIL_TIPOS.MASTER) {
     console.log('Usuário não tem permissão para acessar área Master')
     return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
   }
 
-  // Verifica se é uma página de revenda e se o status está aguardando ativação
-  if (pathname.startsWith('/revendas') && userPerfil?.revenda_status === 1 && pathname !== '/revendas/ativar_revenda') {
-    return NextResponse.redirect(new URL('/revendas/ativar_revenda', req.url))
-  }
+  console.log('Acesso permitido')
+  console.log('=== Fim Middleware Debug ===')
 
-  // Se a rota for /revendas/ativar_revenda e o status não for 1, redireciona para /revendas
-  if (pathname === '/revendas/ativar_revenda' && userPerfil?.revenda_status !== 1) {
-    return NextResponse.redirect(new URL('/revendas', req.url))
-  }
-
-  // Busca o perfil do domínio atual (se existir)
-  let domainPerfil;
-  if (isDevelopment) {
-    // Em desenvolvimento, usa o mesmo perfil do usuário
-    domainPerfil = userPerfil
-  } else {
-    // Em produção, busca pelo subdomínio
-    const subdomain = hostname.split('.')[0]
-    const { data: perfilData } = await supabase
-      .from('perfis')
-      .select('*')
-      .eq('dominio', subdomain)
-      .single()
-    
-    domainPerfil = perfilData
-  }
-
-  if (!domainPerfil) {
-    console.log('Perfil do domínio não encontrado')
-    return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
-  }
-
-  // Verifica se o usuário tem acesso ao perfil do domínio
-  if (userPerfil.id !== domainPerfil.id) {
-    const { data: perfilAccess } = await supabase
-      .from('perfis_users')
-      .select('*')
-      .eq('perfil_id', domainPerfil.id)
-      .eq('user_id', session.user.id)
-      .single()
-
-    if (!perfilAccess) {
-      console.log('Usuário não tem acesso ao perfil do domínio')
-      return NextResponse.redirect(new URL('/auth/usuario-nao-autorizado', req.url))
-    }
-  }
-
+  // Se chegou até aqui, permite o acesso
   return res
 }
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|imagens).*)',
+    '/revendas/:path*',
+    '/erp/:path*',
+    '/master/:path*',
+    '/auth/:path*'
   ],
 }
