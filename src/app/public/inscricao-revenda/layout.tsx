@@ -5,7 +5,7 @@ export default function InscricaoRevendaLayout({
 }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/30 via-background/90 to-secondary/30">
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto py-12">
         {children}
       </div>
     </div>

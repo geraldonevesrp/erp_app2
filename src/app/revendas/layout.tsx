@@ -41,6 +41,15 @@ const menuItems = [
         href: '/revendas/financeiro/extratos'
       }
     ]
+  },
+  {
+    title: 'Asaas',
+    items: [
+      {
+        name: 'Criar Subconta',
+        href: '/revendas/criar_subconta_asaas'
+      }
+    ]
   }
 ]
 

@@ -411,15 +411,26 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         throw new Error(data.error || 'Erro ao finalizar cadastro')
       }
 
+      // Fazer login localmente após o cadastro
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.senha
+      })
+
+      if (loginError) {
+        throw new Error('Erro ao fazer login automático')
+      }
+
+      // Aguardar um momento para garantir que a sessão foi estabelecida
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
       // Redirecionar para o subdomínio da revenda
       const protocol = window.location.protocol
       const hostname = window.location.hostname
+      const port = window.location.port ? `:${window.location.port}` : ''
       
-      // Em desenvolvimento (localhost), não usa subdomínio
-      const isDevelopment = hostname === 'localhost' || hostname === '127.0.0.1'
-      const redirectUrl = isDevelopment
-        ? `${protocol}//${hostname}:${window.location.port}/revendas/ativar_revenda`
-        : `${protocol}//${data.dominio}.${hostname.split('.').slice(1).join('.')}/revendas/ativar_revenda`
+      // Mesmo em localhost, usa o subdomínio
+      const redirectUrl = `${protocol}//${formData.dominio}.${hostname}${port}/revendas/ativar_revenda`
 
       window.location.href = redirectUrl
     } catch (error: any) {
@@ -1088,7 +1099,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600/10 via-white to-indigo-600/10 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-xl p-8">
         <StepIndicator currentStep={currentStep} totalSteps={5} />
         
