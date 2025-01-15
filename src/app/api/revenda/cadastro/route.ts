@@ -7,7 +7,10 @@ export async function POST(request: Request) {
     const formData = await request.json()
     const supabase = createRouteHandlerClient({ cookies })
 
+    console.log('=== Iniciando cadastro de revenda ===')
+
     // 1. Criar usuário no Supabase Auth
+    console.log('1. Criando usuário no Supabase Auth...')
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.senha,
@@ -21,6 +24,7 @@ export async function POST(request: Request) {
     if (authError) throw new Error(authError.message)
 
     // 2. Criar perfil da revenda
+    console.log('2. Criando perfil da revenda...')
     const { data: perfilData, error: perfilError } = await supabase
       .from('perfis')
       .insert({
@@ -42,6 +46,7 @@ export async function POST(request: Request) {
     if (perfilError) throw new Error(perfilError.message)
 
     // 3. Criar endereço principal
+    console.log('3. Criando endereço principal...')
     const { error: enderecoError } = await supabase
       .from('perfis_enderecos')
       .insert({
@@ -63,7 +68,8 @@ export async function POST(request: Request) {
 
     if (enderecoError) throw new Error(enderecoError.message)
 
-    // 4. Fazer login
+    // 4. Fazer login automático
+    console.log('4. Realizando login automático...')
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: formData.email,
       password: formData.senha
@@ -71,11 +77,9 @@ export async function POST(request: Request) {
 
     if (signInError) throw new Error(signInError.message)
 
-    // 5. Retornar sucesso com o domínio para redirecionamento
-    return NextResponse.json({
-      success: true,
-      dominio: formData.dominio
-    })
+    // 5. Retornar sucesso
+    console.log('=== Cadastro finalizado com sucesso ===')
+    return NextResponse.json({ success: true })
 
   } catch (error: any) {
     console.error('Erro no cadastro de revenda:', error)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import TermosModal from './TermosModal'
 
@@ -278,7 +278,25 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       if (!disponivel) {
         return
       }
+
+      // Se o domínio está disponível, redireciona para o subdomínio
+      const protocol = window.location.protocol
+      const hostname = window.location.hostname
+      const port = window.location.port ? `:${window.location.port}` : ''
+      
+      // Passa apenas os dados necessários (email e domínio)
+      const dadosIniciais = {
+        email: formData.email,
+        dominio: formData.dominio
+      }
+      
+      const redirectUrl = `${protocol}//${formData.dominio}.${hostname}${port}/public/inscricao-revenda?step=2&data=${encodeURIComponent(JSON.stringify(dadosIniciais))}`
+      
+      console.log('Redirecionando para subdomínio:', redirectUrl)
+      window.location.href = redirectUrl
+      return
     }
+    
     setCurrentStep(prev => prev + 1)
   }
 
@@ -376,25 +394,10 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    
+  const handleSubmit = async () => {
     try {
       setIsLoading(true)
       setError(null)
-
-      // Validações
-      if (formData.senha !== formData.confirmar_senha) {
-        throw new Error('As senhas não conferem')
-      }
-
-      if (formData.senha.length < 6) {
-        throw new Error('A senha deve ter no mínimo 6 caracteres')
-      }
-
-      if (!formData.aceite_termos) {
-        throw new Error('Você deve aceitar os termos de uso')
-      }
 
       // Enviar dados para a API
       const response = await fetch('/api/revenda/cadastro', {
@@ -406,36 +409,18 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       })
 
       const data = await response.json()
+      console.log('Resposta da API de cadastro:', data)
 
       if (!response.ok) {
         throw new Error(data.error || 'Erro ao finalizar cadastro')
       }
 
-      // Fazer login localmente após o cadastro
-      const { error: loginError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.senha
-      })
-
-      if (loginError) {
-        throw new Error('Erro ao fazer login automático')
-      }
-
-      // Aguardar um momento para garantir que a sessão foi estabelecida
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      // Redirecionar para o subdomínio da revenda
-      const protocol = window.location.protocol
-      const hostname = window.location.hostname
-      const port = window.location.port ? `:${window.location.port}` : ''
+      // Redirecionar para /revendas após o cadastro
+      window.location.href = '/revendas'
       
-      // Mesmo em localhost, usa o subdomínio
-      const redirectUrl = `${protocol}//${formData.dominio}.${hostname}${port}/revendas/ativar_revenda`
-
-      window.location.href = redirectUrl
     } catch (error: any) {
       console.error('Erro ao finalizar cadastro:', error)
-      setError(error.message || 'Erro ao finalizar cadastro')
+      setError(error.message)
     } finally {
       setIsLoading(false)
     }
@@ -979,7 +964,8 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
               </button>
 
               <button
-                type="submit"
+                type="button"
+                onClick={handleSubmit}
                 disabled={!formData.senha || !formData.confirmar_senha || formData.senha !== formData.confirmar_senha || !formData.aceite_termos || isLoading}
                 className={`inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
                   (!formData.senha || !formData.confirmar_senha || formData.senha !== formData.confirmar_senha || !formData.aceite_termos || isLoading) ? 'opacity-50 cursor-not-allowed' : ''
@@ -1098,6 +1084,22 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
     }
   }
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const step = params.get('step')
+    const data = params.get('data')
+
+    if (step && data) {
+      try {
+        const savedData = JSON.parse(decodeURIComponent(data))
+        setFormData(prev => ({ ...prev, ...savedData }))
+        setCurrentStep(Number(step))
+      } catch (error) {
+        console.error('Erro ao recuperar dados:', error)
+      }
+    }
+  }, [])
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-xl p-8">
@@ -1121,7 +1123,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6" onKeyDown={handleKeyDown}>
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-6" onKeyDown={handleKeyDown}>
           {renderStep()}
         </form>
       </div>
