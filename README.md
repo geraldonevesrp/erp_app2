@@ -66,6 +66,42 @@ Esta estratégia permite:
 - Usar tipos automáticos em código novo
 - Migração gradual quando necessário
 
+## Sistema de Login e Módulos
+
+## Introdução
+Este documento fornece uma visão geral do sistema de login e dos módulos disponíveis na aplicação.
+
+## Sistema de Login
+O sistema de login utiliza o Supabase para autenticação de usuários. O fluxo de autenticação é realizado da seguinte forma:
+1. O usuário insere suas credenciais (email e senha).
+2. O sistema verifica as credenciais e autentica o usuário.
+3. Após o login, o perfil do usuário é carregado para determinar o acesso aos módulos.
+
+### Tratamento de Erros
+Erros comuns durante o login incluem:
+- Credenciais inválidas
+- Problemas de conexão com o servidor
+
+## Tipos de Perfis
+Existem três tipos de perfis no sistema:
+1. **Revenda**: Acesso ao módulo de revendas.
+2. **ERP**: Acesso ao módulo ERP.
+3. **Master**: Acesso ao módulo Master.
+
+Cada tipo de perfil possui permissões específicas e restrições de acesso.
+
+## Módulos do Sistema
+Os módulos disponíveis são:
+- **Módulo de Revendas**: Para gerenciar informações de revendas.
+- **Módulo ERP**: Para gerenciar informações e operações de ERP.
+- **Módulo Master**: Para gerenciar configurações e usuários do sistema.
+
+### Restrições de Acesso
+O acesso aos módulos é controlado com base no tipo de perfil do usuário. Usuários com perfil de revenda não podem acessar o módulo ERP e vice-versa.
+
+## Conclusão
+Esta documentação fornece uma visão geral do sistema de login e dos módulos. Para mais informações, consulte a equipe de desenvolvimento.
+
 ## Como Instalar
 
 1. Clone o repositório
