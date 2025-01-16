@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server'
 import { getAsaasConfig } from '@/lib/asaas/config'
 
-export async function POST(req: Request) {
+const ASAAS_API_URL = getAsaasConfig().baseUrl
+const ASAAS_API_KEY = getAsaasConfig().apiKey
+
+export async function POST(request: Request) {
   try {
     console.log('=== INÍCIO DO PROCESSAMENTO DA API ROUTE (POST) ===')
     
     // Ler o corpo da requisição
-    const body = await req.json()
+    const body = await request.json()
     console.log('Corpo da requisição:', body)
 
-    const { endpoint, data } = body
+    const { endpoint, data, method = 'POST' } = body
 
     if (!endpoint) {
       console.error('Endpoint não especificado')
@@ -19,37 +22,26 @@ export async function POST(req: Request) {
       )
     }
 
-    // Carregar configuração
-    console.log('Carregando configuração do Asaas...')
-    const config = getAsaasConfig()
-    
-    if (!config.apiKey) {
-      console.error('API Key não encontrada')
-      return NextResponse.json(
-        { error: 'API Key não encontrada' },
-        { status: 500 }
-      )
-    }
-
     // Montar URL
-    const apiUrl = `${config.baseUrl}${endpoint}`
+    const apiUrl = `${ASAAS_API_URL}${endpoint}`
     console.log('URL completa:', apiUrl)
 
     // Preparar headers
     const headers = {
       'Content-Type': 'application/json',
-      'access_token': config.apiKey
+      'access_token': ASAAS_API_KEY
     }
 
     // Fazer requisição para o Asaas
     console.log('Fazendo requisição para o Asaas...')
     console.log('Headers:', headers)
+    console.log('Method:', method)
     console.log('Body:', data)
 
     const response = await fetch(apiUrl, {
-      method: 'POST',
+      method: method,
       headers,
-      body: JSON.stringify(data)
+      ...(method !== 'GET' && { body: JSON.stringify(data) })
     })
 
     const responseData = await response.json()
