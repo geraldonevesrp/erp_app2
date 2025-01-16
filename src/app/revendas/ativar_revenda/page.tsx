@@ -12,7 +12,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card } from '@/components/ui/card'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
@@ -148,6 +148,36 @@ export default function AtivarRevenda() {
   const [copied, setCopied] = useState(false)
   const [verificandoCobranca, setVerificandoCobranca] = useState(true)
 
+  // Efeito para monitorar mudanças na cobrança via realtime
+  useEffect(() => {
+    if (!perfil?.id) return
+
+    // Inscreve-se nas mudanças da tabela cobrancas
+    const channel = supabase
+      .channel('cobrancas-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'cobrancas',
+          filter: `sacado_perfil_id=eq.${perfil.id}`
+        },
+        (payload) => {
+          // Se a cobrança foi paga, redireciona
+          if (payload.new.paga === true) {
+            window.location.href = '/revendas'
+          }
+        }
+      )
+      .subscribe()
+
+    // Limpa a subscrição quando o componente for desmontado
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [perfil?.id])
+
   // Verifica se já existe uma cobrança ao carregar a página
   useEffect(() => {
     async function verificarCobrancaExistente() {
@@ -168,6 +198,13 @@ export default function AtivarRevenda() {
           throw errorCobranca
         }
 
+        // Se encontrou uma cobrança paga, redireciona
+        if (cobrancaExistente?.paga) {
+          window.location.href = '/revendas'
+          return
+        }
+
+        // Se encontrou uma cobrança não paga, exibe ela
         if (cobrancaExistente && !cobrancaExistente.paga) {
           console.log('Cobrança existente encontrada na inicialização:', cobrancaExistente)
           
