@@ -6,48 +6,29 @@ export interface AsaasConfig {
 
 export function getAsaasConfig(): AsaasConfig {
   console.log('=== CARREGANDO CONFIGURAÇÃO DO ASAAS ===')
-  console.log('NODE_ENV:', process.env.NODE_ENV)
   
   // Forçando sandbox por enquanto
   const isSandbox = true // process.env.NODE_ENV === 'development'
-  console.log('Usando ambiente:', isSandbox ? 'sandbox' : 'produção')
   
   const baseUrl = isSandbox 
     ? 'https://sandbox.asaas.com/api/v3'
     : 'https://api.asaas.com/api/v3'
 
-  const apiKey = isSandbox
-    ? process.env.NEXT_PUBLIC_ASAAS_SANDBOX_API_KEY
-    : process.env.NEXT_PUBLIC_ASAAS_PRODUCTION_API_KEY
-
-  console.log('Variáveis de ambiente:', {
-    NEXT_PUBLIC_ASAAS_SANDBOX_API_KEY_presente: !!process.env.NEXT_PUBLIC_ASAAS_SANDBOX_API_KEY,
-    NEXT_PUBLIC_ASAAS_SANDBOX_API_KEY_primeiros20: process.env.NEXT_PUBLIC_ASAAS_SANDBOX_API_KEY?.substring(0, 20),
-    NEXT_PUBLIC_ASAAS_SANDBOX_WALLET_ID: process.env.NEXT_PUBLIC_ASAAS_SANDBOX_WALLET_ID
-  })
+  // Tentar ler a chave da variável de ambiente
+  const apiKey = process.env.ASAAS_SANDBOX_API_KEY
+  console.log('API Key encontrada:', apiKey ? 'Sim' : 'Não')
 
   if (!apiKey) {
-    console.error('API Key do Asaas não encontrada')
     throw new Error('API Key do Asaas não encontrada')
   }
-
-  const walletId = isSandbox
-    ? process.env.NEXT_PUBLIC_ASAAS_SANDBOX_WALLET_ID
-    : process.env.NEXT_PUBLIC_ASAAS_PRODUCTION_WALLET_ID
 
   const config = {
     baseUrl,
     apiKey,
-    walletId
+    walletId: process.env.ASAAS_SANDBOX_WALLET_ID
   }
 
-  console.log('Configuração final:', {
-    baseUrl: config.baseUrl,
-    apiKeyPresente: !!config.apiKey,
-    apiKeyPrimeiros20: config.apiKey?.substring(0, 20),
-    walletId: config.walletId
-  })
-
+  console.log('Configuração carregada com sucesso')
   return config
 }
 

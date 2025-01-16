@@ -1,12 +1,12 @@
-"use client"
+'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useSupabase } from '@/contexts/supabase'
+import { useRouter, usePathname } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { RevendasHeader } from './revendas-header'
 import { RevendasSidebar } from './revendas-sidebar'
 import { cn } from '@/lib/utils'
-import { useRevendaStatus } from '@/hooks/useRevendaStatus'
+import { useRevendaStatus } from '@/hooks/revendas/useRevendaStatus'
 import { Loader2 } from 'lucide-react'
 
 interface MenuItem {
@@ -27,8 +27,10 @@ interface RevendasLayoutProps {
 
 export function RevendasLayout({ children, menuItems }: RevendasLayoutProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(true)
-  const { supabase } = useSupabase()
+  const [isMounted, setIsMounted] = useState(false)
+  const supabase = createClientComponentClient()
   const router = useRouter()
+  const pathname = usePathname()
   const { isLoading, isActive } = useRevendaStatus()
 
   // Inicializa o menu fechado em dispositivos móveis
@@ -40,6 +42,7 @@ export function RevendasLayout({ children, menuItems }: RevendasLayoutProps) {
 
     handleResize() // Inicializa
     window.addEventListener('resize', handleResize)
+    setIsMounted(true)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
@@ -48,38 +51,43 @@ export function RevendasLayout({ children, menuItems }: RevendasLayoutProps) {
     router.push('/auth')
   }
 
+  if (!isMounted) {
+    return null // Evita renderização no servidor
+  }
+
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     )
   }
 
-  if (!isActive) {
-    return null // O hook já cuida do redirecionamento
+  // Se não estiver ativo e não estiver na página de ativação, redireciona
+  if (!isActive && !pathname.includes('/revendas/ativar_revenda')) {
+    router.push('/revendas/ativar_revenda')
+    return null
   }
 
   return (
-    <div className={cn(
-      "flex h-screen overflow-hidden transition-[padding] duration-300",
-      isMenuOpen ? "md:pl-64" : "md:pl-0"
-    )}>
+    <div className="flex h-screen">
       {/* Sidebar */}
       <RevendasSidebar
         isOpen={isMenuOpen}
-        menuItems={menuItems}
         onClose={() => setIsMenuOpen(false)}
+        menuItems={menuItems}
       />
 
-      {/* Conteúdo Principal */}
-      <div className="flex flex-col flex-1 h-full overflow-hidden w-full">
+      {/* Main Content */}
+      <div className={cn(
+        'flex-1 flex flex-col min-h-screen transition-all duration-300',
+        isMenuOpen ? 'md:ml-64' : ''
+      )}>
         <RevendasHeader
-          isMenuOpen={isMenuOpen}
-          setIsMenuOpen={setIsMenuOpen}
+          onMenuClick={() => setIsMenuOpen(!isMenuOpen)}
           onLogout={handleLogout}
         />
-        <main className="flex-1 p-4 overflow-auto">
+        <main className="flex-1 p-4 bg-background">
           {children}
         </main>
       </div>

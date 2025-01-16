@@ -127,6 +127,62 @@ npm run dev
 - [Estrutura de Rotas e Autenticação](docs/auth_routes_structure.md)
 - [Configuração de Domínio](docs/configuracao_dominio.md)
 - [Deploy na Vercel](docs/vercel_deploy.md)
+- [Processo de Ativação de Revenda](docs/processo_ativacao_revenda.md)
+
+### Processo de Ativação de Revenda
+
+O processo de ativação de revenda é gerenciado através da integração com a API do Asaas para pagamentos. Aqui está o fluxo completo:
+
+#### Inicialização da Página
+1. Carrega o perfil da revenda
+2. Verifica se já existe uma cobrança pendente na tabela `cobrancas`
+3. Se encontrar cobrança não paga, exibe QR Code
+4. Se não encontrar, exibe botão de "Gerar Cobrança"
+
+#### Processo de Geração de Cobrança
+1. **Preparação**:
+   - Ativa estado de loading
+   - Limpa erros anteriores
+   - Verifica se existe perfil
+
+2. **Verificação de Segurança**:
+   - Verifica se já existe cobrança na tabela `cobrancas`
+   - Tipo: 1 (ativação de revenda)
+   - Se encontrar cobrança não paga, exibe QR Code
+   - Se houver erro, interrompe processo
+
+3. **Gestão do Cliente Asaas**:
+   - Verifica se já existe cliente na tabela `asaas_clientes`
+   - Se encontrar, usa o `asaas_id` existente
+   - Se não encontrar:
+     - Cria novo cliente no Asaas
+     - Salva dados na tabela `asaas_clientes`
+     - Vincula ao perfil da revenda
+
+4. **Criação da Cobrança**:
+   - Gera cobrança PIX no Asaas (R$30,00)
+   - Salva na tabela `cobrancas`:
+     - Tipo: 1 (ativação)
+     - Sacado: perfil da revenda
+     - Cedente: perfil ERPAPP
+     - Dados completos do Asaas
+     - Status inicial (não paga)
+
+5. **Finalização**:
+   - Exibe QR Code e instruções
+   - Disponibiliza botão para copiar código PIX
+   - Mostra link para fatura no Asaas
+
+#### Tabelas Relacionadas
+- `cobrancas`: Registra cobranças e status
+- `asaas_clientes`: Mantém dados dos clientes no Asaas
+- `perfis`: Dados do perfil da revenda
+
+#### Observações
+- Evita duplicidade de cobranças e clientes
+- Mantém registro completo no Supabase
+- Interface amigável com feedback visual
+- Processo assíncrono com tratamento de erros
 
 ### ERP
 - Dashboard com gráficos e métricas

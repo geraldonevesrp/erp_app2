@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  env: {
+    ASAAS_SANDBOX_API_KEY: process.env.ASAAS_SANDBOX_API_KEY,
+    ASAAS_SANDBOX_WALLET_ID: process.env.ASAAS_SANDBOX_WALLET_ID
+  },
   images: {
     remotePatterns: [
       {

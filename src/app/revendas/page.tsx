@@ -1,8 +1,19 @@
 'use client'
 
 import { Card } from '@/components/ui/card'
+import { useEffect, useState } from 'react'
 
 export default function RevendasPage() {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return null // Evita renderização no servidor
+  }
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6">Área do Revendedor</h1>

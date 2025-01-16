@@ -1,6 +1,7 @@
-"use client"
+'use client'
 
 import { RevendasLayout } from '@/components/revendas/layout/revendas-layout'
+import { RevendaPerfilProvider } from '@/contexts/revendas/perfil'
 
 const menuItems = [
   {
@@ -58,5 +59,11 @@ export default function Layout({
 }: {
   children: React.ReactNode
 }) {
-  return <RevendasLayout menuItems={menuItems}>{children}</RevendasLayout>
+  return (
+    <RevendaPerfilProvider>
+      <RevendasLayout menuItems={menuItems}>
+        {children}
+      </RevendasLayout>
+    </RevendaPerfilProvider>
+  )
 }
