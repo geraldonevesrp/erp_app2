@@ -5,10 +5,13 @@ const nextConfig = {
     ASAAS_SANDBOX_WALLET_ID: process.env.ASAAS_SANDBOX_WALLET_ID
   },
   images: {
+    domains: ['fwmxtjrxilkrirvrxlxb.supabase.co'],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'fwmxtjrxilkrirvrxlxb.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
       },
     ],
     unoptimized: true

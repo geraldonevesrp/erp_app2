@@ -10,37 +10,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { usePerfil } from '@/contexts/perfil'
+import { useRevendaPerfil } from '@/contexts/revendas/perfil'
 
 interface RevendasHeaderProps {
-  isMenuOpen: boolean
-  setIsMenuOpen: (isOpen: boolean) => void
+  onMenuClick: () => void
   onLogout: () => void
 }
 
-export function RevendasHeader({ isMenuOpen, setIsMenuOpen, onLogout }: RevendasHeaderProps) {
+export function RevendasHeader({ onMenuClick, onLogout }: RevendasHeaderProps) {
   const { theme, setTheme } = useTheme()
-  const { perfil_user } = usePerfil()
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen)
-  }
+  const { perfil } = useRevendaPerfil()
 
   return (
     <header className="h-12 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex items-center justify-between h-full px-4">
         {/* Botão do Menu */}
         <button
-          onClick={toggleMenu}
+          onClick={onMenuClick}
           className="p-2 rounded-md hover:bg-accent"
-          title={isMenuOpen ? "Fechar menu" : "Abrir menu"}
-          aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+          title="Toggle menu"
+          aria-label="Toggle menu"
         >
-          {isMenuOpen ? (
-            <ChevronLeft className="w-5 h-5" />
-          ) : (
-            <Menu className="w-5 h-5" />
-          )}
+          <Menu className="w-5 h-5" />
         </button>
 
         {/* Ações do Header */}
@@ -67,16 +58,16 @@ export function RevendasHeader({ isMenuOpen, setIsMenuOpen, onLogout }: Revendas
             <DropdownMenuTrigger asChild>
               <button className="relative p-1 rounded-full hover:bg-accent">
                 <Avatar className="w-8 h-8 border-2 border-border">
-                  <AvatarImage src={perfil_user?.foto_url || undefined} />
+                  <AvatarImage src={perfil?.foto_url || undefined} />
                   <AvatarFallback className="font-medium">
-                    {perfil_user?.apelido?.[0]?.toUpperCase() || '?'}
+                    {perfil?.apelido?.[0]?.toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <div className="px-3 py-2 bg-muted rounded-t-lg">
-                <p className="text-sm font-medium">{perfil_user?.apelido || 'Usuário'}</p>
+                <p className="text-sm font-medium">{perfil?.apelido || 'Usuário'}</p>
               </div>
               <div className="mt-2.5">
                 <DropdownMenuItem>

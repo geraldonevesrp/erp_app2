@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { usePerfil } from '@/contexts/perfil'
+import { useRevendaPerfil } from '@/contexts/revendas/perfil'
 import { UserCircle, ChevronDown } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
@@ -27,7 +27,7 @@ interface RevendasSidebarProps {
 
 export function RevendasSidebar({ isOpen, onClose, menuItems }: RevendasSidebarProps) {
   const pathname = usePathname()
-  const { perfilPublico } = usePerfil()
+  const { perfil } = useRevendaPerfil()
   
   // Inicializa todos os grupos fechados
   const [expandedGroups, setExpandedGroups] = useState<{ [key: string]: boolean }>({})
@@ -73,10 +73,10 @@ export function RevendasSidebar({ isOpen, onClose, menuItems }: RevendasSidebarP
       >
         {/* Logo e Info do Perfil */}
         <div className="flex-none flex flex-col items-center justify-center py-6 border-b w-full px-2">
-          {perfilPublico?.foto_url ? (
+          {perfil?.foto_url ? (
             <div className="relative w-full h-[120px]">
               <Image
-                src={perfilPublico.foto_url}
+                src={perfil.foto_url}
                 alt="Logo"
                 fill
                 className="object-contain dark:invert"
@@ -88,9 +88,9 @@ export function RevendasSidebar({ isOpen, onClose, menuItems }: RevendasSidebarP
               <UserCircle className="h-16 w-16 text-muted-foreground" />
             </div>
           )}
-          {perfilPublico?.apelido && (
+          {perfil?.apelido && (
             <span className="mt-3 text-sm font-medium text-muted-foreground">
-              {perfilPublico.apelido}
+              {perfil.apelido}
             </span>
           )}
         </div>

@@ -5,10 +5,19 @@ import { RevendaPerfilProvider } from '@/contexts/revendas/perfil'
 
 const menuItems = [
   {
-    title: 'Dashboard',
+    title: 'Principal',
     items: [
       {
         name: 'Home',
+        href: '/revendas'
+      }
+    ]
+  },
+  {
+    title: 'Dashboard',
+    items: [
+      {
+        name: 'Visão Geral',
         href: '/revendas/dashboard'
       },
       {
@@ -40,6 +49,19 @@ const menuItems = [
       {
         name: 'Extratos',
         href: '/revendas/financeiro/extratos'
+      }
+    ]
+  },
+  {
+    title: 'Configurações',
+    items: [
+      {
+        name: 'Perfil da Revenda',
+        href: '/revendas/configuracoes/perfil'
+      },
+      {
+        name: 'Personalização',
+        href: '/revendas/configuracoes/personalizacao'
       }
     ]
   },
