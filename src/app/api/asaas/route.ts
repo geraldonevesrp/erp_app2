@@ -44,8 +44,40 @@ export async function POST(request: Request) {
       ...(method !== 'GET' && { body: JSON.stringify(data) })
     })
 
-    const responseData = await response.json()
-    console.log('Resposta do Asaas:', responseData)
+    // Verificar status da resposta
+    if (!response.ok) {
+      console.error('Erro na resposta do Asaas:', {
+        status: response.status,
+        statusText: response.statusText
+      })
+
+      let errorData
+      try {
+        errorData = await response.json()
+      } catch (e) {
+        errorData = { error: 'Erro na comunicação com o Asaas' }
+      }
+
+      return NextResponse.json(
+        errorData,
+        { status: response.status }
+      )
+    }
+
+    // Tentar ler o corpo da resposta
+    let responseData
+    try {
+      responseData = await response.json()
+      console.log('Resposta do Asaas:', responseData)
+    } catch (error) {
+      console.error('Erro ao processar resposta do Asaas:', error)
+      const textResponse = await response.text()
+      console.log('Resposta em texto:', textResponse)
+      return NextResponse.json(
+        { error: 'Erro ao processar resposta do Asaas' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(responseData)
 
@@ -98,9 +130,41 @@ export async function GET(req: Request) {
       headers
     })
 
-    const data = await response.json()
-    return NextResponse.json(data)
+    // Verificar status da resposta
+    if (!response.ok) {
+      console.error('Erro na resposta do Asaas:', {
+        status: response.status,
+        statusText: response.statusText
+      })
 
+      let errorData
+      try {
+        errorData = await response.json()
+      } catch (e) {
+        errorData = { error: 'Erro na comunicação com o Asaas' }
+      }
+
+      return NextResponse.json(
+        errorData,
+        { status: response.status }
+      )
+    }
+
+    // Tentar ler o corpo da resposta
+    let data
+    try {
+      data = await response.json()
+    } catch (error) {
+      console.error('Erro ao processar resposta do Asaas:', error)
+      const textResponse = await response.text()
+      console.log('Resposta em texto:', textResponse)
+      return NextResponse.json(
+        { error: 'Erro ao processar resposta do Asaas' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json(data)
   } catch (error) {
     console.error('Erro ao processar requisição:', error)
     return NextResponse.json(

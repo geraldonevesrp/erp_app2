@@ -17,8 +17,8 @@ export function Header() {
                 <Image
                   src={perfil.foto_url}
                   alt={perfil.nome_completo || 'Logo'}
-                  width={40}
-                  height={40}
+                  width={48}
+                  height={48}
                   className="h-10 w-auto"
                 />
               ) : (

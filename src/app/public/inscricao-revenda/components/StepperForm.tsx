@@ -27,6 +27,8 @@ interface FormData {
   confirmar_senha: string
   aceite_termos: boolean
   cpf_cnpj: string
+  nascimento: string
+  faturamento: number
 }
 
 // Componente StepIndicator para mostrar o progresso
@@ -118,7 +120,9 @@ export default function StepperForm() {
     senha: '',
     confirmar_senha: '',
     aceite_termos: false,
-    cpf_cnpj: ''
+    cpf_cnpj: '',
+    nascimento: '',
+    faturamento: 25000
   })
 
   const [errors, setErrors] = useState({
@@ -271,6 +275,11 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
     }
   }
 
+  // Domínio base baseado no ambiente
+  const BASE_DOMAIN = process.env.NODE_ENV === 'development' 
+    ? 'localhost' 
+    : 'erp1.com.br'
+
   // Função para avançar para o próximo passo
   const handleNext = async () => {
     if (currentStep === 1) {
@@ -281,8 +290,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
 
       // Se o domínio está disponível, redireciona para o subdomínio
       const protocol = window.location.protocol
-      const hostname = window.location.hostname
-      const port = window.location.port ? `:${window.location.port}` : ''
+      const port = process.env.NODE_ENV === 'development' ? ':3000' : ''
       
       // Passa apenas os dados necessários (email e domínio)
       const dadosIniciais = {
@@ -290,7 +298,8 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         dominio: formData.dominio
       }
       
-      const redirectUrl = `${protocol}//${formData.dominio}.${hostname}${port}/public/inscricao-revenda?step=2&data=${encodeURIComponent(JSON.stringify(dadosIniciais))}`
+      // Usa o domínio base apropriado para o ambiente
+      const redirectUrl = `${protocol}//${formData.dominio}.${BASE_DOMAIN}${port}/public/inscricao-revenda?step=2&data=${encodeURIComponent(JSON.stringify(dadosIniciais))}`
       
       console.log('Redirecionando para subdomínio:', redirectUrl)
       window.location.href = redirectUrl
@@ -325,7 +334,8 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         razao_social: data.razao_social,
         nome_fantasia: data.nome_fantasia,
         socios: data.socios,
-        primeiro_socio: data.socios?.[0]
+        primeiro_socio: data.socios?.[0],
+        data_inicio: data.data_inicio_atividade
       })
 
       // Atualiza os dados do formulário com os dados da empresa
@@ -334,14 +344,15 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         nome_empresa: data.razao_social || data.nome_fantasia,
         nome_completo: data.razao_social,
         apelido: data.nome_fantasia || data.razao_social,
-        cpf_cnpj: cnpjLimpo, // Garante que o cpf_cnpj está preenchido
+        cpf_cnpj: cnpjLimpo,
         cep: data.endereco?.cep?.replace(/\D/g, '') || '',
         logradouro: `${data.endereco?.tipo_logradouro || ''} ${data.endereco?.logradouro || ''}`.trim(),
         numero: data.endereco?.numero || '',
         complemento: data.endereco?.complemento || '',
         bairro: data.endereco?.bairro || '',
         municipio: data.endereco?.municipio?.descricao || '',
-        uf: data.endereco?.uf || ''
+        uf: data.endereco?.uf || '',
+        nascimento: data.data_inicio_atividade || ''
       }
 
       console.log('Novos dados do formulário:', novosDados)
@@ -443,8 +454,6 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       case 1:
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold mb-4">Dados de Acesso</h2>
-            
             {error && (
               <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
                 <p className="text-red-700">{error}</p>
@@ -550,7 +559,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                   setFormData(prev => ({ 
                     ...prev, 
                     cnpj: value,
-                    cpf_cnpj: value.replace(/\D/g, '') // Adiciona ao cpf_cnpj também
+                    cpf_cnpj: value.replace(/\D/g, '') 
                   }));
                 }}
                 className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2"
@@ -629,6 +638,45 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                     className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2"
                     required
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="nascimento" className="block text-sm font-medium text-gray-700">
+                    Data de Nascimento
+                  </label>
+                  <input
+                    id="nascimento"
+                    type="date"
+                    value={formData.nascimento}
+                    onChange={(e) => setFormData(prev => ({ ...prev, nascimento: e.target.value }))}
+                    className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="faturamento" className="block text-sm font-medium text-gray-700">
+                    Faturamento Mensal
+                  </label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500 sm:text-sm">R$</span>
+                    </div>
+                    <input
+                      id="faturamento"
+                      type="text"
+                      inputMode="numeric"
+                      value={formData.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        const numberValue = Number(value) / 100;
+                        setFormData(prev => ({ ...prev, faturamento: numberValue }));
+                      }}
+                      className="block w-full pl-10 pr-3 rounded-md border border-gray-300 bg-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2 text-right"
+                      placeholder="0,00"
+                      required
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -897,7 +945,9 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                 required
                 minLength={6}
               />
-              <p className="mt-1 text-sm text-gray-500">Mínimo de 6 caracteres</p>
+              <p className="mt-1 text-sm text-gray-500">
+                Mínimo de 6 caracteres
+              </p>
             </div>
 
             <div>
@@ -999,7 +1049,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       // No passo 2, ENTER só executa a busca do CNPJ
       if (currentStep === 2) {
         if (formData.cpf_cnpj) {
-          handleBuscarCNPJ()
+          buscarCNPJ(formData.cnpj)
         }
         return
       }
@@ -1028,25 +1078,48 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
 
       const data = await response.json()
 
-      // Atualiza o formulário com os dados da empresa
-      setFormData(prev => ({
-        ...prev,
+      if (!data || data.error) {
+        console.error("Erro da API:", data)
+        throw new Error('Erro ao consultar CNPJ. Tente novamente.')
+      }
+
+      // Log para debug
+      console.log('Dados recebidos da API:', {
+        razao_social: data.razao_social,
+        nome_fantasia: data.nome_fantasia,
+        socios: data.socios,
+        primeiro_socio: data.socios?.[0],
+        data_inicio: data.data_inicio_atividade
+      })
+
+      // Atualiza os dados do formulário com os dados da empresa
+      const novosDados = {
+        ...formData,
+        nome_empresa: data.razao_social || data.nome_fantasia,
         nome_completo: data.razao_social,
-        apelido: data.estabelecimento.nome_fantasia || data.razao_social,
-        cep: data.estabelecimento.cep,
-        logradouro: `${data.estabelecimento.tipo_logradouro || ''} ${data.estabelecimento.logradouro || ''}`.trim(),
-        numero: data.estabelecimento.numero,
-        complemento: data.estabelecimento.complemento || '',
-        bairro: data.estabelecimento.bairro,
-        municipio: data.estabelecimento.cidade.nome,
-        uf: data.estabelecimento.estado.sigla,
-        telefone: data.estabelecimento.ddd1 + data.estabelecimento.telefone1,
-      }))
+        apelido: data.nome_fantasia || data.razao_social,
+        cpf_cnpj: cnpj,
+        cep: data.endereco?.cep?.replace(/\D/g, '') || '',
+        logradouro: `${data.endereco?.tipo_logradouro || ''} ${data.endereco?.logradouro || ''}`.trim(),
+        numero: data.endereco?.numero || '',
+        complemento: data.endereco?.complemento || '',
+        bairro: data.endereco?.bairro || '',
+        municipio: data.endereco?.municipio?.descricao || '',
+        uf: data.endereco?.uf || '',
+        nascimento: data.data_inicio_atividade || ''
+      }
+
+      console.log('Novos dados do formulário:', novosDados)
+      
+      setFormData(novosDados)
 
       // Busca dados complementares do CEP
-      await handleBuscarCEP(data.estabelecimento.cep)
+      if (data.endereco?.cep) {
+        await buscarCEP(data.endereco.cep)
+      }
 
-      setError('')
+      // Avança para o próximo passo
+      setCurrentStep(prev => prev + 1)
     } catch (error: any) {
       console.error('Erro ao buscar CNPJ:', error)
       setError(error.message || 'Erro ao buscar dados do CNPJ')
@@ -1058,6 +1131,10 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
   const handleBuscarCEP = async (cep: string) => {
     try {
       const cepLimpo = cep.replace(/\D/g, '')
+      if (cepLimpo.length !== 8) return
+
+      setIsLoading(true)
+      
       const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
       
       if (!response.ok) {
@@ -1066,21 +1143,23 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
 
       const data = await response.json()
 
-      if (data.erro) {
-        throw new Error('CEP não encontrado')
+      if (data.error) {
+        throw new Error(data.error)
       }
 
-      // Atualiza o formulário com os dados complementares do CEP
+      // Atualiza apenas campos vazios com dados do ViaCEP
       setFormData(prev => ({
         ...prev,
-        ibge: data.ibge,
-        gia: data.gia,
-        ddd: data.ddd,
-        siafi: data.siafi
+        logradouro: prev.logradouro || data.logradouro || '',
+        bairro: prev.bairro || data.bairro || '',
+        municipio: prev.municipio || data.localidade || '',
+        uf: prev.uf || data.uf || ''
       }))
     } catch (error: any) {
       console.error('Erro ao buscar CEP:', error)
       // Não exibimos erro para o usuário pois são apenas dados complementares
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -1101,32 +1180,30 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
   }, [])
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-xl p-8">
-        <StepIndicator currentStep={currentStep} totalSteps={5} />
-        
-        {/* Título do passo atual */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {currentStep === 1 && "Dados de Acesso"}
-            {currentStep === 2 && "Informações da Empresa"}
-            {currentStep === 3 && "Dados Complementares"}
-            {currentStep === 4 && "Endereço"}
-            {currentStep === 5 && "Senha e Termos de Uso"}
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            {currentStep === 1 && "Configure seu acesso ao sistema"}
-            {currentStep === 2 && "Preencha os dados da sua empresa"}
-            {currentStep === 3 && "Complete seu cadastro"}
-            {currentStep === 4 && "Preencha seu endereço"}
-            {currentStep === 5 && "Configure sua senha e aceite os termos de uso"}
-          </p>
-        </div>
-
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-6" onKeyDown={handleKeyDown}>
-          {renderStep()}
-        </form>
+    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-xl p-8">
+      <StepIndicator currentStep={currentStep} totalSteps={5} />
+      
+      {/* Título do passo atual */}
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900">
+          {currentStep === 1 && "Dados de Acesso"}
+          {currentStep === 2 && "Informações da Empresa"}
+          {currentStep === 3 && "Dados Complementares"}
+          {currentStep === 4 && "Endereço"}
+          {currentStep === 5 && "Senha e Termos de Uso"}
+        </h2>
+        <p className="mt-2 text-sm text-gray-600">
+          {currentStep === 1 && "Configure seu acesso ao sistema"}
+          {currentStep === 2 && "Preencha os dados da sua empresa"}
+          {currentStep === 3 && "Complete seu cadastro"}
+          {currentStep === 4 && "Preencha seu endereço"}
+          {currentStep === 5 && "Configure sua senha e aceite os termos de uso"}
+        </p>
       </div>
+
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-6" onKeyDown={handleKeyDown}>
+        {renderStep()}
+      </form>
     </div>
   )
 }

@@ -38,7 +38,9 @@ export async function POST(request: Request) {
         cpf_cnpj: formData.cpf_cnpj,
         tipo: 2, // Tipo revenda
         dominio: formData.dominio,
-        revenda_status: 1 // Aguardando ativação
+        revenda_status: 1, // Aguardando ativação
+        nascimento: formData.nascimento, // Data de fundação (PJ) ou nascimento (PF)
+        faturamento: formData.faturamento // Faturamento mensal
       })
       .select()
       .single()

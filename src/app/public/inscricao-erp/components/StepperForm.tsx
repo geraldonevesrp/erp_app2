@@ -110,7 +110,7 @@ export default function StepperForm() {
   const [formData, setFormData] = useState<FormData>({
     email: '',
     dominio: '',
-    tipo_pessoa: 'J',
+    tipo_pessoa: 'J', // Pessoa Jurídica apenas
     nome_empresa: '',
     nome_completo: '',
     apelido: '',
@@ -420,6 +420,30 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
     }
 
     if (currentStep === 3) {
+      // Validar dados cadastrais
+      if (!formData.nome_empresa || !formData.apelido || !formData.nome_completo || !formData.celular) {
+        setError('Preencha todos os campos')
+        return
+      }
+
+      setCurrentStep(prev => prev + 1)
+      setError(null)
+      return
+    }
+
+    if (currentStep === 4) {
+      // Validar endereço
+      if (!formData.cep || !formData.logradouro || !formData.numero || !formData.bairro || !formData.municipio || !formData.uf) {
+        setError('Preencha todos os campos')
+        return
+      }
+
+      setCurrentStep(prev => prev + 1)
+      setError(null)
+      return
+    }
+
+    if (currentStep === 5) {
       // Validar senha e termos
       if (!formData.senha || !formData.confirmar_senha) {
         setError('Preencha todos os campos')
@@ -473,7 +497,14 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
             dominio: formData.dominio,
             apelido: formData.apelido || formData.nome_completo,
             telefone: formData.telefone,
-            whatsapp: formData.whatsapp
+            whatsapp: formData.whatsapp,
+            cep: formData.cep,
+            logradouro: formData.logradouro,
+            numero: formData.numero,
+            complemento: formData.complemento,
+            bairro: formData.bairro,
+            municipio: formData.municipio,
+            uf: formData.uf
           }
         ])
         .select()
@@ -543,7 +574,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="Digite seu email"
+                placeholder="Digite seu email corporativo"
                 className={errors.email ? 'border-red-500' : ''}
               />
               {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
@@ -561,28 +592,17 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                 />
                 <span>.erp.app</span>
               </div>
+              <p className="text-sm text-gray-500 mt-1">Este será o endereço do seu ERP, exemplo: minhaempresa.erp.app</p>
               {errors.dominio && <p className="text-sm text-red-500 mt-1">{errors.dominio}</p>}
             </div>
 
-            <div className="flex justify-between pt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setCurrentStep(prev => prev - 1)
-                  setError(null)
-                }}
-                disabled={currentStep === 1 || isLoading}
-              >
-                Voltar
-              </Button>
-
+            <div className="flex justify-end pt-6">
               <Button
                 type="button"
                 onClick={handleNext}
-                disabled={isLoading}
+                disabled={isLoading || !formData.email || !formData.dominio || errors.email || errors.dominio}
               >
-                {isLoading ? 'Carregando...' : 'Próximo'}
+                {isLoading ? 'Verificando...' : 'Próximo'}
               </Button>
             </div>
           </div>
@@ -591,27 +611,8 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       case 2:
         return (
           <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Informações da Empresa</h2>
-              <p className="text-gray-600">
-                Preencha os dados da sua empresa
-              </p>
-            </div>
-
             <div>
-              <Label htmlFor="tipo_pessoa">Tipo de Pessoa</Label>
-              <select
-                id="tipo_pessoa"
-                value={formData.tipo_pessoa}
-                onChange={(e) => setFormData(prev => ({ ...prev, tipo_pessoa: e.target.value as 'F' | 'J' }))}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="J">Pessoa Jurídica</option>
-              </select>
-            </div>
-
-            <div>
-              <Label htmlFor="cpf_cnpj">CNPJ</Label>
+              <Label htmlFor="cpf_cnpj">CNPJ da Empresa</Label>
               <Input
                 id="cpf_cnpj"
                 value={formData.cpf_cnpj}
@@ -619,11 +620,13 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                   setFormData(prev => ({ ...prev, cpf_cnpj: e.target.value }))
                   setErrors(prev => ({ ...prev, cpf_cnpj: '' }))
                 }}
+                placeholder="Digite o CNPJ"
                 className={errors.cpf_cnpj ? 'border-red-500' : ''}
               />
               {errors.cpf_cnpj && (
                 <p className="text-red-500 text-sm mt-1">{errors.cpf_cnpj}</p>
               )}
+              <p className="text-sm text-gray-500 mt-1">Buscaremos automaticamente os dados da sua empresa</p>
             </div>
 
             <div className="flex justify-between">
@@ -631,21 +634,246 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                 type="button"
                 variant="outline"
                 onClick={() => setCurrentStep(prev => prev - 1)}
+                disabled={isLoading}
               >
                 Voltar
               </Button>
               <Button
                 type="button"
                 onClick={handleNext}
-                disabled={isLoading}
+                disabled={isLoading || !formData.cpf_cnpj}
               >
-                {isLoading ? 'Carregando...' : 'Próximo'}
+                {isLoading ? 'Buscando dados...' : 'Próximo'}
               </Button>
             </div>
           </div>
         )
 
       case 3:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4">Dados Cadastrais</h2>
+            
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                <p className="text-red-700">{error}</p>
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="nome_empresa">Razão Social</Label>
+              <Input
+                id="nome_empresa"
+                value={formData.nome_empresa}
+                onChange={(e) => setFormData(prev => ({ ...prev, nome_empresa: e.target.value }))}
+                placeholder="Razão Social da empresa"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="apelido">Nome Fantasia</Label>
+              <Input
+                id="apelido"
+                value={formData.apelido}
+                onChange={(e) => setFormData(prev => ({ ...prev, apelido: e.target.value }))}
+                placeholder="Nome Fantasia da empresa"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="nome_completo">Nome do Responsável</Label>
+              <Input
+                id="nome_completo"
+                value={formData.nome_completo}
+                onChange={(e) => setFormData(prev => ({ ...prev, nome_completo: e.target.value }))}
+                placeholder="Nome completo do responsável"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="telefone">Telefone Fixo</Label>
+                <Input
+                  id="telefone"
+                  value={formData.telefone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                  placeholder="Telefone fixo"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="celular">Celular</Label>
+                <Input
+                  id="celular"
+                  value={formData.celular}
+                  onChange={(e) => setFormData(prev => ({ ...prev, celular: e.target.value }))}
+                  placeholder="Celular"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="whatsapp">WhatsApp</Label>
+              <Input
+                id="whatsapp"
+                value={formData.whatsapp}
+                onChange={(e) => setFormData(prev => ({ ...prev, whatsapp: e.target.value }))}
+                placeholder="WhatsApp (opcional)"
+              />
+              <p className="text-sm text-gray-500 mt-1">Opcional, preencha se for diferente do celular</p>
+            </div>
+
+            <div className="flex justify-between pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCurrentStep(prev => prev - 1)}
+                disabled={isLoading}
+              >
+                Voltar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setCurrentStep(prev => prev + 1)}
+                disabled={!formData.nome_completo || !formData.celular || !formData.nome_empresa || !formData.apelido}
+              >
+                Próximo
+              </Button>
+            </div>
+          </div>
+        )
+
+      case 4:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold mb-4">Endereço</h2>
+            
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                <p className="text-red-700">{error}</p>
+              </div>
+            )}
+
+            <div>
+              <Label htmlFor="cep">CEP</Label>
+              <Input
+                id="cep"
+                value={formData.cep}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setFormData(prev => ({ ...prev, cep: value }))
+                  if (value.replace(/\D/g, '').length === 8) {
+                    buscarCEP(value)
+                  }
+                }}
+                placeholder="Digite o CEP"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="logradouro">Logradouro</Label>
+              <Input
+                id="logradouro"
+                value={formData.logradouro}
+                onChange={(e) => setFormData(prev => ({ ...prev, logradouro: e.target.value }))}
+                placeholder="Rua, Avenida, etc"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="numero">Número</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="numero"
+                    value={formData.numero}
+                    onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
+                    placeholder="Número"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setFormData(prev => ({ ...prev, numero: 'S/N' }))}
+                  >
+                    S/N
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="complemento">Complemento</Label>
+                <Input
+                  id="complemento"
+                  value={formData.complemento}
+                  onChange={(e) => setFormData(prev => ({ ...prev, complemento: e.target.value }))}
+                  placeholder="Complemento (opcional)"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="bairro">Bairro</Label>
+              <Input
+                id="bairro"
+                value={formData.bairro}
+                onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
+                placeholder="Bairro"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="municipio">Município</Label>
+                <Input
+                  id="municipio"
+                  value={formData.municipio}
+                  onChange={(e) => setFormData(prev => ({ ...prev, municipio: e.target.value }))}
+                  placeholder="Município"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="uf">UF</Label>
+                <Input
+                  id="uf"
+                  value={formData.uf}
+                  onChange={(e) => setFormData(prev => ({ ...prev, uf: e.target.value }))}
+                  placeholder="UF"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCurrentStep(prev => prev - 1)}
+                disabled={isLoading}
+              >
+                Voltar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setCurrentStep(prev => prev + 1)}
+                disabled={!formData.cep || !formData.logradouro || !formData.numero || !formData.bairro || !formData.municipio || !formData.uf}
+              >
+                Próximo
+              </Button>
+            </div>
+          </div>
+        )
+
+      case 5:
         return (
           <div className="space-y-4">
             <div>
@@ -656,7 +884,9 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                 value={formData.senha}
                 onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
                 placeholder="Digite sua senha"
+                minLength={6}
               />
+              <p className="text-sm text-gray-500 mt-1">Mínimo de 6 caracteres</p>
             </div>
 
             <div>
@@ -667,21 +897,23 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                 value={formData.confirmar_senha}
                 onChange={(e) => setFormData(prev => ({ ...prev, confirmar_senha: e.target.value }))}
                 placeholder="Confirme sua senha"
+                minLength={6}
               />
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 mt-4">
               <input
                 type="checkbox"
                 id="aceite_termos"
                 checked={formData.aceite_termos}
                 onChange={(e) => setFormData(prev => ({ ...prev, aceite_termos: e.target.checked }))}
+                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
               />
               <label htmlFor="aceite_termos" className="text-sm">
                 Li e aceito os{' '}
                 <button
                   type="button"
-                  onClick={() => setModalConfig({ isOpen: true, title: 'Termos de Serviço', content: termosContent })}
+                  onClick={() => handleOpenTermos('termos')}
                   className="text-indigo-600 hover:underline"
                 >
                   termos de serviço
@@ -689,12 +921,46 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                 e a{' '}
                 <button
                   type="button"
-                  onClick={() => setModalConfig({ isOpen: true, title: 'Política de Privacidade', content: privacidadeContent })}
+                  onClick={() => handleOpenTermos('privacidade')}
                   className="text-indigo-600 hover:underline"
                 >
                   política de privacidade
                 </button>
               </label>
+            </div>
+
+            <div className="flex justify-between pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCurrentStep(prev => prev - 1)}
+                disabled={isLoading}
+              >
+                Voltar
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={
+                  isLoading || 
+                  !formData.senha || 
+                  !formData.confirmar_senha || 
+                  formData.senha !== formData.confirmar_senha ||
+                  !formData.aceite_termos
+                }
+              >
+                {isLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Criando conta...</span>
+                  </div>
+                ) : (
+                  'Criar Conta'
+                )}
+              </Button>
             </div>
           </div>
         )
@@ -720,13 +986,24 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
             )}
           </div>
 
-          <StepIndicator currentStep={currentStep} totalSteps={3} />
+          <StepIndicator currentStep={currentStep} totalSteps={5} />
 
           <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             {renderStep()}
 
             {error && (
-              <div className="text-red-500 text-center">{error}</div>
+              <div className="bg-red-50 border-l-4 border-red-400 p-4 mt-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                </div>
+              </div>
             )}
           </form>
         </Card>
@@ -740,4 +1017,4 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       />
     </div>
   )
-} 
+}
