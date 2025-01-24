@@ -11,7 +11,9 @@ class AsaasClient {
   private readonly config: AsaasConfig;
 
   private constructor() {
-    const apiKey = process.env.ASAAS_SANDBOX_API_KEY
+    // APENAS PARA DEBUG - NÃO USE EM PRODUÇÃO
+    const apiKey = process.env.ASAAS_SANDBOX_API_KEY || '$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjI3ZThmZGMxLTIxOWQtNDg1NS05YjRmLTY3OGIwYzNiZmM4OTo6JGFhY2hfZTE0YTY3Y2EtN2JmMS00YWNkLWE3NDItZTQ2YWEyOGZiZTY3'
+
     if (!apiKey) {
       throw new Error('ASAAS_SANDBOX_API_KEY não configurada')
     }

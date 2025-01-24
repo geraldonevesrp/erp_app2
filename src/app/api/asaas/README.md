@@ -12,6 +12,35 @@
    - Use o `asaasClient` fornecido em `@/lib/asaas/client`
    - O cliente gerencia as credenciais de forma segura
 
+## Cliente do Asaas
+
+### 1. Localização do Cliente
+
+O cliente oficial do Asaas está em `src/lib/asaas/client.ts`. Este é o ÚNICO lugar onde o cliente deve ser definido.
+
+```typescript
+// ✅ Forma correta de importar
+import { asaasClient } from '@/lib/asaas/client'
+
+// ❌ NÃO crie novos clientes ou duplique o código
+// ❌ NÃO acesse process.env.ASAAS_SANDBOX_API_KEY diretamente
+```
+
+### 2. Usando o Cliente
+
+O cliente é um singleton que gerencia automaticamente as credenciais:
+
+```typescript
+// Em qualquer arquivo que precise fazer chamadas ao Asaas
+import { asaasClient } from '@/lib/asaas/client'
+
+// Fazer uma requisição
+const response = await asaasClient.makeRequest('/endpoint', {
+  method: 'POST',
+  body: JSON.stringify(data)
+})
+```
+
 ## Configuração do Ambiente
 
 ### 1. Arquivo `.env.local`
@@ -41,99 +70,111 @@ const nextConfig = {
 
 ## Uso nas Rotas de API
 
-### Forma Segura (Recomendada)
+### 1. Criar Cliente
 
 ```typescript
-import { asaasClient } from '@/lib/asaas/client'
-
-export async function GET() {
-  try {
-    // Lista clientes
-    const response = await asaasClient.listCustomers()
-    const data = await response.json()
-    
-    return NextResponse.json({ success: true, data })
-  } catch (error) {
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Erro ao acessar Asaas' 
-    }, { status: 500 })
-  }
-}
-```
-
-### ❌ Forma Insegura (Não Recomendada)
-
-```typescript
-// NÃO FAÇA ISSO!
-const apiKey = process.env.ASAAS_SANDBOX_API_KEY
-const response = await fetch('https://sandbox.asaas.com/api/v3/customers', {
-  headers: { 'access_token': apiKey }
+// POST /api/asaas
+const response = await fetch('/api/asaas', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    endpoint: '/customers',
+    data: {
+      name: "Nome do Cliente",
+      cpfCnpj: "19540550000121",
+      mobilePhone: "4799376637",
+      email: "cliente@email.com",
+      postalCode: "01001000",
+      addressNumber: "123"
+    }
+  })
 })
+
+const data = await response.json()
+// data.data.id -> ID do cliente criado
 ```
 
-## Troubleshooting
+### 2. Criar Cobrança PIX
 
-### Problemas com Variáveis de Ambiente
+```typescript
+// POST /api/asaas
+const response = await fetch('/api/asaas', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    endpoint: '/payments',
+    data: {
+      customer: "cus_000005219613", // ID do cliente
+      billingType: "PIX",
+      value: 297.00,
+      dueDate: "2025-01-25",
+      description: "Descrição da cobrança"
+    }
+  })
+})
 
-Se você estiver tendo problemas com as variáveis de ambiente não sendo carregadas corretamente, aqui estão algumas soluções:
+const data = await response.json()
+// data.data.id -> ID do pagamento criado
+```
 
-1. **Solução 1: Verificar Arquivos**
-   - Confirme que `.env.local` existe na raiz do projeto
-   - Verifique se as variáveis estão escritas corretamente (sem espaços)
-   - Certifique-se que não há caracteres especiais ou BOM no arquivo
+### 3. Gerar QR Code PIX
 
-2. **Solução 2: Reiniciar o Servidor**
-   ```powershell
-   # Pare todos os processos node
-   taskkill /F /IM node.exe
-   # Inicie o servidor novamente
-   npm run dev
-   ```
+```typescript
+// POST /api/asaas
+const response = await fetch('/api/asaas', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    endpoint: `/payments/${paymentId}/pixQrCode`
+  })
+})
 
-3. **Solução 3: Configuração Manual**
-   Se ainda houver problemas, você pode configurar as variáveis diretamente no código para debug:
-   ```typescript
-   // Apenas para debug - NÃO USE EM PRODUÇÃO
-   const API_KEY = process.env.ASAAS_SANDBOX_API_KEY || '$aact_seu_api_key'
-   ```
+const data = await response.json()
+// data.data.encodedImage -> Imagem do QR Code em base64
+// data.data.payload -> Código PIX copia e cola
+// data.data.expirationDate -> Data de expiração
 
-4. **Solução 4: Usar dotenv**
-   Se nada mais funcionar, você pode usar o pacote dotenv:
-   ```typescript
-   import * as dotenv from 'dotenv'
-   dotenv.config({ path: '.env.local' })
-   ```
+// Para mostrar o QR Code:
+const imageUrl = `data:image/png;base64,${data.data.encodedImage}`
+```
 
-### Outros Problemas Comuns
+## Exemplo de Uso Completo
 
-1. **Erro 401 (Não Autorizado)**
-   - Verifique se a API key está correta
-   - Confirme se está usando o ambiente correto (sandbox/produção)
+Veja um exemplo completo em `/api/asaas/test-page` que demonstra:
+1. Criação de cliente
+2. Criação de cobrança PIX
+3. Geração de QR Code
 
-2. **Erro 404 (Não Encontrado)**
-   - Verifique se a rota está no diretório correto (`app/api/...`)
-   - Certifique-se que o arquivo se chama `route.ts`
+## Notas Importantes
 
-3. **Erro 500 (Erro Interno)**
-   - Verifique os logs do servidor para mais detalhes
-   - Tente usar um try/catch para capturar erros específicos
+1. **Ambiente Sandbox**
+   - Use o prefixo `$aact_` na API Key para ambiente sandbox
+   - Base URL: `https://sandbox.asaas.com/api/v3`
 
-## Teste das Credenciais
+2. **QR Code PIX**
+   - O QR Code é dinâmico e expira
+   - Expira 12 meses após a data de vencimento
+   - Só pode ser pago uma vez
+   - Retorna tanto a imagem em base64 quanto o código copia e cola
 
-Para testar se suas credenciais estão configuradas corretamente:
+3. **Tratamento de Erros**
+   - Sempre verifique `response.ok` antes de usar os dados
+   - Use try/catch para capturar erros de rede
+   - Verifique os logs para debug em caso de erro
 
-```bash
-# Teste básico
-curl http://localhost:3000/api/asaas/test
+4. **Segurança**
+   - Todas as chamadas devem ser feitas através do backend
+   - Nunca exponha a API Key no frontend
+   - Use HTTPS em produção
 
-# Resposta esperada
-{
-  "success": true,
-  "data": {
-    "object": "list",
-    "hasMore": false,
-    "totalCount": X,
-    "data": [...]
-  }
-}
+## Links Úteis
+
+- [Documentação Oficial do Asaas](https://docs.asaas.com/)
+- [Documentação PIX](https://docs.asaas.com/docs/pix-overview)
+- [Referência da API](https://docs.asaas.com/reference/api-introduction)

@@ -3,6 +3,7 @@
 import { ThemeProvider } from '@/components/theme-provider'
 import { PerfilProvider } from '@/contexts/perfil'
 import { SupabaseProvider } from '@/contexts/supabase'
+import { RevendaPerfilProvider } from '@/contexts/revendas/perfil'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -14,7 +15,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <SupabaseProvider>
         <PerfilProvider>
-          <div suppressHydrationWarning>{children}</div>
+          <RevendaPerfilProvider>
+            <div suppressHydrationWarning>{children}</div>
+          </RevendaPerfilProvider>
         </PerfilProvider>
       </SupabaseProvider>
     </ThemeProvider>

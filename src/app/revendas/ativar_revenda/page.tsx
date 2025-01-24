@@ -34,24 +34,7 @@ async function createAsaasCustomer(customerData: any) {
       },
       body: JSON.stringify({
         endpoint: '/customers',
-        data: {
-          name: customerData.name,
-          cpfCnpj: customerData.cpfCnpj,
-          email: customerData.email,
-          phone: customerData.phone,
-          mobilePhone: customerData.mobilePhone,
-          address: customerData.address,
-          addressNumber: customerData.addressNumber,
-          complement: customerData.complement,
-          province: customerData.province,
-          postalCode: customerData.postalCode,
-          externalReference: customerData.externalReference,
-          notificationDisabled: false,
-          additionalEmails: customerData.additionalEmails,
-          municipalInscription: customerData.municipalInscription,
-          stateInscription: customerData.stateInscription,
-          observations: customerData.observations
-        }
+        data: customerData
       })
     })
 
@@ -63,7 +46,7 @@ async function createAsaasCustomer(customerData: any) {
 
     const data = await response.json()
     console.log('Cliente criado com sucesso:', data)
-    return data
+    return data.data
   } catch (error: any) {
     console.error('Erro detalhado ao criar cliente:', error)
     throw error
@@ -80,15 +63,7 @@ async function createAsaasCharge(chargeData: any) {
       },
       body: JSON.stringify({
         endpoint: '/payments',
-        data: {
-          customer: chargeData.customer,
-          billingType: chargeData.billingType,
-          value: chargeData.value,
-          dueDate: chargeData.dueDate,
-          description: chargeData.description,
-          externalReference: chargeData.externalReference,
-          postalService: false
-        }
+        data: chargeData
       })
     })
 
@@ -100,7 +75,7 @@ async function createAsaasCharge(chargeData: any) {
 
     const data = await response.json()
     console.log('Cobrança criada com sucesso:', data)
-    return data
+    return data.data
   } catch (error: any) {
     console.error('Erro detalhado ao criar cobrança:', error)
     throw error
@@ -116,18 +91,18 @@ async function getPixQrCode(paymentId: string) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        endpoint: `/payments/${paymentId}/pixQrCode`,
-        method: 'GET'
+        endpoint: `/payments/${paymentId}/pixQrCode`
       })
     })
 
     if (!response.ok) {
-      throw new Error(`Erro ao buscar QR Code: ${response.status}`)
+      const errorData = await response.json()
+      throw new Error(errorData.error || `Erro ao buscar QR Code: ${response.status}`)
     }
 
     const data = await response.json()
     console.log('QR Code recebido:', data)
-    return data
+    return data.data
   } catch (error) {
     console.error('Erro ao buscar QR Code:', error)
     throw error
@@ -147,6 +122,41 @@ export default function AtivarRevenda() {
   const [cobranca, setCobranca] = useState<any>(null)
   const [copied, setCopied] = useState(false)
   const [verificandoCobranca, setVerificandoCobranca] = useState(true)
+  const [validacaoErros, setValidacaoErros] = useState<string[]>([])
+
+  // Função para validar os dados do perfil
+  const validarPerfil = (perfil: any) => {
+    const erros: string[] = []
+    
+    if (!perfil.nome_completo?.trim()) {
+      erros.push('Nome da empresa é obrigatório')
+    }
+    
+    if (!perfil.cpf_cnpj?.trim()) {
+      erros.push('CPF/CNPJ é obrigatório')
+    } else {
+      const cpfCnpj = perfil.cpf_cnpj.replace(/[^0-9]/g, '')
+      if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
+        erros.push('CPF/CNPJ inválido')
+      }
+    }
+    
+    if (!perfil.email?.trim()) {
+      erros.push('Email é obrigatório')
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(perfil.email)) {
+      erros.push('Email inválido')
+    }
+    
+    if (!perfil.celular?.trim()) {
+      erros.push('Celular é obrigatório')
+    }
+    
+    if (!perfil.endereco_principal?.cep?.trim()) {
+      erros.push('CEP é obrigatório')
+    }
+    
+    return erros
+  }
 
   // Efeito para monitorar mudanças na cobrança via realtime
   useEffect(() => {
@@ -268,9 +278,17 @@ export default function AtivarRevenda() {
     try {
       setLoading(true)
       setError(null)
+      setValidacaoErros([])
 
       if (!perfil) {
         throw new Error('Perfil não encontrado')
+      }
+
+      // Valida os dados do perfil
+      const erros = validarPerfil(perfil)
+      if (erros.length > 0) {
+        setValidacaoErros(erros)
+        return
       }
 
       // Verifica novamente se já existe cobrança
@@ -448,6 +466,20 @@ export default function AtivarRevenda() {
             <Info className="h-4 w-4 text-muted-foreground" />
             <h2 className="text-lg font-semibold">Informações da Revenda</h2>
           </div>
+
+          {/* Erros de Validação */}
+          {validacaoErros.length > 0 && (
+            <Alert variant="destructive">
+              <AlertTitle>Por favor, complete seu cadastro</AlertTitle>
+              <AlertDescription>
+                <ul className="list-disc list-inside">
+                  {validacaoErros.map((erro, index) => (
+                    <li key={index}>{erro}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
             <div>
@@ -568,6 +600,11 @@ export default function AtivarRevenda() {
                     <p className="text-xs text-muted-foreground text-center max-w-[200px]">
                       Escaneie o QR Code com o app do seu banco
                     </p>
+                    {cobranca?.pix?.expirationDate && (
+                      <p className="text-xs text-muted-foreground">
+                        Expira em: {new Date(cobranca.pix.expirationDate).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                 ) : null}
 
@@ -625,7 +662,27 @@ export default function AtivarRevenda() {
                   Após o pagamento, sua conta será ativada automaticamente.
                   Em caso de dúvidas, entre em contato com nosso suporte.
                 </p>
+                <p className="mt-1 text-primary">
+                  Valor único de {formatCurrency(30)} para ativação da sua revenda
+                </p>
               </div>
+
+              {/* Status do Pagamento */}
+              {cobranca && (
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <div className={cn(
+                    "h-2 w-2 rounded-full",
+                    cobranca.status === 'RECEIVED' ? "bg-green-500" :
+                    cobranca.status === 'PENDING' ? "bg-yellow-500" :
+                    "bg-red-500"
+                  )} />
+                  <span className="text-xs text-muted-foreground">
+                    {cobranca.status === 'RECEIVED' ? 'Pagamento Recebido' :
+                     cobranca.status === 'PENDING' ? 'Aguardando Pagamento' :
+                     'Pagamento não Realizado'}
+                  </span>
+                </div>
+              )}
             </div>
           )}
         </div>
