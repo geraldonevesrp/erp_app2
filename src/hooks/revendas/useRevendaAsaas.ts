@@ -43,10 +43,18 @@ export function useRevendaAsaas() {
           .select(`
             *,
             asaas_contas!inner(*),
-            perfis_enderecos(*)
+            perfis_enderecos(*),
+            revenda_status
           `)
           .eq('user_id', user.id)
           .single()
+
+        // Se não estiver ativa, não continua
+        if (perfil?.revenda_status !== 2) {
+          setIsLoading(false)
+          setHasAsaasAccount(false)
+          return
+        }
 
         if (perfilError) {
           console.error('Erro ao buscar perfil:', perfilError)
@@ -96,7 +104,7 @@ export function useRevendaAsaas() {
               'logradouro',
               'numero',
               'bairro',
-              'municipio',
+              'localidade',
               'uf',
               'cep'
             ]
@@ -142,7 +150,7 @@ export function useRevendaAsaas() {
               complement: endereco.complemento || undefined,
               province: endereco.bairro,
               postalCode: endereco.cep,
-              city: endereco.municipio,
+              city: endereco.localidade,
               state: endereco.uf,
               // Configuração do webhook
               webhook: {

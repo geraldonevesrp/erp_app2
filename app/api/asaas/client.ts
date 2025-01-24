@@ -1,4 +1,9 @@
-import { env } from '@/env'
+import * as dotenv from 'dotenv'
+
+// Carrega as variáveis de ambiente do .env.local
+dotenv.config({ path: '.env.local' })
+// Carrega as variáveis de ambiente do .env como fallback
+dotenv.config({ path: '.env' })
 
 export interface AsaasConfig {
   baseUrl: string
@@ -11,10 +16,8 @@ class AsaasClient {
   private readonly config: AsaasConfig;
 
   private constructor() {
-    const apiKey = process.env.ASAAS_SANDBOX_API_KEY
-    if (!apiKey) {
-      throw new Error('ASAAS_SANDBOX_API_KEY não configurada')
-    }
+    // APENAS PARA DEBUG - NÃO USE EM PRODUÇÃO
+    const apiKey = process.env.ASAAS_SANDBOX_API_KEY || '$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjI3ZThmZGMxLTIxOWQtNDg1NS05YjRmLTY3OGIwYzNiZmM4OTo6JGFhY2hfZTE0YTY3Y2EtN2JmMS00YWNkLWE3NDItZTQ2YWEyOGZiZTY3'
 
     this.config = {
       baseUrl: 'https://sandbox.asaas.com/api/v3',

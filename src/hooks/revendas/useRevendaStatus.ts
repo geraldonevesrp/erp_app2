@@ -9,6 +9,7 @@ export function useRevendaStatus() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [isActive, setIsActive] = useState(false)
+  const [status, setStatus] = useState<number | null>(null)
 
   useEffect(() => {
     async function checkRevendaStatus() {
@@ -35,12 +36,16 @@ export function useRevendaStatus() {
           throw perfilError
         }
 
+        // Atualiza o status
+        setStatus(perfil?.revenda_status || null)
+        
         // Status 2 = Revenda Ativa
         setIsActive(perfil?.revenda_status === 2)
         
       } catch (error) {
         console.error('Erro ao verificar status da revenda:', error)
         setIsActive(false)
+        setStatus(null)
       } finally {
         setIsLoading(false)
       }
@@ -49,5 +54,5 @@ export function useRevendaStatus() {
     checkRevendaStatus()
   }, [supabase, router])
 
-  return { isLoading, isActive }
+  return { isLoading, isActive, status }
 }

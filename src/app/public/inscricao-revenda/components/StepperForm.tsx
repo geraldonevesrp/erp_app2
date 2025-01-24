@@ -87,6 +87,7 @@ export default function StepperForm() {
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean
     title: string
@@ -381,6 +382,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       if (cepLimpo.length !== 8) return
 
       setIsLoading(true)
+      setSuccessMessage(null)
       
       const response = await fetch(`/api/cep/${cepLimpo}`)
       const data = await response.json()
@@ -389,17 +391,29 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         throw new Error(data.error)
       }
 
-      // Atualiza apenas campos vazios com dados do ViaCEP
+      // Atualiza os campos com os novos dados do CEP
       setFormData(prev => ({
         ...prev,
-        logradouro: prev.logradouro || data.logradouro || '',
-        bairro: prev.bairro || data.bairro || '',
-        municipio: prev.municipio || data.localidade || '',
-        uf: prev.uf || data.uf || ''
+        logradouro: data.logradouro || '',
+        bairro: data.bairro || '',
+        municipio: data.localidade || '',
+        uf: data.uf || ''
       }))
+
+      // Mostra mensagem de sucesso
+      setSuccessMessage('Endereço atualizado com sucesso!')
+      
+      // Remove a mensagem após 3 segundos
+      setTimeout(() => {
+        setSuccessMessage(null)
+      }, 3000)
+
     } catch (error: any) {
       console.error('Erro ao buscar CEP:', error)
-      // Não mostra erro para o usuário, já que os dados do CNPJ foram mantidos
+      setError('CEP não encontrado. Verifique o número digitado.')
+      setTimeout(() => {
+        setError(null)
+      }, 3000)
     } finally {
       setIsLoading(false)
     }
@@ -774,6 +788,18 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
               </div>
             )}
 
+            {successMessage && (
+              <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+                <p className="text-green-700">{successMessage}</p>
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                <p className="text-blue-700">Buscando endereço...</p>
+              </div>
+            )}
+
             <div>
               <label htmlFor="cep" className="block text-sm font-medium text-gray-700">
                 CEP
@@ -783,19 +809,14 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
                 type="text"
                 value={formData.cep}
                 onChange={(e) => {
-                  const value = e.target.value
-                  setFormData(prev => ({ ...prev, cep: value }))
-                  // Busca CEP quando tiver 8 dígitos
-                  if (value.replace(/\D/g, '').length === 8) {
-                    buscarCEP(value)
+                  const newCep = e.target.value.replace(/\D/g, '');
+                  setFormData(prev => ({ ...prev, cep: newCep }));
+                  if (newCep.length === 8) {
+                    buscarCEP(newCep);
                   }
                 }}
-                onBlur={(e) => {
-                  // Busca CEP quando o campo perde o foco
-                  if (e.target.value.replace(/\D/g, '').length === 8) {
-                    buscarCEP(e.target.value)
-                  }
-                }}
+                maxLength={8}
+                placeholder="00000000"
                 className="mt-1 block w-full rounded-md border border-gray-300 bg-gray-50 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-4 py-2"
                 required
               />
@@ -1134,6 +1155,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       if (cepLimpo.length !== 8) return
 
       setIsLoading(true)
+      setSuccessMessage(null)
       
       const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
       
@@ -1147,17 +1169,29 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         throw new Error(data.error)
       }
 
-      // Atualiza apenas campos vazios com dados do ViaCEP
+      // Atualiza os campos com os novos dados do CEP
       setFormData(prev => ({
         ...prev,
-        logradouro: prev.logradouro || data.logradouro || '',
-        bairro: prev.bairro || data.bairro || '',
-        municipio: prev.municipio || data.localidade || '',
-        uf: prev.uf || data.uf || ''
+        logradouro: data.logradouro || '',
+        bairro: data.bairro || '',
+        municipio: data.localidade || '',
+        uf: data.uf || ''
       }))
+
+      // Mostra mensagem de sucesso
+      setSuccessMessage('Endereço atualizado com sucesso!')
+      
+      // Remove a mensagem após 3 segundos
+      setTimeout(() => {
+        setSuccessMessage(null)
+      }, 3000)
+
     } catch (error: any) {
       console.error('Erro ao buscar CEP:', error)
-      // Não exibimos erro para o usuário pois são apenas dados complementares
+      setError('CEP não encontrado. Verifique o número digitado.')
+      setTimeout(() => {
+        setError(null)
+      }, 3000)
     } finally {
       setIsLoading(false)
     }

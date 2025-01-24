@@ -6,7 +6,6 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { RevendasHeader } from './revendas-header'
 import { RevendasSidebar } from './revendas-sidebar'
 import { cn } from '@/lib/utils'
-import { useRevendaStatus } from '@/hooks/revendas/useRevendaStatus'
 import { Loader2 } from 'lucide-react'
 
 interface MenuItem {
@@ -31,7 +30,6 @@ export function RevendasLayout({ children, menuItems }: RevendasLayoutProps) {
   const supabase = createClientComponentClient()
   const router = useRouter()
   const pathname = usePathname()
-  const { isLoading, isActive } = useRevendaStatus()
 
   // Inicializa o menu fechado em dispositivos móveis
   useEffect(() => {
@@ -51,43 +49,20 @@ export function RevendasLayout({ children, menuItems }: RevendasLayoutProps) {
     router.push('/auth')
   }
 
+  // Não renderiza nada até o componente estar montado
   if (!isMounted) {
-    return null // Evita renderização no servidor
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    )
-  }
-
-  // Se não estiver ativo e não estiver na página de ativação, redireciona
-  if (!isActive && !pathname.includes('/revendas/ativar_revenda')) {
-    router.push('/revendas/ativar_revenda')
     return null
   }
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <RevendasSidebar
-        isOpen={isMenuOpen}
-        onClose={() => setIsMenuOpen(false)}
-        menuItems={menuItems}
-      />
-
-      {/* Main Content */}
-      <div className={cn(
-        'flex-1 flex flex-col min-h-screen transition-all duration-300',
-        isMenuOpen ? 'md:ml-64' : ''
-      )}>
-        <RevendasHeader
-          onMenuClick={() => setIsMenuOpen(!isMenuOpen)}
-          onLogout={handleLogout}
-        />
-        <main className="flex-1 p-4 bg-background">
+    <div className="flex h-screen flex-col">
+      <RevendasHeader isMenuOpen={isMenuOpen} onMenuToggle={() => setIsMenuOpen(!isMenuOpen)} onLogout={handleLogout} />
+      <div className="flex flex-1 overflow-hidden">
+        <RevendasSidebar isOpen={isMenuOpen} menuItems={menuItems} pathname={pathname} />
+        <main className={cn(
+          "flex-1 overflow-y-auto p-4 transition-all duration-200",
+          isMenuOpen ? "md:ml-64" : "md:ml-0"
+        )}>
           {children}
         </main>
       </div>
