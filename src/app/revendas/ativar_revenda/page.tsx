@@ -17,7 +17,7 @@ import { Card } from '@/components/ui/card'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { CircleDollarSign, Loader2, QrCode, ExternalLink, Check, Info, Copy, CopyCheck } from 'lucide-react'
+import { CircleDollarSign, Loader2, QrCode, ExternalLink, Check, Info, Copy, CopyCheck, AlertCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { useRevendaPerfil } from '@/contexts/revendas/perfil'
 import { useToast } from '@/components/ui/use-toast'
@@ -95,14 +95,84 @@ async function getPixQrCode(paymentId: string) {
       })
     })
 
+    // Verifica o content-type
+    const contentType = response.headers.get('content-type')
+    console.log('Content-Type:', contentType)
+
+    // Se não for ok, pega o erro
     if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || `Erro ao buscar QR Code: ${response.status}`)
+      const errorText = await response.text()
+      console.error('Erro na resposta:', errorText)
+      throw new Error(errorText)
     }
 
+    // Se chegou aqui, a resposta está ok
     const data = await response.json()
-    console.log('QR Code recebido:', data)
-    return data.data
+    console.log('QR Code recebido:', {
+      ...data,
+      encodedImage: data.encodedImage ? '[BASE64_IMAGE]' : undefined
+    })
+    
+    // A resposta contém a imagem em base64
+    if (!data.success || !data.encodedImage) {
+      console.error('Resposta sem QR Code:', data)
+      throw new Error('QR Code não encontrado na resposta')
+    }
+
+    // A resposta contém a imagem em base64
+    if (!data.success || !data.encodedImage) {
+      console.error('Resposta sem QR Code:', data)
+      throw new Error('QR Code não encontrado na resposta')
+    }
+
+    // Atualiza a cobrança com o QR Code
+    console.log('Atualizando cobrança com QR Code...')
+    const cobrancaAtualizada = {
+      ...cobrancaExistente.asaas,
+      pix: {
+        encodedImage: data.encodedImage,
+        payload: data.payload,
+        expirationDate: data.expirationDate,
+        success: true
+      }
+    }
+
+    const { data: dataAtualizada, error: updateError } = await supabase
+      .from('cobrancas')
+      .update({ 
+        asaas: cobrancaAtualizada
+      })
+      .eq('id', cobrancaExistente.id)
+      .select('*')
+      .single()
+
+    if (updateError) {
+      console.error('Erro ao atualizar cobrança:', updateError)
+      console.error('Detalhes do erro:', {
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint
+      })
+      throw new Error(`Erro ao atualizar cobrança: ${updateError.message}`)
+    }
+
+    if (!dataAtualizada) {
+      console.error('Nenhum dado retornado após atualização')
+      throw new Error('Erro ao atualizar cobrança: nenhum dado retornado')
+    }
+    
+    console.log('Cobrança atualizada com sucesso:', {
+      id: dataAtualizada.id,
+      asaas: {
+        ...dataAtualizada.asaas,
+        pix: {
+          ...dataAtualizada.asaas.pix,
+          encodedImage: dataAtualizada.asaas.pix?.encodedImage ? '[BASE64_IMAGE]' : undefined
+        }
+      }
+    })
+
+    return data
   } catch (error) {
     console.error('Erro ao buscar QR Code:', error)
     throw error
@@ -188,12 +258,18 @@ export default function AtivarRevenda() {
     }
   }, [perfil?.id])
 
-  // Verifica se já existe uma cobrança ao carregar a página
+  // Função para verificar cobrança existente
   useEffect(() => {
-    async function verificarCobrancaExistente() {
+    const verificarCobrancaExistente = async () => {
       if (!perfil?.id) return
-
+      
       try {
+        setVerificandoCobranca(true)
+        setError(null)
+
+        console.log('Verificando cobrança existente para perfil:', perfil.id)
+        
+        // Busca cobrança existente
         const { data: cobrancaExistente, error: errorCobranca } = await supabase
           .from('cobrancas')
           .select('*')
@@ -216,56 +292,66 @@ export default function AtivarRevenda() {
 
         // Se encontrou uma cobrança não paga, exibe ela
         if (cobrancaExistente && !cobrancaExistente.paga) {
-          console.log('Cobrança existente encontrada na inicialização:', cobrancaExistente)
+          console.log('Cobrança existente encontrada:', {
+            id: cobrancaExistente.id,
+            asaas: cobrancaExistente.asaas
+          })
           
-          // Busca o QR Code se não existir
-          if (!cobrancaExistente.asaas.pix) {
-            try {
-              setLoadingQrCode(true)
-              const qrCodeData = await getPixQrCode(cobrancaExistente.asaas.id)
-              console.log('QR Code obtido:', qrCodeData)
-              
-              // Atualiza a cobrança com o QR Code
-              const cobrancaAtualizada = {
-                ...cobrancaExistente.asaas,
-                pix: {
-                  encodedImage: qrCodeData.encodedImage,
-                  payload: qrCodeData.payload,
-                  expirationDate: qrCodeData.expirationDate
-                }
-              }
-              
-              // Atualiza no Supabase
-              const { error: updateError } = await supabase
-                .from('cobrancas')
-                .update({ asaas: cobrancaAtualizada })
-                .eq('id', cobrancaExistente.id)
-
-              if (updateError) {
-                console.error('Erro ao atualizar cobrança:', updateError)
-                throw updateError
-              }
-              
-              console.log('Cobrança atualizada com QR Code:', cobrancaAtualizada)
-              setCobranca(cobrancaAtualizada)
-            } catch (error) {
-              console.error('Erro ao buscar QR Code:', error)
-              setCobranca(cobrancaExistente.asaas)
-              toast({
-                variant: "destructive",
-                title: "Erro ao buscar QR Code",
-                description: "Tente recarregar a página"
+          // Busca o QR Code
+          try {
+            setLoadingQrCode(true)
+            console.log('Buscando QR Code para cobrança:', cobrancaExistente.asaas.id)
+            
+            const response = await fetch('/api/asaas', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                endpoint: `/payments/${cobrancaExistente.asaas.id}/pixQrCode`
               })
-            } finally {
-              setLoadingQrCode(false)
+            })
+
+            // Se não for ok, pega o erro
+            if (!response.ok) {
+              const errorText = await response.text()
+              console.error('Erro na resposta:', errorText)
+              throw new Error(errorText)
             }
-          } else {
-            console.log('QR Code já existe na cobrança:', cobrancaExistente.asaas.pix)
+
+            // Se chegou aqui, a resposta está ok
+            const data = await response.json()
+            console.log('QR Code recebido:', {
+              ...data,
+              encodedImage: data.encodedImage ? '[BASE64_IMAGE]' : undefined
+            })
+            
+            if (!data.success || !data.encodedImage) {
+              console.error('Resposta sem QR Code:', data)
+              throw new Error('QR Code não encontrado na resposta')
+            }
+
+            // Atualiza o estado com o QR Code
+            setCobranca({
+              ...cobrancaExistente.asaas,
+              pix: {
+                encodedImage: data.encodedImage,
+                payload: data.payload,
+                expirationDate: data.expirationDate,
+                success: true
+              }
+            })
+          } catch (error) {
+            console.error('Erro ao buscar QR Code:', error)
+            setError('Erro ao buscar QR Code. Tente recarregar a página.')
             setCobranca(cobrancaExistente.asaas)
+          } finally {
+            setLoadingQrCode(false)
           }
         }
       } catch (err) {
         console.error('Erro ao verificar cobrança existente:', err)
+        setError('Erro ao verificar cobrança. Tente novamente.')
       } finally {
         setVerificandoCobranca(false)
       }
@@ -577,7 +663,7 @@ export default function AtivarRevenda() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center w-full max-w-2xl">
+              <div className="grid grid-cols-1 gap-6 items-center w-full max-w-2xl">
                 {/* QR Code PIX */}
                 {loadingQrCode ? (
                   <div className="flex flex-col items-center space-y-2">
@@ -589,7 +675,7 @@ export default function AtivarRevenda() {
                     </p>
                   </div>
                 ) : cobranca?.pix?.encodedImage ? (
-                  <div className="flex flex-col items-center space-y-2">
+                  <div className="flex flex-col items-center space-y-4">
                     <div className="p-4 bg-white rounded-xl shadow-sm">
                       <img 
                         src={`data:image/png;base64,${cobranca.pix.encodedImage}`}
@@ -600,60 +686,45 @@ export default function AtivarRevenda() {
                     <p className="text-xs text-muted-foreground text-center max-w-[200px]">
                       Escaneie o QR Code com o app do seu banco
                     </p>
-                    {cobranca?.pix?.expirationDate && (
-                      <p className="text-xs text-muted-foreground">
-                        Expira em: {new Date(cobranca.pix.expirationDate).toLocaleString()}
-                      </p>
-                    )}
-                  </div>
-                ) : null}
 
-                {/* Botões de Ação */}
-                <div className="flex flex-col gap-2">
-                  {/* Botão Copiar Código PIX */}
-                  {cobranca?.pix?.payload && (
-                    <Button 
-                      variant="outline" 
-                      size="lg"
-                      className={cn(
-                        "w-full py-6 px-4 border-2",
-                        copied 
-                          ? "border-green-500/30 bg-green-500/10 hover:bg-green-500/20" 
-                          : "border-primary/20 bg-primary/5 hover:bg-primary/10"
+                    <div className="flex flex-col w-full gap-3">
+                      {cobranca.pix?.payload && (
+                        <Button
+                          variant="outline"
+                          className="w-full border-2 hover:bg-muted"
+                          onClick={() => {
+                            navigator.clipboard.writeText(cobranca.pix.payload)
+                            toast({
+                              title: "Código PIX copiado!",
+                              description: "Cole no app do seu banco para pagar"
+                            })
+                          }}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copiar código PIX
+                        </Button>
                       )}
-                      onClick={handleCopyPix}
-                    >
-                      <div className="flex flex-col items-center gap-2 px-2">
-                        {copied ? (
-                          <>
-                            <CopyCheck className="w-5 h-5 text-green-500" />
-                            <span className="text-sm text-green-500">Código Copiado!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-5 h-5" />
-                            <span className="text-sm">Copiar Código PIX</span>
-                          </>
-                        )}
-                      </div>
-                    </Button>
-                  )}
 
-                  {/* Link para o Asaas */}
-                  {cobranca?.invoiceUrl && (
-                    <Button 
-                      variant="outline" 
-                      size="lg"
-                      className="w-full py-6 px-4 border-2 border-primary/20 bg-primary/5 hover:bg-primary/10"
-                      onClick={() => window.open(cobranca.invoiceUrl, '_blank')}
-                    >
-                      <div className="flex flex-col items-center gap-2 px-2">
-                        <ExternalLink className="w-5 h-5" />
-                        <span className="text-sm">Ver Fatura no Asaas</span>
-                      </div>
-                    </Button>
-                  )}
-                </div>
+                      <Button
+                        variant="outline"
+                        className="w-full border-2 hover:bg-muted"
+                        onClick={() => window.open(cobranca.invoiceUrl, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Ver Fatura
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center space-y-2">
+                    <div className="p-4 bg-white rounded-xl shadow-sm">
+                      <AlertCircle className="w-32 h-32 text-muted-foreground" />
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center max-w-[200px]">
+                      QR Code não disponível. Tente recarregar a página.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Instruções */}

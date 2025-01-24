@@ -16,7 +16,9 @@ export async function POST(request: Request) {
       password: formData.senha,
       options: {
         data: {
-          tipo_usuario: 'revenda'
+          tipo_usuario: 'revenda',
+          email: formData.email,
+          email_verified: false
         }
       }
     })
@@ -46,6 +48,16 @@ export async function POST(request: Request) {
       .single()
 
     if (perfilError) throw new Error(perfilError.message)
+
+    // 2.1 Atualizar metadados do usuário com o perfil_id
+    console.log('2.1 Atualizando metadados do usuário...')
+    const { error: updateUserError } = await supabase.auth.updateUser({
+      data: {
+        perfil_id: perfilData.id
+      }
+    })
+
+    if (updateUserError) throw new Error(updateUserError.message)
 
     // 3. Criar endereço principal
     console.log('3. Criando endereço principal...')
@@ -78,6 +90,26 @@ export async function POST(request: Request) {
     })
 
     if (signInError) throw new Error(signInError.message)
+
+    // 4.1 Atualizar metadados do usuário após o login
+    console.log('4.1 Atualizando metadados do usuário...')
+    const { error: updateError } = await supabase.auth.updateUser({
+      data: {
+        perfil_id: perfilData.id,
+        tipo_usuario: 'revenda'
+      }
+    })
+
+    if (updateError) throw new Error(updateError.message)
+
+    // 4.2 Verificar se os metadados foram atualizados
+    const { data: { user }, error: getUserError } = await supabase.auth.getUser()
+    if (getUserError) throw new Error(getUserError.message)
+
+    console.log('Metadados atualizados:', user?.user_metadata)
+    if (!user?.user_metadata?.perfil_id) {
+      throw new Error('Erro ao atualizar metadados do usuário')
+    }
 
     // 5. Retornar sucesso
     console.log('=== Cadastro finalizado com sucesso ===')

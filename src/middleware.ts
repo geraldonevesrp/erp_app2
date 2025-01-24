@@ -28,7 +28,7 @@ export async function middleware(req: NextRequest) {
 
   // Se for uma página pública, rota do asaas_testes ou API do asaas, permite acesso direto
   if (PUBLIC_PAGES.includes(pathname) || 
-      pathname.startsWith('/asaas_testes') || 
+      pathname.startsWith('/public/asaas_testes') || 
       pathname.startsWith('/api/asaas')) {
     return res
   }
@@ -60,12 +60,17 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith('/revendas')) {
     const { data: perfil } = await supabase
       .from('perfis')
-      .select('tipo')
+      .select('tipo, revenda_status')
       .eq('id', session.user.user_metadata.perfil_id)
       .single()
 
     if (!perfil || perfil.tipo !== PERFIL_TIPOS.REVENDA) {
       return NextResponse.redirect(new URL('/auth/sem-acesso', req.url))
+    }
+
+    // Se não estiver na página de ativação e a revenda não estiver ativa, redireciona
+    if (!pathname.startsWith('/revendas/ativar_revenda') && perfil.revenda_status === 1) {
+      return NextResponse.redirect(new URL('/revendas/ativar_revenda', req.url))
     }
   }
 
@@ -79,7 +84,7 @@ export const config = {
     '/master/:path*',
     '/auth/:path*',
     '/public/:path*',
-    '/asaas_testes/:path*',
+    '/public/asaas_testes/:path*',
     '/api/asaas/:path*'
   ]
 }

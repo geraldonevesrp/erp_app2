@@ -8,7 +8,7 @@ export interface AsaasConfig {
 
 class AsaasClient {
   private static instance: AsaasClient;
-  private readonly config: AsaasConfig;
+  public readonly config: AsaasConfig;
 
   private constructor() {
     // APENAS PARA DEBUG - NÃO USE EM PRODUÇÃO
@@ -35,15 +35,40 @@ class AsaasClient {
   public async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const url = `${this.config.baseUrl}${endpoint}`
     const headers = {
-      'Content-Type': 'application/json',
-      'access_token': this.config.apiKey,
       ...options.headers,
+      'access_token': this.config.apiKey,
     }
 
-    return fetch(url, {
+    console.log('Fazendo requisição para Asaas:', {
+      url,
+      method: options.method,
+      headers: {
+        ...headers,
+        'access_token': '[REDACTED]'
+      }
+    })
+
+    const response = await fetch(url, {
       ...options,
       headers,
     })
+
+    if (!response.ok) {
+      console.error('Erro na resposta do Asaas:', {
+        status: response.status,
+        statusText: response.statusText,
+        url,
+        method: options.method
+      })
+    } else {
+      console.log('Resposta do Asaas OK:', {
+        status: response.status,
+        url,
+        method: options.method
+      })
+    }
+
+    return response
   }
 
   // Métodos específicos para cada operação do Asaas

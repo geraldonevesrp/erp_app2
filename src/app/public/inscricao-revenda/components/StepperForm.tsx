@@ -440,8 +440,8 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         throw new Error(data.error || 'Erro ao finalizar cadastro')
       }
 
-      // Redirecionar para /revendas após o cadastro
-      window.location.href = '/revendas'
+      // Redirecionar para a página de ativação após o cadastro
+      window.location.href = '/revendas/ativar_revenda'
       
     } catch (error: any) {
       console.error('Erro ao finalizar cadastro:', error)

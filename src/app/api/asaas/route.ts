@@ -24,16 +24,30 @@ export async function POST(request: NextRequest) {
     console.log('POST para endpoint:', endpoint)
     console.log('Dados:', data)
 
+    // Verifica se é o endpoint do QR Code
+    const isQrCodeEndpoint = endpoint.includes('/pixQrCode')
+    const method = isQrCodeEndpoint ? 'GET' : 'POST'
+
+    console.log('Método da requisição:', method)
+    console.log('URL completa:', `${asaasClient.config.baseUrl}${endpoint}`)
+
     // Faz a requisição para o Asaas
     const response = await asaasClient.makeRequest(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data)
+      method,
+      body: method === 'POST' ? JSON.stringify(data) : undefined,
+      headers: {
+        'Content-Type': method === 'POST' ? 'application/json' : undefined
+      }
     })
 
     // Se a resposta não for ok, retorna o erro
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Erro do Asaas:', errorText)
+      console.error('Erro do Asaas:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText
+      })
       return NextResponse.json({
         success: false,
         error: `Erro ${response.status}: ${errorText}`
@@ -42,13 +56,19 @@ export async function POST(request: NextRequest) {
 
     // Retorna os dados
     const responseData = await response.json()
-    return NextResponse.json({
-      success: true,
-      data: responseData
+    console.log('Resposta do Asaas:', {
+      ...responseData,
+      encodedImage: responseData.encodedImage ? '[BASE64_IMAGE]' : undefined
     })
+    
+    return NextResponse.json(responseData)
 
   } catch (error) {
-    console.error('Erro na requisição Asaas:', error)
+    console.error('Erro na requisição Asaas:', {
+      message: error.message,
+      stack: error.stack,
+      cause: error.cause
+    })
     return NextResponse.json({
       success: false,
       error: String(error)
