@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { asaasClient } from '../client'
 
-const API_KEY = '$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjI3ZThmZGMxLTIxOWQtNDg1NS05YjRmLTY3OGIwYzNiZmM4OTo6JGFhY2hfZTE0YTY3Y2EtN2JmMS00YWNkLWE3NDItZTQ2YWEyOGZiZTY3'
-
 export async function GET() {
   try {
     console.log('=== TESTE DE CONEXÃO COM O ASAAS ===')

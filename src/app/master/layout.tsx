@@ -34,6 +34,15 @@ const menuItems = [
     ]
   },
   {
+    title: 'Asaas',
+    items: [
+      {
+        name: 'Clientes',
+        href: '/master/asaas/testes/clientes'
+      }
+    ]
+  },
+  {
     title: 'Configurações',
     items: [
       {
@@ -49,27 +58,10 @@ const menuItems = [
         href: '/master/config/logs'
       }
     ]
-  },
-  {
-    title: 'Financeiro',
-    items: [
-      {
-        name: 'Assinaturas',
-        href: '/master/financeiro/assinaturas'
-      },
-      {
-        name: 'Comissões',
-        href: '/master/financeiro/comissoes'
-      },
-      {
-        name: 'Relatórios',
-        href: '/master/financeiro/relatorios'
-      }
-    ]
   }
 ]
 
-export default function MasterLayout({
+export default function MasterRootLayout({
   children,
 }: {
   children: React.ReactNode
