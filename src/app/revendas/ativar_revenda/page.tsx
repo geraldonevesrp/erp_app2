@@ -181,22 +181,27 @@ export default function AtivarRevenda() {
           event: 'UPDATE',
           schema: 'public',
           table: 'cobrancas',
-          filter: `sacado_perfil_id=eq.${perfil.id}`
+          filter: `sacado_perfil_id=eq.${perfil.id}`,
         },
         (payload) => {
+          console.log('Mudança detectada na cobrança:', payload)
+          const cobrancaAtualizada = payload.new as any
+
           // Se a cobrança foi paga, redireciona
-          if (payload.new.paga === true) {
+          if (cobrancaAtualizada.paga) {
+            console.log('Cobrança paga, redirecionando...')
             window.location.href = '/revendas'
           }
         }
       )
       .subscribe()
 
-    // Limpa a subscrição quando o componente for desmontado
+    // Cleanup: remove a inscrição quando o componente for desmontado
     return () => {
+      console.log('Removendo inscrição do canal realtime')
       supabase.removeChannel(channel)
     }
-  }, [perfil?.id])
+  }, [perfil?.id, supabase])
 
   // Função para verificar cobrança existente
   useEffect(() => {
