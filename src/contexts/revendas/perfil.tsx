@@ -62,9 +62,19 @@ export function RevendaPerfilProvider({
       setIsLoading(true)
       setError(null)
 
+      // Na página de inscrição, não mostra erros de autenticação
+      const isInscricaoPage = typeof window !== 'undefined' && window.location.pathname.includes('/public/inscricao-revenda')
+      
       // Verifica autenticação
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       
+      // Se estiver na página de inscrição, ignora erros de autenticação
+      if (isInscricaoPage) {
+        setIsLoading(false)
+        return
+      }
+
+      // Para outras páginas, trata normalmente os erros
       if (authError) {
         throw authError
       }
