@@ -68,22 +68,31 @@ export function RevendaPerfilProvider({
       // Verifica autenticação
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       
-      // Se estiver na página de inscrição, ignora erros de autenticação
-      if (isInscricaoPage) {
-        setIsLoading(false)
-        return
-      }
-
-      // Para outras páginas, trata normalmente os erros
+      // Se houver erro de autenticação
       if (authError) {
+        // Na página de inscrição, ignora o erro
+        if (isInscricaoPage) {
+          setIsLoading(false)
+          return
+        }
+        // Em outras páginas, lança o erro
         throw authError
       }
 
+      // Se não houver usuário
       if (!user) {
+        // Na página de inscrição, apenas retorna
+        if (isInscricaoPage) {
+          setIsLoading(false)
+          return
+        }
+        // Em outras páginas, redireciona para login
         router.push('/auth/login')
         return
       }
 
+      // Se chegou aqui, temos um usuário autenticado
+      // Busca perfil independente da página
       // Busca perfil
       const { data: perfilData, error: perfilError } = await supabase
         .from('perfis')

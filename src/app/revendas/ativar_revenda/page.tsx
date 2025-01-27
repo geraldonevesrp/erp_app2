@@ -46,7 +46,7 @@ async function createAsaasCustomer(customerData: any) {
 
     const data = await response.json()
     console.log('Cliente criado com sucesso:', data)
-    return data.data
+    return data
   } catch (error: any) {
     console.error('Erro detalhado ao criar cliente:', error)
     throw error
@@ -75,7 +75,7 @@ async function createAsaasCharge(chargeData: any) {
 
     const data = await response.json()
     console.log('Cobrança criada com sucesso:', data)
-    return data.data
+    return data
   } catch (error: any) {
     console.error('Erro detalhado ao criar cobrança:', error)
     throw error
@@ -95,82 +95,22 @@ async function getPixQrCode(paymentId: string) {
       })
     })
 
-    // Verifica o content-type
-    const contentType = response.headers.get('content-type')
-    console.log('Content-Type:', contentType)
-
-    // Se não for ok, pega o erro
     if (!response.ok) {
       const errorText = await response.text()
       console.error('Erro na resposta:', errorText)
       throw new Error(errorText)
     }
 
-    // Se chegou aqui, a resposta está ok
     const data = await response.json()
     console.log('QR Code recebido:', {
       ...data,
       encodedImage: data.encodedImage ? '[BASE64_IMAGE]' : undefined
     })
     
-    // A resposta contém a imagem em base64
     if (!data.success || !data.encodedImage) {
       console.error('Resposta sem QR Code:', data)
       throw new Error('QR Code não encontrado na resposta')
     }
-
-    // A resposta contém a imagem em base64
-    if (!data.success || !data.encodedImage) {
-      console.error('Resposta sem QR Code:', data)
-      throw new Error('QR Code não encontrado na resposta')
-    }
-
-    // Atualiza a cobrança com o QR Code
-    console.log('Atualizando cobrança com QR Code...')
-    const cobrancaAtualizada = {
-      ...cobrancaExistente.asaas,
-      pix: {
-        encodedImage: data.encodedImage,
-        payload: data.payload,
-        expirationDate: data.expirationDate,
-        success: true
-      }
-    }
-
-    const { data: dataAtualizada, error: updateError } = await supabase
-      .from('cobrancas')
-      .update({ 
-        asaas: cobrancaAtualizada
-      })
-      .eq('id', cobrancaExistente.id)
-      .select('*')
-      .single()
-
-    if (updateError) {
-      console.error('Erro ao atualizar cobrança:', updateError)
-      console.error('Detalhes do erro:', {
-        message: updateError.message,
-        details: updateError.details,
-        hint: updateError.hint
-      })
-      throw new Error(`Erro ao atualizar cobrança: ${updateError.message}`)
-    }
-
-    if (!dataAtualizada) {
-      console.error('Nenhum dado retornado após atualização')
-      throw new Error('Erro ao atualizar cobrança: nenhum dado retornado')
-    }
-    
-    console.log('Cobrança atualizada com sucesso:', {
-      id: dataAtualizada.id,
-      asaas: {
-        ...dataAtualizada.asaas,
-        pix: {
-          ...dataAtualizada.asaas.pix,
-          encodedImage: dataAtualizada.asaas.pix?.encodedImage ? '[BASE64_IMAGE]' : undefined
-        }
-      }
-    })
 
     return data
   } catch (error) {
@@ -399,20 +339,22 @@ export default function AtivarRevenda() {
       const customerData = {
         name: perfil.nome_completo || '',
         email: perfil.email || '',
-        phone: perfil.fone || undefined,
-        mobilePhone: perfil.celular || undefined,
-        cpfCnpj: perfil.cpf_cnpj?.replace(/[^0-9]/g, '') || '',
-        postalCode: perfil.endereco_principal?.cep?.replace(/[^0-9]/g, '') || '',
+        mobilePhone: perfil.celular || '',
+        cpfCnpj: perfil.cpf_cnpj || '',
+        postalCode: perfil.endereco_principal?.cep || '',
         address: perfil.endereco_principal?.logradouro || '',
         addressNumber: perfil.endereco_principal?.numero || '',
-        complement: perfil.endereco_principal?.complemento || undefined,
+        complement: perfil.endereco_principal?.complemento || '',
         province: perfil.endereco_principal?.bairro || '',
-        externalReference: perfil.id?.toString()
+        externalReference: perfil.id
       }
 
-      console.log('Dados para criar cliente:', customerData)
+      console.log('Criando cliente no Asaas...')
       const asaasResponse = await createAsaasCustomer(customerData)
-      console.log('Resposta do Asaas:', asaasResponse)
+
+      if (!asaasResponse) {
+        throw new Error('Erro ao criar cliente no Asaas')
+      }
 
       // Salva cliente no banco
       console.log('Salvando cliente no banco...')
@@ -430,11 +372,11 @@ export default function AtivarRevenda() {
           complement: asaasResponse.complement || null,
           province: asaasResponse.province || '',
           city: asaasResponse.city || '',
-          cityname: asaasResponse.city || '',
+          cityname: asaasResponse.cityName || '',
           state: asaasResponse.state || '',
           country: 'Brasil',
           postalcode: asaasResponse.postalCode || '',
-          persontype: asaasResponse.cpfCnpj?.length > 11 ? 'JURIDICA' : 'FISICA',
+          persontype: asaasResponse.personType || 'FISICA',
           object: 'customer',
           company: asaasResponse.company || '',
           deleted: false,
@@ -458,7 +400,7 @@ export default function AtivarRevenda() {
         value: 30.00,
         dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         description: 'Ativação de Revenda',
-        externalReference: perfil.id?.toString()
+        externalReference: perfil.id
       }
 
       console.log('Dados da cobrança:', chargeData)
@@ -470,7 +412,7 @@ export default function AtivarRevenda() {
         .from('cobrancas')
         .insert({
           cobrancas_tipos_id: 1, // Ativação de revenda
-          asaas: chargeResponse,
+          asaas: chargeResponse, // Objeto completo do Asaas
           sacado_perfil_id: perfil.id,
           cedente_perfil_id: '2c55d107-7c8a-4d96-8dcb-3a4958db665b', // ID do perfil ERPAPP
           valor: chargeResponse.value,

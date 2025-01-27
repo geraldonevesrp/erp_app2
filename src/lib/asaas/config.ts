@@ -1,4 +1,4 @@
-import { createAsaasClient } from './client'
+import { asaasClient } from './client'
 
 export interface AsaasConfig {
   baseUrl: string
@@ -9,7 +9,7 @@ export interface AsaasConfig {
 export function getAsaasConfig(): AsaasConfig {
   console.log('=== CARREGANDO CONFIGURAÇÃO DO ASAAS ===')
   
-  const config = createAsaasClient()
+  const config = asaasClient.config
   
   console.log('API Key encontrada:', config.apiKey ? 'Sim' : 'Não')
 
