@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Asaas</title>
+</head>
+<body>
+    <h1>Teste de Conexão com Asaas</h1>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAsaas() {
+            const apiKey = '$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmUyOWE5OTg2LTE4NTQtNDY3My1hOWRlLWMyNDgxMmE5MDM3ODo6JGFhY2hfMDM2ZWY3YTYtOGI1NC00MmMzLTk4NDAtOTQ1OGFiNjY1ZjY4';
+            
+            try {
+                const response = await fetch('https://sandbox.asaas.com/api/v3/customers?limit=1', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'access_token': apiKey
+                    }
+                });
+
+                const responseText = await response.text();
+                document.getElementById('result').textContent = `
+Status: ${response.status}
+Status Text: ${response.statusText}
+Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}
+Response: ${responseText}
+                `;
+            } catch (error) {
+                document.getElementById('result').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        // Executa o teste quando a página carregar
+        testAsaas();
+    </script>
+</body>
+</html>

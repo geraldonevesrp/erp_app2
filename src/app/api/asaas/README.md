@@ -68,6 +68,132 @@ const nextConfig = {
 }
 ```
 
+## Rotas da API do Asaas
+
+Este diretório contém as rotas da API que fazem interface com o Asaas.
+
+## 📁 Estrutura
+
+```
+api/asaas/
+├── README.md           # Este arquivo
+├── test/              # Rotas de teste
+│   └── route.ts       # Teste de autenticação
+├── customers/         # Rotas de clientes
+│   └── route.ts       # CRUD de clientes
+└── payments/          # Rotas de pagamentos
+    └── route.ts       # Gerenciamento de cobranças
+```
+
+## 🔑 Autenticação
+
+### Teste de Autenticação
+
+```typescript
+// GET /api/asaas/test
+const response = await fetch('/api/asaas/test')
+const data = await response.json()
+
+// Resposta de sucesso
+{
+  success: true,
+  message: "Conexão com Asaas estabelecida com sucesso",
+  config: {
+    NODE_ENV: "development",
+    ASAAS_ENV: "sandbox",
+    ASAAS_API_KEY: "...",
+    ASAAS_WALLET_ID: "...",
+    baseUrl: "https://sandbox.asaas.com/api/v3"
+  }
+}
+```
+
+## 👥 Clientes
+
+### Criar Cliente
+
+```typescript
+// POST /api/asaas/customers
+const response = await fetch('/api/asaas/customers', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    name: "Nome do Cliente",
+    cpfCnpj: "123.456.789-00",
+    email: "cliente@email.com",
+    mobilePhone: "(11) 98765-4321"
+  })
+})
+```
+
+### Listar Clientes
+
+```typescript
+// GET /api/asaas/customers
+const response = await fetch('/api/asaas/customers')
+const { data: customers } = await response.json()
+```
+
+## 💰 Pagamentos
+
+### Criar Cobrança PIX
+
+```typescript
+// POST /api/asaas/payments
+const response = await fetch('/api/asaas/payments', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    customer: "cus_000000000000",
+    billingType: "PIX",
+    value: 100.00,
+    dueDate: "2025-12-31"
+  })
+})
+```
+
+### Consultar Pagamento
+
+```typescript
+// GET /api/asaas/payments/{id}
+const response = await fetch('/api/asaas/payments/pay_000000000000')
+const payment = await response.json()
+```
+
+## ⚙️ Configuração
+
+As rotas utilizam o cliente oficial do Asaas localizado em `@/lib/asaas/client`. Para configuração completa, consulte:
+
+1. [Documentação Detalhada](../../../docs/asaas-integration.md)
+2. [README do Módulo Asaas](../../../lib/asaas/README.md)
+
+## 🔍 Debug e Logs
+
+Todas as rotas incluem logs detalhados no console do servidor:
+
+```typescript
+console.log('=== REQUISIÇÃO PARA O ASAAS ===')
+console.log('URL:', url)
+console.log('Status:', response.status)
+```
+
+## 🔒 Segurança
+
+1. Todas as rotas validam os dados de entrada
+2. As credenciais são gerenciadas pelo cliente oficial
+3. Não há exposição de chaves sensíveis
+4. Todas as respostas são sanitizadas
+
+## 📚 Documentação Relacionada
+
+- [Documentação Oficial Asaas](https://docs.asaas.com/)
+- [Documentação da Integração](../../../docs/asaas-integration.md)
+- [README do Módulo](../../../lib/asaas/README.md)
+
 ## Uso nas Rotas de API
 
 ### 1. Criar Cliente

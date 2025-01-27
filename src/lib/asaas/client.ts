@@ -8,20 +8,37 @@ export interface AsaasConfig {
 
 class AsaasClient {
   private static instance: AsaasClient;
-  public readonly config: AsaasConfig;
+  private readonly config: AsaasConfig;
 
   private constructor() {
-    // APENAS PARA DEBUG - NÃO USE EM PRODUÇÃO
-    const apiKey = process.env.ASAAS_SANDBOX_API_KEY || '$aact_MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OjI3ZThmZGMxLTIxOWQtNDg1NS05YjRmLTY3OGIwYzNiZmM4OTo6JGFhY2hfZTE0YTY3Y2EtN2JmMS00YWNkLWE3NDItZTQ2YWEyOGZiZTY3'
-
+    console.log('=== CONFIGURAÇÃO DO ASAAS ===')
+    console.log('NODE_ENV:', process.env.NODE_ENV)
+    console.log('ASAAS_ENV:', process.env.ASAAS_ENV)
+    
+    // Log da API Key original
+    const originalApiKey = process.env.ASAAS_API_KEY
+    console.log('API Key original:', originalApiKey)
+    
+    // Limpa a API Key
+    const apiKey = originalApiKey?.trim()
+    console.log('API Key após trim:', apiKey)
+    
     if (!apiKey) {
-      throw new Error('ASAAS_SANDBOX_API_KEY não configurada')
+      throw new Error('ASAAS_API_KEY não configurada')
     }
 
+    // URLs corretas conforme documentação
+    const baseUrl = process.env.ASAAS_ENV === 'production' 
+      ? 'https://api.asaas.com/v3'
+      : 'https://sandbox.asaas.com/api/v3'
+
+    console.log('URL Base:', baseUrl)
+    console.log('ASAAS_WALLET_ID:', process.env.ASAAS_WALLET_ID)
+
     this.config = {
-      baseUrl: 'https://sandbox.asaas.com/api/v3',
+      baseUrl,
       apiKey,
-      walletId: process.env.ASAAS_SANDBOX_WALLET_ID
+      walletId: process.env.ASAAS_WALLET_ID
     }
   }
 
@@ -34,52 +51,37 @@ class AsaasClient {
 
   public async makeRequest(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const url = `${this.config.baseUrl}${endpoint}`
+
+    // Headers exatamente como na documentação, na mesma ordem
     const headers = {
-      ...options.headers,
       'access_token': this.config.apiKey,
+      'Content-Type': 'application/json',
+      'User-Agent': 'erp_app2'
     }
 
-    console.log('Fazendo requisição para Asaas:', {
-      url,
-      method: options.method,
-      headers: {
-        ...headers,
-        'access_token': '[REDACTED]'
-      }
+    console.log('=== REQUISIÇÃO PARA O ASAAS ===')
+    console.log('URL:', url)
+    console.log('Headers:', {
+      ...headers,
+      'access_token': headers['access_token'].substring(0, 10) + '...' // Esconde parte da chave
     })
 
     const response = await fetch(url, {
       ...options,
-      headers,
+      headers
     })
 
+    // Log apenas do status e URL em caso de erro
     if (!response.ok) {
-      console.error('Erro na resposta do Asaas:', {
-        status: response.status,
-        statusText: response.statusText,
+      console.error('Erro na requisição:', {
         url,
-        method: options.method
-      })
-    } else {
-      console.log('Resposta do Asaas OK:', {
         status: response.status,
-        url,
-        method: options.method
+        statusText: response.statusText
       })
     }
 
     return response
   }
-
-  // Métodos específicos para cada operação do Asaas
-  public async listCustomers(params?: { limit?: number; offset?: number }) {
-    const queryParams = new URLSearchParams(params as Record<string, string>).toString()
-    const endpoint = `/customers${queryParams ? `?${queryParams}` : ''}`
-    return this.makeRequest(endpoint)
-  }
-
-  // Adicione outros métodos conforme necessário
 }
 
-// Exporta apenas a instância, não a classe
 export const asaasClient = AsaasClient.getInstance();
