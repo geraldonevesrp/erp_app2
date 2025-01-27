@@ -412,6 +412,54 @@ export default function AtivarRevenda() {
       const chargeResponse = await createAsaasCharge(chargeData)
       console.log('Resposta da cobrança:', chargeResponse)
 
+      // Busca o QR Code
+      try {
+        setLoadingQrCode(true)
+        console.log('Buscando QR Code para cobrança:', chargeResponse.id)
+        
+        const response = await fetch('/api/asaas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            endpoint: `/payments/${chargeResponse.id}/pixQrCode`
+          })
+        })
+
+        // Se não for ok, pega o erro
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('Erro na resposta:', errorText)
+          throw new Error(errorText)
+        }
+
+        // Se chegou aqui, a resposta está ok
+        const data = await response.json()
+        console.log('QR Code recebido:', {
+          ...data,
+          encodedImage: data.encodedImage ? '[BASE64_IMAGE]' : undefined
+        })
+        
+        if (!data.success || !data.encodedImage) {
+          console.error('Resposta sem QR Code:', data)
+          throw new Error('QR Code não encontrado na resposta')
+        }
+
+        // Atualiza o chargeResponse com o QR Code
+        chargeResponse.pix = {
+          encodedImage: data.encodedImage,
+          payload: data.payload,
+          expirationDate: data.expirationDate,
+          success: true
+        }
+      } catch (error) {
+        console.error('Erro ao buscar QR Code:', error)
+        setError('Erro ao buscar QR Code. Tente recarregar a página.')
+      } finally {
+        setLoadingQrCode(false)
+      }
+
       // Salva a cobrança no Supabase
       const { error: cobrancaError } = await supabase
         .from('cobrancas')

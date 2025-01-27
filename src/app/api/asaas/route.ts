@@ -48,10 +48,7 @@ export async function POST(request: NextRequest) {
         statusText: response.statusText,
         error: errorText
       })
-      return NextResponse.json({
-        success: false,
-        error: `Erro ${response.status}: ${errorText}`
-      }, { status: response.status })
+      throw new Error(errorText)
     }
 
     // Retorna os dados
@@ -60,81 +57,29 @@ export async function POST(request: NextRequest) {
       ...responseData,
       encodedImage: responseData.encodedImage ? '[BASE64_IMAGE]' : undefined
     })
-    
-    return NextResponse.json(responseData)
 
-  } catch (error) {
-    console.error('Erro na requisição Asaas:', {
-      message: error.message,
-      stack: error.stack,
-      cause: error.cause
-    })
-    return NextResponse.json({
-      success: false,
-      error: String(error)
-    }, { status: 500 })
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    // Pega o endpoint da URL
-    const url = new URL(request.url)
-    const endpoint = url.pathname.replace('/api/asaas', '')
-
-    // Validação básica
-    if (!endpoint) {
+    // Se for QR Code, adiciona o campo success
+    if (isQrCodeEndpoint) {
       return NextResponse.json({
-        success: false,
-        error: 'Endpoint não especificado'
-      }, { status: 400 })
-    }
-
-    console.log('URL completa:', request.url)
-    console.log('Endpoint extraído:', endpoint)
-    console.log('URL base do Asaas:', asaasClient.config.baseUrl)
-    console.log('URL final:', `${asaasClient.config.baseUrl}${endpoint}`)
-
-    // Faz a requisição para o Asaas
-    const response = await asaasClient.makeRequest(endpoint)
-
-    // Log do status e headers
-    console.log('Status:', response.status)
-    console.log('Content-Type:', response.headers.get('content-type'))
-
-    // Se a resposta não for ok, retorna o erro
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Erro do Asaas:', errorText)
-      return NextResponse.json({
-        success: false,
-        error: `Erro ${response.status}: ${errorText}`
-      }, { status: response.status })
-    }
-
-    // Para endpoints que retornam imagem (como QR Code), retorna o blob
-    const contentType = response.headers.get('content-type')
-    if (contentType?.includes('image')) {
-      console.log('Retornando imagem...')
-      const blob = await response.blob()
-      return new NextResponse(blob, {
-        headers: { 'Content-Type': contentType }
+        ...responseData,
+        success: true
       })
     }
 
-    // Para outros endpoints, retorna JSON
-    console.log('Retornando JSON...')
-    const data = await response.json()
-    return NextResponse.json({
-      success: true,
-      data
-    })
-
-  } catch (error) {
-    console.error('Erro na requisição Asaas:', error)
-    return NextResponse.json({
-      success: false,
-      error: String(error)
-    }, { status: 500 })
+    return NextResponse.json(responseData)
+  } catch (error: any) {
+    console.error('Erro ao processar requisição:', error)
+    throw error
   }
+}
+
+/**
+ * Endpoint GET para testes e verificação de status
+ * Não usar em produção, apenas para debug
+ */
+export async function GET(request: NextRequest) {
+  return NextResponse.json({
+    success: true,
+    message: 'API Asaas está funcionando'
+  })
 }
