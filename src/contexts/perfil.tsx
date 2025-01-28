@@ -73,11 +73,9 @@ export function PerfilProvider({
       console.log('Perfil público encontrado:', data)
 
       const perfilPublicoData: PerfilPublico = {
-        id: data.id,
-        nome: data.nome_completo || '',
+        nome_completo: data.nome_completo,
         foto_url: data.foto_url,
         dominio: data.dominio,
-        tipo: data.tipo,
         apelido: data.apelido
       }
 

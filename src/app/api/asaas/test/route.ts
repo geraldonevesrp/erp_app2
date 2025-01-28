@@ -4,7 +4,7 @@ import { asaasClient } from '@/lib/asaas/client'
 export async function GET() {
   try {
     // Usa o endpoint /customers com limit=1 apenas para testar a autenticação
-    const response = await asaasClient.makeRequest('/customers?limit=1')
+    const response = await asaasClient.request('/customers?limit=1')
     
     const responseText = await response.text()
     console.log('=== RESPOSTA DO ASAAS ===')

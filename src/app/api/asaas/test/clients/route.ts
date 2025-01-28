@@ -5,7 +5,7 @@ export async function GET() {
   try {
     console.log('=== INÍCIO DO TESTE DE LISTAGEM DE CLIENTES ===')
     
-    const response = await asaasClient.makeRequest('/customers')
+    const response = await asaasClient.request('/customers')
 
     console.log('Status da resposta:', response.status)
     console.log('Headers:', response.headers)

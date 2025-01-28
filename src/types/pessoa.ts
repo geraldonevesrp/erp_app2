@@ -1,113 +1,222 @@
 export interface PessoaContato {
-  id: number | string
-  pessoa_id: number
-  contato: string
-  telefone: string
-  email: string
-  isNew?: boolean
-}
-
-export interface PessoaEndereco {
-  id: number | string
-  pessoa_id: number
-  titulo: string
-  cep: string
-  logradouro: string
-  numero: string
-  complemento: string
-  bairro: string
-  localidade: string
-  uf: string
-  ibge: string
-  gia: string
-  ddd: string
-  siafi: string
-  principal: boolean
-  isNew?: boolean
-}
-
-export interface Grupo {
   id: number
-  perfis_id: number
-  grupo: string
-}
-
-export interface SubGrupo {
-  id: number
-  perfis_id: number
-  grupos_id: number
-  subgrupo: string
-}
-
-export interface PessoaTelefone {
-  id?: number
-  tipo: string
-  numero: string
-  pessoa_id: number
+  pessoa_id: number | null
+  contato: string | null
+  telefone: string | null
+  celular: string | null
+  email: string | null
+  cargo: string | null
+  departamento: string | null
+  zap: boolean | null
+  created_at: string
   _isNew?: boolean
   _isDeleted?: boolean
   _tempId?: number
 }
 
-export interface PessoaRedeSocial {
-  id?: number
+export interface PessoaEndereco {
+  id: number | null
+  created_at: string | null
+  titulo: string | null
+  principal: boolean | null
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  localidade: string | null
+  uf: string | null
+  ddd: string | null
+  ibge: string | null
+  gia: string | null
+  siafi: string | null
+  geo_point: string | null
+}
+
+export interface Grupo {
+  id: number
+  perfis_id: string
+  grupo: string | null
+  created_at: string
+}
+
+export interface SubGrupo {
+  id: number
+  perfis_id: string
+  grupos_id: number
+  subgrupo: string | null
+  created_at: string
+}
+
+export interface PessoaTelefone {
+  id: number
   pessoa_id: number
-  nome: string
-  link: string
+  numero: string | null
+  tipo: string | null
+  created_at: string
+  _isNew?: boolean
+  _isDeleted?: boolean
+  _tempId?: number
+}
+
+export interface PessoaTelefoneTipo {
+  tipo: string
+}
+
+export interface PessoaRedeSocial {
+  id: number
+  pessoa_id: number | null
+  nome: string | null
+  link: string | null
+  created_at: string
   _isNew?: boolean
   _isDeleted?: boolean
   _tempId?: number
 }
 
 export interface PessoaAnexo {
-  id?: number
-  pessoa_id?: number
-  nome?: string
-  descricao?: string
-  arquivo?: string
-  download?: string
+  id: number
+  pessoa_id: number
+  nome: string | null
+  descricao: string | null
+  arquivo: string | null
+  download: string | null
   download_url?: string
-  created_at?: string
+  created_at: string
   _isNew?: boolean
   _isDeleted?: boolean
   _tempId?: number
 }
 
-export interface Pessoa {
+export interface PessoaAtividade {
   id: number
-  created_at?: string
-  perfis_id: number
-  nome_razao: string
-  apelido: string
-  tipo: number
-  foto_url?: string
-  grupos_ids?: number[]
-  subgrupos_ids?: number[]
-  pessoas_tipos?: number[]
-  pessoas_contatos?: PessoaContato[]
-  pessoas_telefones?: PessoaTelefone[]
-  pessoas_redes_sociais?: PessoaRedeSocial[]
-  pessoas_anexos?: PessoaAnexo[]
-  genero?: string
-  cpf_cnpj?: string
-  rg_ie?: string
-  IM?: string
-  profissoes_id?: number
-  nascimento?: string
-  renda?: string
-  obs?: string
-  indIEDest?: number
-  ISUF?: string
-  status_id?: number
-  ramo_id?: number
-  atividades_ids?: number[]
-  natureza_juridica?: any
-  porte?: any
-  situacao_cadastral?: any
-  atividade_principal?: any
-  atividades_secundarias?: any
-  socios?: any
-  capital_social?: number
-  data_inicio_atividades?: string
-  matriz?: boolean
+  created_at: string
+  nome: string | null
+  cor: string | null
+  ordem: number | null
+  perfis_id: string | null
+}
+
+export interface PessoaTipo {
+  id: number
+  tipo: string | null
+  created_at: string
+}
+
+export interface NaturezaJuridica {
+  codigo: string
+  descricao: string
+}
+
+export interface Porte {
+  codigo: string
+  descricao: string
+}
+
+export interface SituacaoCadastral {
+  codigo: string
+  data: string
+  motivo: string
+}
+
+export interface AtividadePrincipal {
+  codigo: string
+  descricao: string
+}
+
+export interface AtividadeSecundaria {
+  codigo: string
+  descricao: string
+}
+
+export interface Socio {
+  nome: string
+  qualificacao: string
+  pais_origem?: string | null
+  nome_rep_legal?: string | null
+  qual_rep_legal?: string | null
+}
+
+export interface PessoaEmailTipo {
+  tipo: string
+}
+
+export interface PessoaEmail {
+  id: number
+  pessoa_id: number
+  email: string
+  responsavel: string | null
+  tipo: string | null
+  created_at: string
+  _isNew?: boolean
+  _isDeleted?: boolean
+  _tempId?: number
+}
+
+export interface PessoaRamo {
+  id: number
+  ramo: string | null
+}
+
+export interface PessoaStatus {
+  id: number
+  status: string | null
+}
+
+export interface PessoaGrupo {
+  id: number
+  created_at: string
+  nome: string | null
+  cor: string | null
+  ordem: number | null
+  perfis_id: string | null
+}
+
+export interface Pessoa {
+  id: number | null
+  created_at: string | null
+  perfis_id: string | null
+  nome_razao: string | null
+  apelido: string | null
+  tipo: string | null
+  cpf_cnpj: string | null
+  foto_url: string | null
+  genero: string | null
+  grupos: string[] | null
+  grupos_ids: number[] | null
+  subgrupos: string[] | null
+  subgrupos_ids: number[] | null
+  atividades: string[] | null
+  atividades_ids: number[] | null
+  emails: string[] | null
+  telefones: string[] | null
+  tipospessoas: string[] | null
+  pessoas_tipos: number[] | null
+  endereco_id: number | null
+  endereco_created_at: string | null
+  endereco_titulo: string | null
+  endereco_principal: boolean | null
+  endereco_cep: string | null
+  endereco_logradouro: string | null
+  endereco_numero: string | null
+  endereco_complemento: string | null
+  endereco_bairro: string | null
+  endereco_localidade: string | null
+  endereco_uf: string | null
+  endereco_ddd: string | null
+  endereco_ibge: string | null
+  endereco_gia: string | null
+  endereco_siafi: string | null
+  endereco_geo_point: string | null
+  rg_ie: string | null
+  IM: string | null
+  ISUF: string | null
+  indIEDest: number | null
+  profissoes_id: number | null
+  ramo_id: number | null
+  ramo: string | null
+  status_id: number | null
+  renda: string | null
+  nascimento: string | null
+  obs: string | null
 }

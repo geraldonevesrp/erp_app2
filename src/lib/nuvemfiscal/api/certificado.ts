@@ -30,6 +30,10 @@ export interface CertificadoInfo {
   cpf_cnpj: string;
   /** Nome/Razão Social do titular do certificado */
   nome_razao_social: string;
+  /** Dados da empresa do Supabase (opcional) */
+  empresa?: {
+    razao_social?: string;
+  };
 }
 
 /**

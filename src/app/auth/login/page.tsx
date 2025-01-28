@@ -81,7 +81,13 @@ export default function LoginPage() {
       // 4. Busca todos os perfis do usuário
       const { data: perfis, error: perfisError } = await supabase
         .from('perfis')
-        .select('*, perfis_tipos(*)')
+        .select(`
+          *,
+          perfis_tipos (
+            id,
+            tipo
+          )
+        `)
         .eq('user_id', session.user.id)
 
       console.log('Perfis encontrados:', perfis)
@@ -342,7 +348,7 @@ export default function LoginPage() {
           </div>
           <div className="text-center space-y-1">
             <h1 className="text-2xl font-semibold tracking-tight">
-              {perfilPublico?.nome || 'Bem-vindo'}
+              {perfilPublico?.nome_completo || 'Bem-vindo'}
             </h1>
             <p className="text-sm text-muted-foreground">
               Entre com suas credenciais para acessar

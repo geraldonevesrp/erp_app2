@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 
-export async function GET(
-  request: Request,
-  { params }: { params: { cep: string } }
-) {
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+interface RouteParams {
+  params: {
+    cep: string
+  }
+}
+
+export async function GET(_request: Request, { params }: RouteParams) {
   try {
     const cep = params.cep.replace(/\D/g, '')
     
