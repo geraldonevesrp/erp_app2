@@ -79,3 +79,80 @@ export interface AsaasWebhookEvent {
     }
   }
 }
+
+export interface AsaasSubcontaPayload {
+  name: string // required
+  email: string // required
+  loginEmail: string // required
+  cpfCnpj: string // required
+  birthDate: string // required
+  companyType: 'MEI' | 'LIMITED' | 'INDIVIDUAL' | 'ASSOCIATION' // required para PJ
+  personType: 'FISICA' | 'JURIDICA' // required
+  phone: string
+  mobilePhone: string // required
+  site?: string
+  incomeValue: number // required
+  address: string // required
+  addressNumber: string // required
+  complement?: string
+  province: string // required
+  postalCode: string // required
+  webhooks?: Array<{
+    name: string
+    url: string
+    email: string
+    enabled: boolean
+    interrupted: boolean
+    apiVersion: number
+    authToken: string
+    sendType: string
+    events: string[]
+  }>
+}
+
+export interface AsaasSubcontaResponse {
+  object: string
+  hasMore: boolean
+  totalCount: number
+  limit: number
+  offset: number
+  data: Array<{
+    id: string
+    name: string
+    email: string
+    loginEmail: string
+    cpfCnpj: string
+    phone: string
+    mobilePhone: string
+    address: string
+    addressNumber: string
+    complement: string
+    province: string
+    postalCode: string
+    apiKey: string
+    walletId: string
+    accountNumber: string
+    accountDigit: string
+    status: 'ACTIVE' | 'INACTIVE'
+    personType: 'FISICA' | 'JURIDICA'
+    companyType: string
+    birthDate: string
+    city: string
+    state: string
+    country: string
+    site: string
+    dateCreated: string
+    deleted: boolean
+  }>
+}
+
+export interface AsaasWebhookConfig {
+  url: string
+  email: string
+  enabled: boolean
+  interrupted: boolean
+  apiVersion: number
+  type?: string
+  token?: string
+  events: string[]
+}
