@@ -71,7 +71,7 @@ export async function createAsaasSubconta(data: SubcontaPayload): Promise<Subcon
       country: data.country || 'BRA'
     }
 
-    const response = await fetch('/api/asaas', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/asaas`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ export async function createAsaasSubconta(data: SubcontaPayload): Promise<Subcon
     // Configurar webhook para a nova subconta
     try {
       console.log('Configurando webhook para a nova subconta...')
-      const webhookResponse = await fetch('/api/asaas', {
+      const webhookResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/asaas`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

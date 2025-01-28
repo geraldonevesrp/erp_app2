@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const method = isQrCodeEndpoint ? 'GET' : 'POST'
 
     console.log('Método da requisição:', method)
-    console.log('URL completa:', `${asaasClient.config.baseUrl}${endpoint}`)
+    console.log('URL completa:', `${asaasClient.getBaseUrl()}${endpoint}`)
 
     // Faz a requisição para o Asaas
     const response = await asaasClient.makeRequest(endpoint, {
@@ -48,15 +48,31 @@ export async function POST(request: NextRequest) {
         statusText: response.statusText,
         error: errorText
       })
-      throw new Error(errorText)
+
+      return NextResponse.json({
+        success: false,
+        error: errorText || response.statusText,
+        status: response.status
+      }, { status: response.status })
     }
 
-    // Retorna os dados
-    const responseData = await response.json()
-    console.log('Resposta do Asaas:', {
-      ...responseData,
-      encodedImage: responseData.encodedImage ? '[BASE64_IMAGE]' : undefined
-    })
+    // Lê a resposta como texto primeiro
+    const responseText = await response.text()
+    console.log('Resposta do Asaas:', responseText)
+
+    // Tenta fazer o parse do JSON
+    let responseData
+    try {
+      responseData = JSON.parse(responseText)
+    } catch (e) {
+      console.error('Erro ao fazer parse da resposta:', e)
+      console.error('Resposta que causou o erro:', responseText)
+      return NextResponse.json({
+        success: false,
+        error: 'Erro ao fazer parse da resposta',
+        status: response.status
+      }, { status: 500 })
+    }
 
     // Se for QR Code, adiciona o campo success
     if (isQrCodeEndpoint) {
@@ -66,10 +82,16 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json(responseData)
+    return NextResponse.json({
+      ...responseData,
+      success: true
+    })
   } catch (error: any) {
     console.error('Erro ao processar requisição:', error)
-    throw error
+    return NextResponse.json({
+      success: false,
+      error: error.message || 'Erro interno do servidor'
+    }, { status: 500 })
   }
 }
 

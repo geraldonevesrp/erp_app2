@@ -3,17 +3,6 @@ import { asaasClient } from '@/lib/asaas/client'
 
 export async function GET() {
   try {
-    // Coleta as configurações atuais
-    const config = {
-      NODE_ENV: process.env.NODE_ENV,
-      ASAAS_ENV: process.env.ASAAS_ENV,
-      ASAAS_API_KEY: process.env.ASAAS_API_KEY, // Mostra a chave completa
-      ASAAS_WALLET_ID: process.env.ASAAS_WALLET_ID,
-      baseUrl: process.env.ASAAS_ENV === 'production' 
-        ? 'https://api.asaas.com/v3'
-        : 'https://sandbox.asaas.com/api/v3'
-    }
-
     // Usa o endpoint /customers com limit=1 apenas para testar a autenticação
     const response = await asaasClient.makeRequest('/customers?limit=1')
     
@@ -26,11 +15,10 @@ export async function GET() {
     if (!response.ok) {
       return NextResponse.json({
         success: false,
-        error: `Erro de autenticação: ${response.status} - ${responseText}`,
+        error: `Erro de autenticação: ${response.status} - ${response.statusText}`,
         status: response.status,
         statusText: response.statusText,
-        data: responseText,
-        config // Inclui as configurações na resposta
+        environment: process.env.ASAAS_ENV || 'sandbox'
       }, { status: response.status })
     }
 
@@ -46,8 +34,7 @@ export async function GET() {
         error: 'Erro ao fazer parse da resposta',
         status: response.status,
         statusText: response.statusText,
-        data: responseText,
-        config // Inclui as configurações na resposta
+        environment: process.env.ASAAS_ENV || 'sandbox'
       }, { status: 500 })
     }
 
@@ -56,14 +43,14 @@ export async function GET() {
       message: 'Conexão com Asaas estabelecida com sucesso',
       status: response.status,
       statusText: response.statusText,
-      data,
-      config // Inclui as configurações na resposta
+      environment: process.env.ASAAS_ENV || 'sandbox'
     })
   } catch (error) {
     console.error('Erro na conexão:', error)
     return NextResponse.json({
       success: false,
-      error: String(error)
+      error: String(error),
+      environment: process.env.ASAAS_ENV || 'sandbox'
     }, { status: 500 })
   }
 }

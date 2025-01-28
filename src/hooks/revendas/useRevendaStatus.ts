@@ -14,10 +14,15 @@ export function useRevendaStatus() {
   useEffect(() => {
     async function checkRevendaStatus() {
       try {
+        console.log('=== DEBUG STATUS REVENDA ===: Verificando status')
+
         const { data: { user } } = await supabase.auth.getUser()
         
         if (!user) {
-          router.push('/auth/login')
+          console.log('=== DEBUG STATUS REVENDA ===: Usuário não autenticado')
+          setIsLoading(false)
+          setIsActive(false)
+          setStatus(null)
           return
         }
 
@@ -32,9 +37,14 @@ export function useRevendaStatus() {
           .single()
 
         if (perfilError) {
-          console.error('Erro ao buscar perfil:', perfilError)
+          console.error('=== DEBUG STATUS REVENDA ===: Erro ao buscar perfil', perfilError)
           throw perfilError
         }
+
+        console.log('=== DEBUG STATUS REVENDA ===: Status encontrado', {
+          status: perfil?.revenda_status,
+          isActive: perfil?.revenda_status === 2
+        })
 
         // Atualiza o status
         setStatus(perfil?.revenda_status || null)
@@ -43,7 +53,7 @@ export function useRevendaStatus() {
         setIsActive(perfil?.revenda_status === 2)
         
       } catch (error) {
-        console.error('Erro ao verificar status da revenda:', error)
+        console.error('=== DEBUG STATUS REVENDA ===: Erro', error)
         setIsActive(false)
         setStatus(null)
       } finally {
@@ -52,7 +62,7 @@ export function useRevendaStatus() {
     }
 
     checkRevendaStatus()
-  }, [supabase, router])
+  }, [])
 
   return { isLoading, isActive, status }
 }

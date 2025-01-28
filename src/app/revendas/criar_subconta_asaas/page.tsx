@@ -1,229 +1,206 @@
 'use client'
 
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { useRevendaPerfil } from '@/contexts/revendas/perfil'
+import { useState, useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Database } from '@/types/database.types'
-import { useToast } from '@/components/ui/use-toast'
-import { Card } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { AsaasClient } from '@/lib/asaas/api'
-import { usePerfil } from '@/contexts/perfil'
-import { useSupabase } from '@/contexts/supabase'
-import { PERFIL_TIPOS } from '@/types/perfil'
-import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
-export default function CriarSubcontaAsaasPage() {
-  const { supabase } = useSupabase()
-  const router = useRouter()
-  const { toast } = useToast()
-  const { perfil, perfil_user } = usePerfil()
+// Função para criar subconta no Asaas
+async function createAsaasSubconta(payload: any) {
+  try {
+    console.log('Criando subconta no Asaas...')
+    console.log('Payload:', payload)
+    
+    const response = await fetch('/api/asaas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        endpoint: '/accounts',
+        data: payload
+      })
+    })
 
-  const [loadingMessage, setLoadingMessage] = useState<string>('')
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const [statusConexao, setStatusConexao] = useState<'testando' | 'ok' | 'erro'>('testando')
-  const [mensagemConexao, setMensagemConexao] = useState<string>('Testando conexão com Asaas...')
+    const responseData = await response.text()
+    console.log('Resposta do Asaas:', responseData)
 
-  useEffect(() => {
-    async function testarConexaoAsaas() {
-      try {
-        setStatusConexao('testando')
-        setMensagemConexao('Testando conexão com Asaas...')
-        console.log('=== INÍCIO DO TESTE DE CONEXÃO ===')
-        
-        const asaas = new AsaasClient()
-        console.log('Cliente Asaas criado')
-        
-        const resultado = await asaas.testConnection()
-        console.log('Teste de conexão realizado:', resultado)
-        
-        setStatusConexao('ok')
-        setMensagemConexao('Conexão com Asaas estabelecida com sucesso!')
-        console.log('=== FIM DO TESTE DE CONEXÃO - SUCESSO ===')
-      } catch (error: any) {
-        console.error('=== ERRO NO TESTE DE CONEXÃO ===')
-        console.error('Detalhes do erro:', {
-          message: error?.message,
-          cause: error?.cause,
-          stack: error?.stack,
-          name: error?.name
-        })
-        
-        setStatusConexao('erro')
-        setMensagemConexao(error?.message || 'Erro desconhecido ao conectar com Asaas')
-      }
+    if (!response.ok) {
+      throw new Error(responseData || `Erro ao criar subconta no Asaas: ${response.status}`)
     }
 
-    testarConexaoAsaas()
-  }, [])
-
-  const criarSubconta = async () => {
     try {
-      setLoadingMessage('Iniciando criação da subconta...')
-      setError(null)
+      const data = JSON.parse(responseData)
+      console.log('Subconta criada com sucesso:', data)
+      return data
+    } catch (e) {
+      console.error('Erro ao fazer parse da resposta:', e)
+      throw new Error('Erro ao processar resposta do servidor')
+    }
+  } catch (error: any) {
+    console.error('Erro detalhado ao criar subconta:', error)
+    throw error
+  }
+}
 
-      if (!perfil) {
-        console.log('Perfil não encontrado, redirecionando para login...')
-        router.push('/auth/login')
-        return
+export default function CriarSubcontaAsaasPage() {
+  const { perfil } = useRevendaPerfil()
+  const router = useRouter()
+  const supabase = createClientComponentClient<Database>()
+  const [isLoading, setIsLoading] = useState(false)
+  const [debugData, setDebugData] = useState<any>(null)
+
+  // Atualiza debugData sempre que o perfil mudar
+  useEffect(() => {
+    if (perfil) {
+      const telefone = (perfil.celular || perfil.fone || '').replace(/[^0-9]/g, '')
+      const cpfCnpj = (perfil.cpf_cnpj || '').replace(/[^0-9]/g, '')
+      const email = perfil.email?.trim()
+      const nome = perfil.nome_completo || ''
+
+      const payload = {
+        name: nome,
+        email: email,
+        loginEmail: email,
+        cpfCnpj: cpfCnpj,
+        companyType: cpfCnpj.length === 11 ? 'MEI' : 'LIMITED',
+        mobilePhone: telefone,
+        address: perfil.endereco_principal?.logradouro || 'Não informado',
+        addressNumber: perfil.endereco_principal?.numero || 'S/N',
+        province: perfil.endereco_principal?.bairro || 'Não informado',
+        postalCode: perfil.endereco_principal?.cep?.replace(/[^0-9]/g, '') || '00000000',
+        personType: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA'
       }
 
-      // Garantir que o usuário tem um perfil válido
-      if (!perfil.tipo || perfil.tipo !== PERFIL_TIPOS.REVENDA) {
-        console.log('Usuário não é revenda, redirecionando...', {
-          tipo: perfil.tipo,
-          esperado: PERFIL_TIPOS.REVENDA
-        })
-        router.push('/auth/sem-acesso')
-        return
-      }
+      setDebugData({
+        perfil,
+        payload,
+        context: {
+          NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+          NODE_ENV: process.env.NODE_ENV
+        }
+      })
+    }
+  }, [perfil])
 
-      console.log('Dados do perfil:', JSON.stringify(perfil, null, 2))
+  const handleCriarSubconta = async () => {
+    if (!perfil) return
+    
+    try {
+      setIsLoading(true)
 
       // Limpar e validar os dados
       const telefone = (perfil.celular || perfil.fone || '').replace(/[^0-9]/g, '')
       const cpfCnpj = (perfil.cpf_cnpj || '').replace(/[^0-9]/g, '')
       const email = perfil.email?.trim()
-      const nome = perfil.nome || perfil.apelido || ''
+      const nome = perfil.nome_completo || ''
 
-      // Validar dados obrigatórios com mais detalhes
-      const validacoes = {
-        'Nome': {
-          valor: nome,
-          valido: nome.length >= 3,
-          mensagem: 'Nome deve ter pelo menos 3 caracteres'
-        },
-        'E-mail': {
-          valor: email,
-          valido: email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
-          mensagem: 'E-mail inválido'
-        },
-        'Telefone': {
-          valor: telefone,
-          valido: telefone.length >= 10,
-          mensagem: 'Telefone deve ter pelo menos 10 dígitos'
-        },
-        'CPF/CNPJ': {
-          valor: cpfCnpj,
-          valido: cpfCnpj.length === 11 || cpfCnpj.length === 14,
-          mensagem: 'CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos'
-        }
+      // Validar dados obrigatórios
+      if (!nome || !email || !telefone || !cpfCnpj) {
+        toast.error('Preencha todos os dados do perfil antes de criar a subconta')
+        router.push('/revendas/configuracoes/perfil')
+        return
       }
 
-      console.log('Validações:', JSON.stringify(validacoes, null, 2))
-
-      const camposInvalidos = Object.entries(validacoes)
-        .filter(([_, { valido }]) => !valido)
-        .map(([campo, { valor, mensagem }]) => `${campo} (${valor || 'vazio'}): ${mensagem}`)
-
-      if (camposInvalidos.length > 0) {
-        throw new Error(`Os seguintes campos são inválidos:\n${camposInvalidos.join('\n')}`)
-      }
-
-      setLoadingMessage('Criando subconta no Asaas...')
-
-      const asaas = new AsaasClient()
-      const response = await asaas.createSubconta({
+      // Preparar payload
+      const payload = {
         name: nome,
-        email: email!,
-        loginEmail: email!,
+        email: email,
+        loginEmail: email,
         cpfCnpj: cpfCnpj,
         companyType: cpfCnpj.length === 11 ? 'MEI' : 'LIMITED',
         mobilePhone: telefone,
-        address: 'Não informado',
-        addressNumber: 'S/N',
-        province: 'Não informado',
-        postalCode: '00000000',
+        address: perfil.endereco_principal?.logradouro || 'Não informado',
+        addressNumber: perfil.endereco_principal?.numero || 'S/N',
+        province: perfil.endereco_principal?.bairro || 'Não informado',
+        postalCode: perfil.endereco_principal?.cep?.replace(/[^0-9]/g, '') || '00000000',
         personType: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA'
-      })
-
-      console.log('Subconta criada:', response)
-
-      // Atualizar o perfil com os dados da subconta
-      const { error: updateError } = await supabase
-        .from('perfis')
-        .update({
-          asaas_account_key: response.apiKey,
-          asaas_wallet_id: response.walletId,
-          asaas_account_id: response.id
-        })
-        .eq('id', perfil.id)
-
-      if (updateError) {
-        throw new Error(`Erro ao atualizar perfil: ${updateError.message}`)
       }
 
-      setSuccess(true)
-      setLoadingMessage('')
-      toast({
-        title: 'Sucesso!',
-        description: 'Subconta criada com sucesso no Asaas.',
-      })
+      // 1. Criar subconta
+      const response = await createAsaasSubconta(payload)
+
+      // 2. Salvar dados da subconta
+      const { error: updateError } = await supabase
+        .from('asaas_contas')
+        .insert({
+          asaas_id: response.id,
+          api_key: response.apiKey,
+          wallet_id: response.walletId,
+          perfis_id: perfil.id,
+          account_number: response.accountNumber || {},
+          income_value: 0,
+          name: nome,
+          email: email,
+          login_email: email,
+          mobile_phone: telefone,
+          address: perfil.endereco_principal?.logradouro || 'Não informado',
+          address_number: perfil.endereco_principal?.numero || 'S/N',
+          province: perfil.endereco_principal?.bairro || 'Não informado',
+          postal_code: perfil.endereco_principal?.cep?.replace(/[^0-9]/g, '') || '00000000',
+          cpf_cnpj: cpfCnpj,
+          person_type: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA',
+          company_type: cpfCnpj.length === 11 ? 'MEI' : 'LIMITED'
+        })
+
+      if (updateError) throw updateError
+
+      toast.success('Subconta criada com sucesso!')
+      router.push('/revendas')
 
     } catch (error: any) {
       console.error('Erro ao criar subconta:', error)
-      setError(error.message)
-      setLoadingMessage('')
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: error.message,
-      })
+      toast.error(error.message || 'Erro ao criar subconta')
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <h1 className="text-2xl font-bold mb-4">Criar Subconta Asaas</h1>
-
-      {/* Card de Status da Conexão */}
-      <Card className="p-4">
-        <div className="flex items-center space-x-2">
-          {statusConexao === 'testando' && <Loader2 className="h-4 w-4 animate-spin" />}
-          {statusConexao === 'ok' && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-          {statusConexao === 'erro' && <AlertCircle className="h-4 w-4 text-red-500" />}
-          <span className={statusConexao === 'erro' ? 'text-red-500' : ''}>
-            {mensagemConexao}
-          </span>
-        </div>
-      </Card>
-
-      {/* Botão de Criar Subconta */}
-      <Card className="p-4">
-        <div className="space-y-4">
+    <div className="container mx-auto p-4">
+      <Card className="mx-auto max-w-2xl mb-4">
+        <CardHeader>
+          <CardTitle>Criar Subconta Asaas</CardTitle>
+          <CardDescription>
+            Configure sua subconta Asaas para começar a receber pagamentos
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           <Button 
-            onClick={criarSubconta}
-            disabled={loadingMessage !== '' || statusConexao !== 'ok'}
-            className="w-full"
+            className="w-full" 
+            onClick={handleCriarSubconta}
+            disabled={isLoading}
           >
-            {loadingMessage ? (
+            {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {loadingMessage}
+                Criando Subconta...
               </>
             ) : (
               'Criar Subconta'
             )}
           </Button>
+        </CardContent>
+      </Card>
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          {success && (
-            <Alert>
-              <CheckCircle2 className="h-4 w-4" />
-              <AlertDescription>
-                Subconta criada com sucesso! Você já pode começar a usar os serviços do Asaas.
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
+      {/* Card de Debug */}
+      <Card className="mx-auto max-w-2xl">
+        <CardHeader>
+          <CardTitle>Debug Info</CardTitle>
+          <CardDescription>
+            Dados que serão enviados para a API
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <pre className="whitespace-pre-wrap bg-slate-100 p-4 rounded-md overflow-auto max-h-96">
+            {JSON.stringify(debugData, null, 2)}
+          </pre>
+        </CardContent>
       </Card>
     </div>
   )
