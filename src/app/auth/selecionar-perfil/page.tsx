@@ -9,17 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { UserCircle, AlertCircle, Building2, Store, Crown } from 'lucide-react'
 import { usePerfil } from '@/contexts/perfil'
-import { PERFIL_TIPOS } from '@/types/perfil'
+import { PERFIL_TIPOS, Perfil } from '@/types/perfil'
 import { getVersionString } from '@/config/version'
-
-interface Perfil {
-  id: string
-  tipo: number
-  nome_completo: string
-  foto_url?: string
-  dominio?: string
-  apelido?: string
-}
 
 export default function SelecionarPerfilPage() {
   const [perfis, setPerfis] = useState<Perfil[]>([])
