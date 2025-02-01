@@ -29,6 +29,7 @@ interface FormData {
   cpf_cnpj: string
   nascimento: string
   faturamento: number
+  ibge: string | null
 }
 
 // Componente StepIndicator para mostrar o progresso
@@ -123,7 +124,8 @@ export default function StepperForm() {
     aceite_termos: false,
     cpf_cnpj: '',
     nascimento: '',
-    faturamento: 25000
+    faturamento: 25000,
+    ibge: null
   })
 
   const [errors, setErrors] = useState({
@@ -353,7 +355,8 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         bairro: data.endereco?.bairro || '',
         municipio: data.endereco?.municipio?.descricao || '',
         uf: data.endereco?.uf || '',
-        nascimento: data.data_inicio_atividade || ''
+        nascimento: data.data_inicio_atividade || '',
+        ibge: data.endereco?.municipio?.codigo_ibge || null
       }
 
       console.log('Novos dados do formulário:', novosDados)
@@ -397,7 +400,8 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         logradouro: data.logradouro || '',
         bairro: data.bairro || '',
         municipio: data.localidade || '',
-        uf: data.uf || ''
+        uf: data.uf || '',
+        ibge: data.ibge || null
       }))
 
       // Mostra mensagem de sucesso
@@ -1091,7 +1095,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
     try {
       setIsLoading(true)
       const cnpj = formData.cpf_cnpj.replace(/\D/g, '')
-      const response = await fetch(`https://publica.cnpj.ws/cnpj/${cnpj}`)
+      const response = await fetch(`/api/cnpj/${cnpj}`)
       
       if (!response.ok) {
         throw new Error('CNPJ não encontrado')
@@ -1127,7 +1131,8 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         bairro: data.endereco?.bairro || '',
         municipio: data.endereco?.municipio?.descricao || '',
         uf: data.endereco?.uf || '',
-        nascimento: data.data_inicio_atividade || ''
+        nascimento: data.data_inicio_atividade || '',
+        ibge: data.endereco?.municipio?.codigo_ibge || null
       }
 
       console.log('Novos dados do formulário:', novosDados)
@@ -1157,7 +1162,7 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
       setIsLoading(true)
       setSuccessMessage(null)
       
-      const response = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+      const response = await fetch(`/api/cep/${cepLimpo}`)
       
       if (!response.ok) {
         throw new Error('CEP não encontrado')
@@ -1175,7 +1180,8 @@ Entre em contato conosco se tiver dúvidas sobre esta política.
         logradouro: data.logradouro || '',
         bairro: data.bairro || '',
         municipio: data.localidade || '',
-        uf: data.uf || ''
+        uf: data.uf || '',
+        ibge: data.ibge || null
       }))
 
       // Mostra mensagem de sucesso

@@ -74,7 +74,8 @@ export default function CriarSubcontaAsaasPage() {
         addressNumber: perfil.endereco_principal?.numero || 'S/N',
         province: perfil.endereco_principal?.bairro || 'Não informado',
         postalCode: perfil.endereco_principal?.cep?.replace(/[^0-9]/g, '') || '00000000',
-        personType: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA'
+        personType: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA',
+        incomeValue: perfil.faturamento || 0
       }
 
       setDebugData({
@@ -107,19 +108,36 @@ export default function CriarSubcontaAsaasPage() {
         return
       }
 
+      // Buscar endereço principal
+      const { data: enderecoPrincipal, error: enderecoError } = await supabase
+        .from('perfis_enderecos')
+        .select('logradouro, numero, bairro, cep, localidade, ibge, uf')
+        .eq('perfis_id', perfil.id)
+        .eq('principal', true)
+        .single()
+
+      if (enderecoError) {
+        console.error('Erro ao buscar endereço principal:', enderecoError)
+        toast.error('Erro ao buscar endereço principal')
+        return
+      }
+
+      // Usar código da cidade de Juazeiro-BA como padrão
+      const codigoCidade = 2918407 // Código IBGE de Juazeiro-BA
+
       // Preparar payload
       const payload = {
-        name: nome,
-        email: email,
-        loginEmail: email,
-        cpfCnpj: cpfCnpj,
-        companyType: cpfCnpj.length === 11 ? 'MEI' : 'LIMITED',
-        mobilePhone: telefone,
-        address: perfil.endereco_principal?.logradouro || 'Não informado',
-        addressNumber: perfil.endereco_principal?.numero || 'S/N',
-        province: perfil.endereco_principal?.bairro || 'Não informado',
-        postalCode: perfil.endereco_principal?.cep?.replace(/[^0-9]/g, '') || '00000000',
-        personType: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA'
+        name: perfil.nome_completo || '',
+        email: perfil.email?.trim() || '',
+        loginEmail: perfil.email?.trim() || '',
+        cpfCnpj: (perfil.cpf_cnpj || '').replace(/[^0-9]/g, ''),
+        companyType: (perfil.cpf_cnpj || '').length === 11 ? 'MEI' : 'LIMITED',
+        mobilePhone: (perfil.celular || perfil.fone || '').replace(/[^0-9]/g, ''),
+        address: enderecoPrincipal.logradouro || 'Não informado',
+        addressNumber: enderecoPrincipal.numero || 'S/N',
+        province: enderecoPrincipal.bairro || 'Não informado',
+        postalCode: enderecoPrincipal.cep || 'Não informado',
+        incomeValue: perfil.faturamento || 0
       }
 
       // 1. Criar subconta
@@ -139,16 +157,22 @@ export default function CriarSubcontaAsaasPage() {
           email: email,
           login_email: email,
           mobile_phone: telefone,
-          address: perfil.endereco_principal?.logradouro || 'Não informado',
-          address_number: perfil.endereco_principal?.numero || 'S/N',
-          province: perfil.endereco_principal?.bairro || 'Não informado',
-          postal_code: perfil.endereco_principal?.cep?.replace(/[^0-9]/g, '') || '00000000',
+          address: enderecoPrincipal.logradouro || 'Não informado',
+          address_number: enderecoPrincipal.numero || 'S/N',
+          province: enderecoPrincipal.bairro || 'Não informado',
+          postal_code: enderecoPrincipal.cep || 'Não informado',
+          city: codigoCidade,
           cpf_cnpj: cpfCnpj,
           person_type: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA',
-          company_type: cpfCnpj.length === 11 ? 'MEI' : 'LIMITED'
+          company_type: cpfCnpj.length === 11 ? 'MEI' : 'LIMITED',
+          country: 'BR',
+          state: enderecoPrincipal.uf || 'BA'
         })
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Erro ao salvar dados da subconta no Supabase:', updateError)
+        throw updateError
+      }
 
       toast.success('Subconta criada com sucesso!')
       router.push('/revendas')

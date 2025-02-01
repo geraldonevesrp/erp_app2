@@ -33,6 +33,35 @@ A estrutura completa do banco de dados está documentada no arquivo `banco_supab
 
 Consulte este arquivo ao implementar novas funcionalidades para garantir consistência com o banco de dados.
 
+## Importante: Acesso à Estrutura do Banco de Dados
+
+Para garantir a precisão e evitar erros durante o desenvolvimento, siga estas diretrizes:
+
+1. **Nunca tente adivinhar a estrutura das tabelas do banco de dados.**
+2. **Sempre consulte o arquivo de tipos em** `src/types/database.types.ts` **para obter a estrutura exata.**
+3. **Se o arquivo não estiver disponível, solicite a estrutura ao usuário.**
+
+Essas práticas ajudam a manter a integridade do banco de dados e evitam problemas de inserção/atualização por campos incorretos.
+
+### Acessando a Estrutura das Tabelas no Supabase
+
+Para acessar a estrutura das tabelas no Supabase, siga os passos abaixo:
+
+1. Acesse o painel do Supabase.
+2. Clique em "Database" no menu lateral.
+3. Selecione a tabela desejada.
+4. Clique em "Schema" para visualizar a estrutura da tabela.
+
+### Importância de Usar o Arquivo de Tipos
+
+O arquivo de tipos (`src/types/database.types.ts`) é gerado automaticamente a partir da estrutura do banco de dados no Supabase. É fundamental usar esse arquivo para garantir que as alterações no banco de dados sejam refletidas corretamente no código.
+
+Ao usar o arquivo de tipos, você garante que:
+
+* As alterações no banco de dados sejam refletidas corretamente no código.
+* Os tipos sejam consistentes em todo o projeto.
+* Os erros de digitação sejam minimizados.
+
 ### Tipos do Supabase
 
 Os tipos do banco de dados são gerados automaticamente do Supabase e estão em `src/types/database.types.ts`.

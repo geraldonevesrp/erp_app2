@@ -44,7 +44,13 @@ async function createAsaasCustomer(customerData: any) {
       throw new Error(errorData.error || `Erro ao criar cliente no Asaas: ${response.status}`)
     }
 
-    const data = await response.json()
+    const { success, data, error } = await response.json()
+    
+    if (!success || error) {
+      console.error('Erro ao criar cliente:', error || 'Resposta sem sucesso')
+      throw new Error(error || 'Erro ao criar cliente no Asaas')
+    }
+
     console.log('Cliente criado com sucesso:', data)
     return data
   } catch (error: any) {
@@ -84,6 +90,10 @@ async function createAsaasCharge(chargeData: any) {
 
 async function getPixQrCode(paymentId: string) {
   try {
+    if (!paymentId) {
+      throw new Error('ID do pagamento é obrigatório')
+    }
+
     console.log('Buscando QR Code para pagamento:', paymentId)
     const response = await fetch('/api/asaas', {
       method: 'POST',
@@ -95,26 +105,43 @@ async function getPixQrCode(paymentId: string) {
       })
     })
 
+    // Log da resposta bruta para debug
+    const responseText = await response.text()
+    console.log('Resposta bruta do QR Code:', responseText)
+
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Erro na resposta:', errorText)
-      throw new Error(errorText)
+      console.error('Erro na resposta:', responseText)
+      throw new Error(`Erro ao buscar QR Code: ${response.status} - ${responseText}`)
     }
 
-    const data = await response.json()
+    let responseData
+    try {
+      responseData = JSON.parse(responseText)
+    } catch (e) {
+      console.error('Erro ao fazer parse da resposta:', e)
+      throw new Error('Resposta inválida do servidor')
+    }
+
+    const { success, data, error } = responseData
+    
+    if (!success || error) {
+      console.error('Erro ao buscar QR Code:', error || 'Resposta sem sucesso', responseData)
+      throw new Error(error || 'Erro ao buscar QR Code')
+    }
+
     console.log('QR Code recebido:', {
       ...data,
       encodedImage: data.encodedImage ? '[BASE64_IMAGE]' : undefined
     })
     
-    if (!data.success || !data.encodedImage) {
+    if (!data.encodedImage) {
       console.error('Resposta sem QR Code:', data)
       throw new Error('QR Code não encontrado na resposta')
     }
 
     return data
   } catch (error) {
-    console.error('Erro ao buscar QR Code:', error)
+    console.error('Erro detalhado ao buscar QR Code:', error)
     throw error
   }
 }
@@ -122,13 +149,14 @@ async function getPixQrCode(paymentId: string) {
 export default function AtivarRevenda() {
   // Clientes e hooks
   const supabase = createClientComponentClient()
-  const { perfil, isLoading: isLoadingPerfil, error: perfilError } = useRevendaPerfil()
+  const { perfil } = useRevendaPerfil()
   const { toast } = useToast()
   
   // Estados locais
   const [loading, setLoading] = useState(false)
   const [loadingQrCode, setLoadingQrCode] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [cobrancaExistente, setCobrancaExistente] = useState<any>(null)
   const [cobranca, setCobranca] = useState<any>(null)
   const [copied, setCopied] = useState(false)
   const [verificandoCobranca, setVerificandoCobranca] = useState(true)
@@ -170,52 +198,19 @@ export default function AtivarRevenda() {
 
   // Efeito para monitorar mudanças na cobrança via realtime
   useEffect(() => {
-    if (!perfil?.id) return
-
-    // Inscreve-se nas mudanças da tabela cobrancas
-    const channel = supabase
-      .channel('cobrancas-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'cobrancas',
-          filter: `sacado_perfil_id=eq.${perfil.id}`,
-        },
-        (payload) => {
-          console.log('Mudança detectada na cobrança:', payload)
-          const cobrancaAtualizada = payload.new as any
-
-          // Se a cobrança foi paga, redireciona
-          if (cobrancaAtualizada.paga) {
-            console.log('Cobrança paga, redirecionando...')
-            window.location.href = '/revendas'
-          }
-        }
-      )
-      .subscribe()
-
-    // Cleanup: remove a inscrição quando o componente for desmontado
-    return () => {
-      console.log('Removendo inscrição do canal realtime')
-      supabase.removeChannel(channel)
+    // Garante que o perfil está disponível
+    if (!perfil) {
+      console.log('Aguardando perfil...')
+      return
     }
-  }, [perfil?.id, supabase])
 
-  // Função para verificar cobrança existente
-  useEffect(() => {
-    const verificarCobrancaExistente = async () => {
-      if (!perfil?.id) return
-      
+    console.log('Iniciando monitoramento de cobranças para perfil:', perfil.id)
+
+    // Busca a cobrança existente
+    const fetchCobranca = async () => {
+      setLoading(true)
       try {
-        setVerificandoCobranca(true)
-        setError(null)
-
-        console.log('Verificando cobrança existente para perfil:', perfil.id)
-        
-        // Busca cobrança existente
-        const { data: cobrancaExistente, error: errorCobranca } = await supabase
+        const { data: cobrancaData, error: cobrancaError } = await supabase
           .from('cobrancas')
           .select('*')
           .eq('sacado_perfil_id', perfil.id)
@@ -224,96 +219,148 @@ export default function AtivarRevenda() {
           .limit(1)
           .single()
 
-        if (errorCobranca && errorCobranca.code !== 'PGRST116') {
-          console.error('Erro ao verificar cobrança:', errorCobranca)
-          throw errorCobranca
-        }
-
-        // Se encontrou uma cobrança paga, redireciona
-        if (cobrancaExistente?.paga) {
-          window.location.href = '/revendas'
+        if (cobrancaError) {
+          console.error('Erro ao buscar cobrança:', cobrancaError)
           return
         }
 
-        // Se encontrou uma cobrança não paga, exibe ela
-        if (cobrancaExistente && !cobrancaExistente.paga) {
-          console.log('Cobrança existente encontrada:', {
-            id: cobrancaExistente.id,
-            asaas: cobrancaExistente.asaas
-          })
+        if (cobrancaData) {
+          console.log('Cobrança encontrada:', cobrancaData)
+          setCobrancaExistente(cobrancaData)
           
-          // Busca o QR Code
-          try {
-            setLoadingQrCode(true)
-            console.log('Buscando QR Code para cobrança:', cobrancaExistente.asaas.id)
-            
-            const response = await fetch('/api/asaas', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                endpoint: `/payments/${cobrancaExistente.asaas.id}/pixQrCode`
-              })
-            })
-
-            // Se não for ok, pega o erro
-            if (!response.ok) {
-              const errorText = await response.text()
-              console.error('Erro na resposta:', errorText)
-              throw new Error(errorText)
-            }
-
-            // Se chegou aqui, a resposta está ok
-            const data = await response.json()
-            console.log('QR Code recebido:', {
-              ...data,
-              encodedImage: data.encodedImage ? '[BASE64_IMAGE]' : undefined
-            })
-            
-            if (!data.success || !data.encodedImage) {
-              console.error('Resposta sem QR Code:', data)
-              throw new Error('QR Code não encontrado na resposta')
-            }
-
-            // Atualiza o estado com o QR Code
-            setCobranca({
-              ...cobrancaExistente.asaas,
-              pix: {
-                encodedImage: data.encodedImage,
-                payload: data.payload,
-                expirationDate: data.expirationDate,
-                success: true
+          // Se encontrou cobrança, busca o QR Code
+          if (!cobrancaData.paga) {
+            const paymentId = cobrancaData?.asaas?.data?.id
+            if (paymentId) {
+              try {
+                setLoadingQrCode(true)
+                const qrCodeData = await getPixQrCode(paymentId)
+                setCobranca({
+                  ...cobrancaData.asaas.data,
+                  pix: {
+                    encodedImage: qrCodeData.encodedImage,
+                    payload: qrCodeData.payload,
+                    expirationDate: qrCodeData.expirationDate,
+                    success: true
+                  }
+                })
+              } catch (error) {
+                console.error('Erro ao buscar QR Code:', error)
+              } finally {
+                setLoadingQrCode(false)
               }
-            })
-          } catch (error) {
-            console.error('Erro ao buscar QR Code:', error)
-            setError('Erro ao buscar QR Code. Tente recarregar a página.')
-            setCobranca(cobrancaExistente.asaas)
-          } finally {
-            setLoadingQrCode(false)
+            }
           }
         }
-      } catch (err) {
-        console.error('Erro ao verificar cobrança existente:', err)
-        setError('Erro ao verificar cobrança. Tente novamente.')
+      } catch (error) {
+        console.error('Erro ao buscar cobrança:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCobranca()
+
+    // Inscreve para atualizações em tempo real
+    const subscription = supabase
+      .channel('cobrancas_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cobrancas',
+          filter: `sacado_perfil_id=eq.${perfil.id}`
+        },
+        async (payload) => {
+          console.log('Mudança detectada na cobrança:', payload)
+          
+          // Atualiza o estado com a nova cobrança
+          if (payload.new) {
+            setCobrancaExistente(payload.new)
+            
+            // Se a cobrança não está paga, busca o QR Code
+            if (!payload.new.paga) {
+              const paymentId = payload.new?.asaas?.data?.id
+              if (paymentId) {
+                try {
+                  setLoadingQrCode(true)
+                  const qrCodeData = await getPixQrCode(paymentId)
+                  setCobranca({
+                    ...payload.new.asaas.data,
+                    pix: {
+                      encodedImage: qrCodeData.encodedImage,
+                      payload: qrCodeData.payload,
+                      expirationDate: qrCodeData.expirationDate,
+                      success: true
+                    }
+                  })
+                } catch (error) {
+                  console.error('Erro ao buscar QR Code:', error)
+                } finally {
+                  setLoadingQrCode(false)
+                }
+              }
+            }
+          }
+        }
+      )
+      .subscribe()
+
+    // Cleanup
+    return () => {
+      console.log('Removendo monitoramento de cobranças')
+      subscription.unsubscribe()
+    }
+  }, [perfil, supabase])
+
+  // Função para verificar cobrança existente
+  useEffect(() => {
+    if (!perfil) {
+      console.log('Aguardando perfil...')
+      return
+    }
+
+    const verificarCobrancaExistente = async () => {
+      try {
+        setVerificandoCobranca(true)
+        setError(null)
+
+        const { data: cobrancaData, error: cobrancaError } = await supabase
+          .from('cobrancas')
+          .select('*')
+          .eq('sacado_perfil_id', perfil.id)
+          .eq('cobrancas_tipos_id', 1)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+
+        if (cobrancaError && cobrancaError.code !== 'PGRST116') {
+          console.error('Erro ao buscar cobrança:', cobrancaError)
+          setError('Erro ao buscar cobrança')
+          return
+        }
+
+        if (cobrancaData) {
+          console.log('Cobrança encontrada:', cobrancaData)
+          setCobrancaExistente(cobrancaData)
+        }
+      } catch (error) {
+        console.error('Erro ao verificar cobrança:', error)
+        setError('Erro ao verificar cobrança')
       } finally {
         setVerificandoCobranca(false)
       }
     }
 
     verificarCobrancaExistente()
-  }, [perfil?.id])
+  }, [perfil, supabase])
 
   const handleAtivarRevenda = async () => {
     try {
       setLoading(true)
       setError(null)
       setValidacaoErros([])
-
-      if (!perfil) {
-        throw new Error('Perfil não encontrado')
-      }
 
       // Valida os dados do perfil
       const erros = validarPerfil(perfil)
@@ -415,47 +462,31 @@ export default function AtivarRevenda() {
       // Busca o QR Code
       try {
         setLoadingQrCode(true)
-        console.log('Buscando QR Code para cobrança:', chargeResponse.id)
         
-        const response = await fetch('/api/asaas', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            endpoint: `/payments/${chargeResponse.id}/pixQrCode`
-          })
-        })
-
-        // Se não for ok, pega o erro
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('Erro na resposta:', errorText)
-          throw new Error(errorText)
+        const paymentId = chargeResponse?.data?.id
+        if (!paymentId) {
+          console.error('ID da cobrança não encontrado:', chargeResponse)
+          throw new Error('ID da cobrança não encontrado')
         }
 
-        // Se chegou aqui, a resposta está ok
-        const data = await response.json()
-        console.log('QR Code recebido:', {
-          ...data,
-          encodedImage: data.encodedImage ? '[BASE64_IMAGE]' : undefined
-        })
+        console.log('Buscando QR Code para cobrança:', paymentId)
         
-        if (!data.success || !data.encodedImage) {
-          console.error('Resposta sem QR Code:', data)
-          throw new Error('QR Code não encontrado na resposta')
-        }
+        const qrCodeData = await getPixQrCode(paymentId)
+        console.log('QR Code obtido com sucesso:', {
+          ...qrCodeData,
+          encodedImage: qrCodeData.encodedImage ? '[BASE64_IMAGE]' : undefined
+        })
 
         // Atualiza o chargeResponse com o QR Code
-        chargeResponse.pix = {
-          encodedImage: data.encodedImage,
-          payload: data.payload,
-          expirationDate: data.expirationDate,
+        chargeResponse.data.pix = {
+          encodedImage: qrCodeData.encodedImage,
+          payload: qrCodeData.payload,
+          expirationDate: qrCodeData.expirationDate,
           success: true
         }
-      } catch (error) {
-        console.error('Erro ao buscar QR Code:', error)
-        setError('Erro ao buscar QR Code. Tente recarregar a página.')
+      } catch (error: any) {
+        console.error('Erro detalhado ao buscar QR Code:', error)
+        setError(`Erro ao buscar QR Code: ${error.message}`)
       } finally {
         setLoadingQrCode(false)
       }
@@ -465,7 +496,10 @@ export default function AtivarRevenda() {
         .from('cobrancas')
         .insert({
           cobrancas_tipos_id: 1, // Ativação de revenda
-          asaas: chargeResponse, // Objeto completo do Asaas
+          asaas: {
+            data: chargeResponse,
+            success: true
+          }, // Objeto completo do Asaas
           sacado_perfil_id: perfil.id,
           cedente_perfil_id: '2c55d107-7c8a-4d96-8dcb-3a4958db665b', // ID do perfil ERPAPP
           valor: chargeResponse.value,
@@ -479,7 +513,7 @@ export default function AtivarRevenda() {
         throw new Error(`Erro ao salvar cobrança no banco de dados: ${cobrancaError.message}`)
       }
 
-      setCobranca(chargeResponse)
+      setCobranca(chargeResponse.data)
       toast({
         title: "Cobrança gerada com sucesso!",
         description: "Use o QR Code ou o código PIX para fazer o pagamento"
@@ -513,7 +547,7 @@ export default function AtivarRevenda() {
   }
 
   // Se estiver verificando cobrança ou carregando perfil, mostra loading
-  if (verificandoCobranca || isLoadingPerfil) {
+  if (verificandoCobranca) {
     return (
       <div className="container max-w-screen-lg mx-auto py-4">
         <Card className="p-6">
@@ -522,18 +556,6 @@ export default function AtivarRevenda() {
             <h1 className="text-2xl font-bold">Carregando...</h1>
           </div>
         </Card>
-      </div>
-    )
-  }
-
-  // Se houver erro no perfil, mostra mensagem
-  if (perfilError) {
-    return (
-      <div className="container max-w-screen-lg mx-auto py-4">
-        <Alert variant="destructive">
-          <AlertTitle>Erro</AlertTitle>
-          <AlertDescription>{perfilError.message}</AlertDescription>
-        </Alert>
       </div>
     )
   }
