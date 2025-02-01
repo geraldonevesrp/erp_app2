@@ -279,27 +279,40 @@ export default function AtivarRevenda() {
           if (payload.new) {
             setCobrancaExistente(payload.new)
             
+            // Se a cobrança está paga, redireciona o usuário
+            if (payload.new.paga) {
+              toast({
+                title: "Pagamento confirmado!",
+                description: "Sua revenda está sendo ativada. Você será redirecionado em instantes..."
+              })
+              
+              // Aguarda 3 segundos antes de redirecionar
+              setTimeout(() => {
+                window.location.href = '/revendas'
+              }, 3000)
+              
+              return
+            }
+            
             // Se a cobrança não está paga, busca o QR Code
-            if (!payload.new.paga) {
-              const paymentId = payload.new?.asaas?.data?.id
-              if (paymentId) {
-                try {
-                  setLoadingQrCode(true)
-                  const qrCodeData = await getPixQrCode(paymentId)
-                  setCobranca({
-                    ...payload.new.asaas.data,
-                    pix: {
-                      encodedImage: qrCodeData.encodedImage,
-                      payload: qrCodeData.payload,
-                      expirationDate: qrCodeData.expirationDate,
-                      success: true
-                    }
-                  })
-                } catch (error) {
-                  console.error('Erro ao buscar QR Code:', error)
-                } finally {
-                  setLoadingQrCode(false)
-                }
+            const paymentId = payload.new?.asaas?.data?.id
+            if (paymentId) {
+              try {
+                setLoadingQrCode(true)
+                const qrCodeData = await getPixQrCode(paymentId)
+                setCobranca({
+                  ...payload.new.asaas.data,
+                  pix: {
+                    encodedImage: qrCodeData.encodedImage,
+                    payload: qrCodeData.payload,
+                    expirationDate: qrCodeData.expirationDate,
+                    success: true
+                  }
+                })
+              } catch (error) {
+                console.error('Erro ao buscar QR Code:', error)
+              } finally {
+                setLoadingQrCode(false)
               }
             }
           }
