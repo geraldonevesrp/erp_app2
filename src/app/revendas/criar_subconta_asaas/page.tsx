@@ -108,17 +108,24 @@ export default function CriarSubcontaAsaasPage() {
               city: 2918407, // Código IBGE de Juazeiro-BA
               state: enderecoPrincipal.uf || 'BA',
               country: 'BR',
-              personType: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA'
+              personType: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA',
+              incomeValue: perfil.faturamento || 5000,
+              object: 'account'
             }
           })
         })
 
         const responseText = await response.text()
         console.log('Resposta do Asaas:', responseText)
+        console.log('Resposta do Asaas (raw):', response.status, response.statusText)
 
         let data
         try {
           data = JSON.parse(responseText)
+          console.log('Data após parse:', data)
+          console.log('Data success:', data.success)
+          console.log('Data apiKey:', data.data?.apiKey)
+          console.log('Data walletId:', data.data?.walletId)
         } catch (e) {
           console.error('Erro ao fazer parse da resposta:', e)
           throw new Error('Erro ao processar resposta do servidor')
@@ -158,20 +165,118 @@ export default function CriarSubcontaAsaasPage() {
 
           data = subcontaExistente
           console.log('Subconta encontrada:', data)
+
+          // Verificar se já existe registro no banco
+          const { data: existingConta } = await supabase
+            .from('asaas_contas')
+            .select()
+            .eq('asaas_id', data.id)
+            .single()
+
+          if (existingConta) {
+            console.log('Conta já existe no banco, pulando criação')
+            data = {
+              ...data,
+              apiKey: existingConta.api_key,
+              walletId: existingConta.wallet_id
+            }
+          }
         } else if (!response.ok) {
           // Se for outro tipo de erro, lança o erro
           throw new Error(responseText)
         }
 
+        // Verificar se já existe um webhook key para este perfil
+        const { data: existingWebhookKey, error: existingWebhookError } = await supabase
+          .from('perfis_asaas_webhook_key')
+          .select()
+          .eq('perfis_id', perfil.id)
+          .single()
+
+        let webhookKey
+        if (existingWebhookError && existingWebhookError.code === 'PGRST116') {
+          // Se não existir, criar um novo
+          const { data: newWebhookKey, error: webhookError } = await supabase
+            .from('perfis_asaas_webhook_key')
+            .insert({
+              perfis_id: perfil.id
+            })
+            .select()
+            .single()
+
+          if (webhookError) {
+            console.error('Erro ao criar webhook key:', webhookError)
+            throw webhookError
+          }
+          webhookKey = newWebhookKey
+        } else if (existingWebhookError) {
+          console.error('Erro ao buscar webhook key:', existingWebhookError)
+          throw existingWebhookError
+        } else {
+          webhookKey = existingWebhookKey
+        }
+
+        // Configurar o webhook no Asaas
+        console.log('Configurando webhook no Asaas...')
+        const webhookResponse = await fetch('/api/asaas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            endpoint: '/webhook',
+            data: {
+              url: 'https://fwmxtjrxilkrirvrxlxb.supabase.co/functions/v1/asaas_webhook',
+              email: 'geraldons@hotmail.com',
+              interrupted: false,
+              enabled: true,
+              apiVersion: 3,
+              authToken: webhookKey.id,
+              type: 'SCHEDULED',
+              events: ['PAYMENT_CREATED', 'PAYMENT_RECEIVED']
+            }
+          })
+        })
+
+        if (!webhookResponse.ok) {
+          const webhookError = await webhookResponse.text()
+          console.error('Erro ao configurar webhook:', webhookError)
+          throw new Error('Erro ao configurar webhook no Asaas')
+        }
+
         // Salvar dados da subconta no Supabase
+        console.log('Dados para salvar no Supabase:', {
+          asaas_id: data.data.id,
+          api_key: data.data.apiKey,
+          wallet_id: data.data.walletId,
+          perfis_id: perfil.id,
+          account_number: data.data.accountNumber || {},
+          income_value: perfil.faturamento || 0,
+          name: nome,
+          email: email,
+          login_email: email,
+          mobile_phone: telefone,
+          address: enderecoPrincipal.logradouro || 'Não informado',
+          address_number: enderecoPrincipal.numero || 'S/N',
+          province: enderecoPrincipal.bairro || 'Não informado',
+          postal_code: enderecoPrincipal.cep || 'Não informado',
+          city: 2918407, // Código IBGE de Juazeiro-BA
+          cpf_cnpj: cpfCnpj,
+          person_type: cpfCnpj.length === 11 ? 'FISICA' : 'JURIDICA',
+          company_type: cpfCnpj.length === 11 ? 'MEI' : 'LIMITED',
+          country: 'BR',
+          state: enderecoPrincipal.uf || 'BA',
+          object: 'account'
+        })
+        
         const { error: updateError } = await supabase
           .from('asaas_contas')
           .insert({
-            asaas_id: data.id,
-            api_key: data.apiKey,
-            wallet_id: data.walletId,
+            asaas_id: data.data.id,
+            api_key: data.data.apiKey,
+            wallet_id: data.data.walletId,
             perfis_id: perfil.id,
-            account_number: data.accountNumber || {},
+            account_number: data.data.accountNumber || {},
             income_value: perfil.faturamento || 0,
             name: nome,
             email: email,
