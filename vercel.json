@@ -30,5 +30,18 @@
     "erp.erp1.com.br",
     "revendas.erp1.com.br",
     "master.erp1.com.br"
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "erp1.com.br"
+        }
+      ],
+      "destination": "https://erp.erp1.com.br",
+      "permanent": true
+    }
   ]
 }
