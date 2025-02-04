@@ -24,9 +24,51 @@ import { useToast } from '@/components/ui/use-toast'
 import { cn } from '@/lib/utils'
 
 // Funções de API
+async function findAsaasCustomerByCpfCnpj(cpfCnpj: string) {
+  try {
+    console.log('Buscando cliente no Asaas por CPF/CNPJ:', cpfCnpj)
+    const response = await fetch('/api/asaas', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // Remove caracteres não numéricos do CPF/CNPJ
+      body: JSON.stringify({
+        endpoint: `/customers?cpfCnpj=${cpfCnpj.replace(/\D/g, '')}`
+      })
+    })
+
+    if (!response.ok) {
+      console.error('Erro ao buscar cliente:', response.status)
+      return null
+    }
+
+    const { data } = await response.json()
+    
+    // Se encontrou clientes, retorna o primeiro
+    if (data && data.length > 0) {
+      console.log('Cliente encontrado:', data[0])
+      return data[0]
+    }
+
+    console.log('Cliente não encontrado')
+    return null
+  } catch (error) {
+    console.error('Erro ao buscar cliente:', error)
+    return null
+  }
+}
+
 async function createAsaasCustomer(customerData: any) {
   try {
-    console.log('Criando cliente no Asaas...')
+    // Primeiro verifica se o cliente já existe
+    const existingCustomer = await findAsaasCustomerByCpfCnpj(customerData.cpfCnpj)
+    if (existingCustomer) {
+      console.log('Cliente já existe, retornando:', existingCustomer)
+      return existingCustomer
+    }
+
+    console.log('Cliente não encontrado, criando novo...')
     const response = await fetch('/api/asaas', {
       method: 'POST',
       headers: {
