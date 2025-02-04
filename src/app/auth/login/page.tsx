@@ -31,11 +31,14 @@ export default function LoginPage() {
 
   const checkHostname = () => {
     const hostname = window.location.hostname
-    const subdomain = hostname.split('.')[0]
+    const parts = hostname.split('.')
+    
+    // Verifica se não tem subdomínio tanto em localhost quanto em produção
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
+    const hasSubdomain = isLocalhost ? hostname.includes('.') : parts.length > 2
 
-    // Se é localhost sem subdomínio, mostra o campo de domínio
-    if (isLocalhost && !window.location.host.includes('.')) {
+    // Se não tem subdomínio, mostra o campo de domínio
+    if (!hasSubdomain) {
       setIsLocalhostWithoutSubdomain(true)
     }
   }
@@ -47,8 +50,14 @@ export default function LoginPage() {
       return
     }
 
-    // Redireciona para o subdomínio em localhost
-    window.location.href = `http://${dominio}.localhost:3000/auth/login`
+    const hostname = window.location.hostname
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
+    const protocol = window.location.protocol
+    const port = isLocalhost ? ':3000' : ''
+
+    // Constrói a URL baseada no ambiente
+    const baseUrl = isLocalhost ? 'localhost' : 'erp1.com.br'
+    window.location.href = `${protocol}//${dominio}.${baseUrl}${port}/auth/login`
   }
 
   const handleLogin = async (e: React.FormEvent) => {
