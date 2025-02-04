@@ -46,21 +46,44 @@ export default function LoginPage() {
     }
   }
 
-  const handleDominioSubmit = (e: React.FormEvent) => {
+  const handleDominioSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!dominio) {
-      setError('Por favor, informe o domínio')
-      return
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      if (!dominio) {
+        setError('Por favor, informe o domínio')
+        return
+      }
+
+      // Verifica se o domínio existe na tabela perfis
+      const { data: perfilData, error: perfilError } = await supabase
+        .from('perfis')
+        .select('*')
+        .eq('dominio', dominio.toLowerCase())
+        .single()
+
+      if (perfilError || !perfilData) {
+        setError('Domínio não encontrado')
+        setIsLoading(false)
+        return
+      }
+
+      const hostname = window.location.hostname
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
+      const protocol = window.location.protocol
+      const port = isLocalhost ? ':3000' : ''
+
+      // Constrói a URL baseada no ambiente
+      const baseUrl = isLocalhost ? 'localhost' : 'erp1.com.br'
+      window.location.href = `${protocol}//${dominio}.${baseUrl}${port}/auth/login`
+    } catch (error) {
+      console.error('Erro ao validar domínio:', error)
+      setError('Erro ao validar domínio')
+    } finally {
+      setIsLoading(false)
     }
-
-    const hostname = window.location.hostname
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
-    const protocol = window.location.protocol
-    const port = isLocalhost ? ':3000' : ''
-
-    // Constrói a URL baseada no ambiente
-    const baseUrl = isLocalhost ? 'localhost' : 'erp1.com.br'
-    window.location.href = `${protocol}//${dominio}.${baseUrl}${port}/auth/login`
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -292,45 +315,42 @@ export default function LoginPage() {
 
           <form onSubmit={handleDominioSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="dominio" className="text-sm font-medium">Domínio</Label>
+              <Label htmlFor="dominio">Domínio</Label>
               <div className="relative">
                 <Input
                   id="dominio"
                   type="text"
                   value={dominio}
                   onChange={(e) => setDominio(e.target.value)}
-                  className="pl-10 bg-white dark:bg-card border-gray-200 dark:border-gray-800 focus:ring-2 focus:ring-primary/20"
-                  placeholder="exemplo"
-                  required
+                  className="pl-10"
+                  placeholder="Digite o domínio"
+                  disabled={isLoading}
                 />
-                <Globe className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Globe className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Exemplo: se seu domínio é empresa.app.com, digite apenas "empresa"
-              </p>
             </div>
-
-            {error && (
-              <Alert variant="destructive" className="border border-destructive/50 bg-destructive/10">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-200"
+              className="w-full"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Carregando...
+                  Validando...
                 </>
               ) : (
-                'Acessar'
+                'Continuar'
               )}
             </Button>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
           </form>
 
           <div className="pt-4 text-center text-xs text-muted-foreground/80 border-t border-border/40">
