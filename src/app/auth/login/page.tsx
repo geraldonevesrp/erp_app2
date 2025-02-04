@@ -39,8 +39,9 @@ export default function LoginPage() {
       return
     }
     
-    // Em produção, verifica se está acessando o domínio base (erp1.com.br)
-    const isBaseDomain = hostname === 'erp1.com.br'
+    // Remove o www se existir e verifica se está acessando o domínio base (erp1.com.br)
+    const cleanHostname = hostname.replace(/^www\./, '')
+    const isBaseDomain = cleanHostname === 'erp1.com.br'
     if (isBaseDomain) {
       setIsLocalhostWithoutSubdomain(true)
     }
@@ -75,8 +76,9 @@ export default function LoginPage() {
       const protocol = window.location.protocol
       const port = isLocalhost ? ':3000' : ''
 
-      // Constrói a URL baseada no ambiente
-      const baseUrl = isLocalhost ? 'localhost' : 'erp1.com.br'
+      // Remove o www se existir antes de construir a URL
+      const cleanHostname = hostname.replace(/^www\./, '')
+      const baseUrl = isLocalhost ? 'localhost' : cleanHostname === 'erp1.com.br' ? 'erp1.com.br' : hostname
       window.location.href = `${protocol}//${dominio}.${baseUrl}${port}/auth/login`
     } catch (error) {
       console.error('Erro ao validar domínio:', error)
