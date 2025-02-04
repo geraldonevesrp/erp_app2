@@ -31,14 +31,17 @@ export default function LoginPage() {
 
   const checkHostname = () => {
     const hostname = window.location.hostname
-    const parts = hostname.split('.')
-    
-    // Verifica se não tem subdomínio tanto em localhost quanto em produção
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
-    const hasSubdomain = isLocalhost ? hostname.includes('.') : parts.length > 2
-
-    // Se não tem subdomínio, mostra o campo de domínio
-    if (!hasSubdomain) {
+    
+    // Em localhost, verifica se tem ponto no hostname
+    if (isLocalhost) {
+      setIsLocalhostWithoutSubdomain(!hostname.includes('.'))
+      return
+    }
+    
+    // Em produção, verifica se está acessando o domínio base (erp1.com.br)
+    const isBaseDomain = hostname === 'erp1.com.br'
+    if (isBaseDomain) {
       setIsLocalhostWithoutSubdomain(true)
     }
   }
